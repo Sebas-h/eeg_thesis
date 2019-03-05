@@ -105,7 +105,9 @@ def run_exp(subject_id, model_type, cuda, bcic_pickle_folder):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s', level=logging.DEBUG, stream=sys.stdout)
 
-    bcic_pickle_folder = '/Users/sebas/code/eeg_thesis/eeg_classify/data/pickled_bcic_iv_2a/'
+    # bcic_pickle_folder = '/Users/sebas/code/eeg_thesis/eeg_classify/data/pickled_bcic_iv_2a/'
+    bcic_pickle_folder = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data/pickled_bcic_iv_2a')) + "/"
+
     subject_id = 1  # 1-9
     model_type = 'shallow'  # 'shallow' or 'deep'
     cuda = False
@@ -114,7 +116,9 @@ if __name__ == '__main__':
 
     # save result dataframe to csv
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
-    exp.epochs_df.to_csv("../results/"+timestamp+".csv")
+    exp.epochs_df.to_csv(
+        os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'my_results')) + "/" + timestamp + ".csv"
+        )
 
     log.info("Last 10 epochs")
     log.info("\n" + str(exp.epochs_df.iloc[-10:]))
