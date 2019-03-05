@@ -1,6 +1,9 @@
 import logging
 from datetime import datetime
-import sys, pickle
+import pickle
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'braindecode')))
 
 import torch.nn.functional as F
 from torch import optim
@@ -81,7 +84,7 @@ def run_exp(subject_id, model_type, cuda, bcic_pickle_folder):
     monitors = [LossMonitor(), MisclassMonitor(col_suffix='sample_misclass'),
                 CroppedTrialMisclassMonitor(input_time_length=input_time_length), RuntimeMonitor()]
 
-    # ?Not sure yet?
+    # 
     model_constraint = MaxNormDefaultConstraint()
 
     # Set loss function to be minimized
@@ -102,19 +105,12 @@ def run_exp(subject_id, model_type, cuda, bcic_pickle_folder):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s', level=logging.DEBUG, stream=sys.stdout)
 
-    bcic_pickle_folder = '/Users/sebas/code/eeg_thesis/pickled_bcic_iv_2a_data/'
+    bcic_pickle_folder = '/Users/sebas/code/eeg_thesis/eeg_classify/data/pickled_bcic_iv_2a/'
     subject_id = 1  # 1-9
     model_type = 'shallow'  # 'shallow' or 'deep'
     cuda = False
 
     exp = run_exp(subject_id, model_type, cuda, bcic_pickle_folder)
-
-    # with open("exp_results_subj1.pickle", 'wb') as f:
-    #     pickle.dump(exp, f, pickle.HIGHEST_PROTOCOL)
-    # with open('exp_results_subj1.pickle', 'rb') as f:
-    #     exp = pickle.load(f)
-
-    
 
     # save result dataframe to csv
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S")

@@ -1,4 +1,3 @@
-pickled_bcic_iv_2a_data/*
-results/*
 .idea/*
 *.pickle
+*.csv
