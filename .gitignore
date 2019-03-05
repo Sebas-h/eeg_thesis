@@ -1,3 +1,5 @@
 .idea/*
 *.pickle
 *.csv
+*.pyc
+**/.ipynb_checkpoints/*
