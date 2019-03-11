@@ -34,7 +34,9 @@ from braindecode.experiments.monitors import compute_preds_per_trial_from_crops
 ####################################################################################
 ####################################################################################
 
-path_to_data = "/Users/sebas/code/thesis/data/bcic_iv_2a_all_9_subjects.pickle"
+# path_to_data = "/Users/sebas/code/thesis/data/bcic_iv_2a_all_9_subjects.pickle"
+path_to_data = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data')) + \
+               "/bcic_iv_2a_all_9_subjects.pickle"
 subject_id = 1  # 1-9
 model_type = 'shallow'  # 'shallow' or 'deep'
 cuda = False  # or do: torch.cuda.is_available()
