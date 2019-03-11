@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 import pickle
 import os
-import sys
 
 import torch.nn.functional as F
 from torch import optim
@@ -30,7 +29,7 @@ import braindecode.datautil.splitters as splitters
 from braindecode.torch_ext.util import np_to_var, var_to_np
 from braindecode.experiments.monitors import compute_preds_per_trial_from_crops
 
-
+start = time.time()
 ####################################################################################
 ####################################################################################
 
@@ -115,7 +114,7 @@ for i_epoch in range(n_epochs):
     model.train()
     running_loss = 0.0
     for batch_X, batch_y in iterator.get_batches(train_set, shuffle=True):
-        # define the input X and output/target y of the current batch:
+        # Define the input X and output/target y of the current batch:
         net_in = np_to_var(batch_X)
         if cuda:
             net_in = net_in.cuda()
@@ -140,9 +139,9 @@ for i_epoch in range(n_epochs):
         optimizer.step()                        # update parameters based on computed gradients
 
         # Print the running loss:
-        running_loss += loss.item()
-        print('[%d, %5d] loss: %.3f' % (i_epoch + 1, 1, running_loss))
-        running_loss = 0.0
+        # running_loss += loss.item()
+        # print('[%d, %5d] loss: %.3f' % (i_epoch + 1, 1, running_loss))
+        # running_loss = 0.0
 
     # Print some statistics each epoch
     # Set model to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
