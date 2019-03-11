@@ -4,3 +4,4 @@
 *.csv
 *.pyc
 **/.ipynb_checkpoints/*
+braindecode/*
