@@ -52,17 +52,6 @@ data = data[subject_id - 1]
 # Split data into train, validation and test sets:
 train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0)
 
-def calcstat(labels):
-    y = np.bincount(labels)
-    ii = np.nonzero(y)[0]
-    stat = zip(ii, y[ii])
-    print(f"{list(stat)}")
-
-calcstat(train_set.y)
-calcstat(valid_set.y)
-calcstat(test_set.y)
-
-exit()
 ####################################################################################
 ####################################################################################
 
