@@ -150,8 +150,6 @@ for i_epoch in range(n_epochs):
     model.eval()
     print("Epoch {:d}".format(i_epoch))
 
-    sys.stdout.write("Epoch {:d} \n".format(i_epoch))
-
     res = [0, 0, 0, 0]
     for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
         # Collect all predictions and losses
@@ -242,4 +240,4 @@ accuracy = np.mean(predicted_labels == test_set.y)
 print("Test Accuracy: {:.1f}%".format(accuracy * 100))
 
 # todo: extend this
-print(results_epochs_list)
+# print(results_epochs_list)

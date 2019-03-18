@@ -119,7 +119,7 @@ if __name__ == '__main__':
     # save result dataframe to csv
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
     exp.epochs_df.to_csv(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'my_results')) + "/" + timestamp + ".csv"
+        os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')) + "/" + timestamp + ".csv"
     )
 
     log.info("Last 10 epochs")
