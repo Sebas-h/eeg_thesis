@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime
 import pickle
-import os
+import os, sys
 
 import torch.nn.functional as F
 from torch import optim
 import torch as th
 import numpy as np
+import pandas as pd
 
 from braindecode.models.deep4 import Deep4Net
 from braindecode.models.util import to_dense_prediction_model
@@ -29,7 +30,6 @@ import braindecode.datautil.splitters as splitters
 from braindecode.torch_ext.util import np_to_var, var_to_np
 from braindecode.experiments.monitors import compute_preds_per_trial_from_crops
 
-start = time.time()
 ####################################################################################
 ####################################################################################
 
@@ -95,7 +95,7 @@ iterator = CropsFromTrialsIterator(batch_size=batch_size, input_time_length=inpu
 optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 
 # Need to determine number of batch passes per epoch for cosine annealing
-n_epochs = 5  # 30
+n_epochs = 4  # 30
 n_updates_per_epoch = len([None for b in iterator.get_batches(train_set, True)])
 scheduler = CosineAnnealing(n_epochs * n_updates_per_epoch)
 
@@ -107,6 +107,8 @@ optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 
 # rng = RandomState((2017, 6, 30))
 
+# results_epochs_df = pd.DataFrame(columns=["train_loss", "train_acc", "valid_loss", "valid_acc"])
+results_epochs_list = []
 # for i_epoch in range(20):
 for i_epoch in range(n_epochs):
 
@@ -147,6 +149,10 @@ for i_epoch in range(n_epochs):
     # Set model to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
     model.eval()
     print("Epoch {:d}".format(i_epoch))
+
+    sys.stdout.write("Epoch {:d} \n".format(i_epoch))
+
+    res = [0, 0, 0, 0]
     for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
         # Collect all predictions and losses
         all_preds = []
@@ -171,6 +177,11 @@ for i_epoch in range(n_epochs):
         loss = np.mean(np.array(all_losses) * np.array(batch_sizes) /
                        np.mean(batch_sizes))
         print("{:6s} Loss: {:.5f}".format(setname, loss))
+        
+        if setname == "Train":
+            res[0] = loss
+        else:
+            res[2] = loss
 
         # Assign the predictions to the trials
         preds_per_trial = compute_preds_per_trial_from_crops(all_preds,
@@ -182,6 +193,13 @@ for i_epoch in range(n_epochs):
         predicted_labels = np.argmax(meaned_preds_per_trial, axis=1)
         accuracy = np.mean(predicted_labels == dataset.y)
         print("{:6s} Accuracy: {:.1f}%".format(setname, accuracy * 100))
+
+        if setname == "Train":
+            res[1] = accuracy
+        else:
+            res[3] = accuracy
+
+    results_epochs_list.append(res)
 
 ####################################################################################
 ####################################################################################
@@ -222,3 +240,6 @@ meaned_preds_per_trial = np.array([np.mean(p, axis=1) for p in preds_per_trial])
 predicted_labels = np.argmax(meaned_preds_per_trial, axis=1)
 accuracy = np.mean(predicted_labels == test_set.y)
 print("Test Accuracy: {:.1f}%".format(accuracy * 100))
+
+# todo: extend this
+print(results_epochs_list)

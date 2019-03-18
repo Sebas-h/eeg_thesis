@@ -1,25 +1,8 @@
-import logging
 import os.path
-import time
 from collections import OrderedDict
-import sys
 import pickle
 
-import numpy as np
-import torch.nn.functional as F
-from torch import optim
-
-from braindecode.models.deep4 import Deep4Net
 from braindecode.datasets.bcic_iv_2a import BCICompetition4Set2A
-from braindecode.experiments.experiment import Experiment
-from braindecode.experiments.monitors import LossMonitor, MisclassMonitor, \
-    RuntimeMonitor
-from braindecode.experiments.stopcriteria import MaxEpochs, NoDecrease, Or
-from braindecode.datautil.iterators import BalancedBatchSizeIterator
-from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
-from braindecode.datautil.splitters import split_into_two_sets
-from braindecode.torch_ext.constraints import MaxNormDefaultConstraint
-from braindecode.torch_ext.util import set_random_seeds, np_to_var
 from braindecode.mne_ext.signalproc import mne_apply
 from braindecode.datautil.signalproc import (bandpass_cnt,
                                              exponential_running_standardize)
@@ -28,17 +11,11 @@ from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 import braindecode.datautil.splitters as splitters
 
 
-
-
 def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     ival = [-500, 4000]
-    max_epochs = 1600
-    max_increase_epochs = 160
-    batch_size = 60
     high_cut_hz = 38
     factor_new = 1e-3
     init_block_size = 1000
-    valid_set_fraction = 0.2
 
     train_filename = 'A{:02d}T.gdf'.format(subject_id)
     test_filename = 'A{:02d}E.gdf'.format(subject_id)
@@ -93,6 +70,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     dataset = splitters.concatenate_two_sets(train_set, test_set)
 
     return dataset
+
 
 if __name__ == '__main__':
     # Should contain both .gdf files and .mat-labelfiles from competition

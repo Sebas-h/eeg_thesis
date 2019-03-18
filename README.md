@@ -1,4 +1,8 @@
 # EEG Classification using Deep Learning
 ###### Master Thesis
 
-Put pickled data in directory "eeg_thesis/eeg_classify/data/pickled_bcic_iv_2a/"
+install pytorch
+pip install braindecode
+pip install numpy
+
+pickled data in data directory in root
