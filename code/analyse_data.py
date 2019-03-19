@@ -53,38 +53,42 @@ def shallow_cnn():
 
     epochs = np.array(all_epochs)
 
-    # for i in range(800):
-    #     if i > 50:
-    #         break
-    #     print(f"{i}&{i+1} : {epochs[i+1, 1]}-{epochs[i, 1]}={epochs[i+1, 1] - epochs[i, 1]}")
+    e1 = 10
+    e2 = 11
+    a = epochs[e1, -1] / 100
+    b = epochs[e2, -1] / 100
+    print(f"{e1}:{a}  {e2}:{b} \n\t=> diff = {b - a}")
 
-    # exit()
+    plot_res = False
 
-
-    num_epoch_shown = 60
-
-    fig, (ax0, ax1) = plt.subplots(nrows=2)
-
-    ax0.set_title('Acc')
-    ax0.plot(epochs[:num_epoch_shown, 2], label='Train')
-    ax0.plot(epochs[:num_epoch_shown, 4], label='Valid')
-    ax0.legend()
-
-    ax1.set_title('Loss')
-    ax1.plot(epochs[:num_epoch_shown, 1], label="Train")
-    ax1.plot(epochs[:num_epoch_shown, 3], label="Valid")
-    ax1.legend()
-
-    fig.tight_layout()
-    plt.show()
+    if plot_res:
+        num_epoch_shown = 60
+        fig, (ax0, ax1) = plt.subplots(nrows=2)
+        ax0.set_title('Acc')
+        ax0.plot(epochs[:num_epoch_shown, 2], label='Train')
+        ax0.plot(epochs[:num_epoch_shown, 4], label='Valid')
+        ax0.legend()
+        ax1.set_title('Loss')
+        ax1.plot(epochs[:num_epoch_shown, 1], label="Train")
+        ax1.plot(epochs[:num_epoch_shown, 3], label="Valid")
+        ax1.legend()
+        fig.tight_layout()
+        plt.show()
 
 
 path = '/Users/sebas/code/thesis/results/190319_005027.csv'
 
 df = pd.read_csv(path)
 
-# print(df.iloc[377])
-# exit()
+shallow_cnn()
+
+e1 = 10
+e2 = 11
+a = 1 - df.iloc[e1, -3]
+b = 1 - df.iloc[e2, -3]
+print(f"{e1}:{a}  {e2}:{b} \n\t=> diff = {b - a}")
+
+exit()
 
 fig, (ax0, ax1) = plt.subplots(nrows=2)
 

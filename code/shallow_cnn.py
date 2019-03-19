@@ -49,7 +49,9 @@ with open(path_to_data, 'rb') as f:
 data = data[subject_id - 1]
 
 # Split data into train, validation and test sets:
-train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0)
+# train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0)
+train_valid_set, test_set = splitters.split_into_two_sets(data, first_set_fraction=0.5)
+train_set, valid_set = splitters.split_into_two_sets(train_valid_set, first_set_fraction=0.8)
 
 ####################################################################################
 ####################################################################################
@@ -68,6 +70,8 @@ to_dense_prediction_model(model)
 
 if cuda:
     model.cuda()
+
+print("Model: \n{:s}".format(str(model)))
 
 ####################################################################################
 ####################################################################################
@@ -92,7 +96,8 @@ iterator = CropsFromTrialsIterator(batch_size=batch_size, input_time_length=inpu
 # optimizer = optim.Adam(model.parameters())
 # rng = RandomState((2018, 8, 7))
 # optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep model
-optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
+# optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
+optimizer = AdamW(model.parameters())
 
 # Need to determine number of batch passes per epoch for cosine annealing
 n_epochs = 40
@@ -107,9 +112,8 @@ optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 
 # rng = RandomState((2017, 6, 30))
 
-# results_epochs_df = pd.DataFrame(columns=["train_loss", "train_acc", "valid_loss", "valid_acc"])
 results_epochs_list = []
-# for i_epoch in range(20):
+
 for i_epoch in range(n_epochs):
 
     # Set model to training mode
