@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     ival = [-500, 4000]
     input_time_length = 1000
-    max_epochs = 2  # 800
+    max_epochs = 800
     max_increase_epochs = 80
     batch_size = 60
     high_cut_hz = 38

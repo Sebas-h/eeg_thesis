@@ -6,7 +6,7 @@
 **/.ipynb_checkpoints/*
 braindecode/*
 results/*
-
+/*.sh
 !results/readme.txt
 
 

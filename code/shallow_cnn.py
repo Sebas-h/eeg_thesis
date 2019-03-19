@@ -97,7 +97,7 @@ iterator = CropsFromTrialsIterator(batch_size=batch_size, input_time_length=inpu
 # rng = RandomState((2018, 8, 7))
 # optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep model
 # optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
-optimizer = AdamW(model.parameters())
+optimizer = optim.Adam(model.parameters())
 
 # Need to determine number of batch passes per epoch for cosine annealing
 n_epochs = 40
@@ -105,7 +105,7 @@ n_updates_per_epoch = len([None for b in iterator.get_batches(train_set, True)])
 scheduler = CosineAnnealing(n_epochs * n_updates_per_epoch)
 
 # schedule_weight_decay must be True for AdamW
-optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
+# optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 
 model_constraint = MaxNormDefaultConstraint()
 
