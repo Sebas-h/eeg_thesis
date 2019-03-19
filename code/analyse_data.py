@@ -83,7 +83,7 @@ path = '/Users/sebas/code/thesis/results/190319_005027.csv'
 
 df = pd.read_csv(path)
 
-# print(df.iloc[200:230, -3])
+# print(df.iloc[377])
 # exit()
 
 fig, (ax0, ax1) = plt.subplots(nrows=2)

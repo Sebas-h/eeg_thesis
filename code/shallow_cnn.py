@@ -95,7 +95,7 @@ iterator = CropsFromTrialsIterator(batch_size=batch_size, input_time_length=inpu
 optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 
 # Need to determine number of batch passes per epoch for cosine annealing
-n_epochs = 4  # 30
+n_epochs = 40
 n_updates_per_epoch = len([None for b in iterator.get_batches(train_set, True)])
 scheduler = CosineAnnealing(n_epochs * n_updates_per_epoch)
 
@@ -150,7 +150,8 @@ for i_epoch in range(n_epochs):
     model.eval()
     print("Epoch {:d}".format(i_epoch))
 
-    res = [0, 0, 0, 0]
+    res = []
+
     for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
         # Collect all predictions and losses
         all_preds = []
@@ -175,11 +176,6 @@ for i_epoch in range(n_epochs):
         loss = np.mean(np.array(all_losses) * np.array(batch_sizes) /
                        np.mean(batch_sizes))
         print("{:6s} Loss: {:.5f}".format(setname, loss))
-        
-        if setname == "Train":
-            res[0] = loss
-        else:
-            res[2] = loss
 
         # Assign the predictions to the trials
         preds_per_trial = compute_preds_per_trial_from_crops(all_preds,
@@ -192,11 +188,11 @@ for i_epoch in range(n_epochs):
         accuracy = np.mean(predicted_labels == dataset.y)
         print("{:6s} Accuracy: {:.1f}%".format(setname, accuracy * 100))
 
-        if setname == "Train":
-            res[1] = accuracy
-        else:
-            res[3] = accuracy
+        # save evaluation results of epoch:        
+        res.append(loss)
+        res.append(accuracy)
 
+    # save evaluation results of all epochs
     results_epochs_list.append(res)
 
 ####################################################################################
@@ -239,5 +235,14 @@ predicted_labels = np.argmax(meaned_preds_per_trial, axis=1)
 accuracy = np.mean(predicted_labels == test_set.y)
 print("Test Accuracy: {:.1f}%".format(accuracy * 100))
 
-# todo: extend this
-# print(results_epochs_list)
+
+# Save results to CSV
+df = pd.DataFrame(results_epochs_list, columns=["train_loss", "train_acc", "valid_loss", "valid_acc"])
+df["test_loss"] = np.nan
+df["test_acc"] = np.nan
+df.iat[-1,-2]= loss
+df.iat[-1,-1]= accuracy
+timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
+df.to_csv(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')) + "/" + timestamp + ".csv"
+)
