@@ -107,6 +107,8 @@ scheduler = CosineAnnealing(n_epochs * n_updates_per_epoch)
 # schedule_weight_decay must be True for AdamW
 optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 
+model_constraint = MaxNormDefaultConstraint()
+
 ####################################################################################
 ####################################################################################
 
@@ -143,6 +145,8 @@ for i_epoch in range(n_epochs):
         loss = F.nll_loss(outputs, net_target)  # calculate the loss
         loss.backward()                         # calculate gradients (i.e. perform backprop)
         optimizer.step()                        # update parameters based on computed gradients
+
+        model_constraint.apply(model)  # model constraints like done in example 
 
         # Print the running loss:
         # running_loss += loss.item()
