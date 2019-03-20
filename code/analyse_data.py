@@ -7,7 +7,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 
-def input_data():
+def analyse_input_data():
     path_to_data = "/Users/sebas/code/thesis/data/bcic_iv_2a_all_9_subjects.pickle"
     subject_id = 1  # 1-9
     model_type = 'shallow'  # 'shallow' or 'deep'
@@ -29,7 +29,7 @@ def input_data():
         print(f"subject {subject_id}: {list(stat)}")
 
 
-def shallow_cnn():
+def shallow_cnn_800_epochs():
     path = "/Users/sebas/code/thesis/results/AASERIALJOB.47021214.0"
 
     all_epochs = []
@@ -76,36 +76,59 @@ def shallow_cnn():
         plt.show()
 
 
-path = '/Users/sebas/code/thesis/results/190319_005027.csv'
+def analyse_shallow_OG_experiment():
+    path = '/Users/sebas/code/thesis/results/190319_005027.csv'
+    df = pd.read_csv(path)
 
-df = pd.read_csv(path)
+    fig, ax1 = plt.subplots(nrows=1)
 
-shallow_cnn()
+    start_epoch = 0
+    end_epoch = 40
 
-e1 = 10
-e2 = 11
-a = 1 - df.iloc[e1, -3]
-b = 1 - df.iloc[e2, -3]
-print(f"{e1}:{a}  {e2}:{b} \n\t=> diff = {b - a}")
+    ax1.set_title('Accuracy 190319_005027.csv')
+    
+    df.iloc[:, -4] = 1 - df.iloc[:, -4]
+    df.iloc[:, -3] = 1 - df.iloc[:, -3]
 
-exit()
+    ax1.plot(df.iloc[start_epoch:end_epoch, -4], label="Train")
+    ax1.plot(df.iloc[start_epoch:end_epoch, -3], label="Valid")
+    ax1.set_ylim([0, 1.1])
+    ax1.legend()
 
-fig, (ax0, ax1) = plt.subplots(nrows=2)
+    fig.tight_layout()
+    # plt.show()
 
-start_epoch = 0
-end_epoch = 50
 
-ax0.set_title('Loss')
-ax0.plot(df.iloc[start_epoch:end_epoch,1], label='Train')
-ax0.plot(df.iloc[start_epoch:end_epoch,2], label='Valid')
-ax0.plot(df.iloc[start_epoch:end_epoch,3], label='Test')
-ax0.legend()
 
-ax1.set_title('Misclass')
-ax1.plot(df.iloc[start_epoch:end_epoch, -4], label="Train")
-ax1.plot(df.iloc[start_epoch:end_epoch, -3], label="Valid")
-ax1.plot(df.iloc[start_epoch:end_epoch, -2], label="Test")
-ax1.legend()
+def analyse_shallow_variants():
+    paths = [
+    '/Users/sebas/code/thesis/results/190319_124018.csv'
+    , '/Users/sebas/code/thesis/results/190319_131808.csv'
+    , '/Users/sebas/code/thesis/results/190319_134814.csv'
+    , '/Users/sebas/code/thesis/results/190319_144135.csv'
+    , '/Users/sebas/code/thesis/results/190319_185336.csv'
+    ]
 
-fig.tight_layout()
-plt.show()
+    for path in paths:
+        df = pd.read_csv(path)
+
+        fig, ax0 = plt.subplots(nrows=1)
+
+        start_epoch = 0
+        end_epoch = 40
+
+        ax0.set_title(f'Accuracy {path[-17:]}')
+        ax0.plot(df.iloc[start_epoch:,2], label='Train')
+        ax0.plot(df.iloc[start_epoch:,4], label='Valid')
+        ax0.set_ylim([0, 1.1])
+        ax0.legend()
+
+        fig.tight_layout()
+        
+    plt.show()
+
+
+
+if __name__ == "__main__":
+    analyse_shallow_OG_experiment()
+    analyse_shallow_variants()
