@@ -52,8 +52,7 @@ with open(path_to_data, 'rb') as f:
 data = data[subject_id - 1]
 
 # Split data into train, validation and test sets:
-train_set, valid_set, test_set = splitters.split_into_train_valid_test(
-    data, 4, 0)
+train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0)
 
 ####################################################################################
 ####################################################################################

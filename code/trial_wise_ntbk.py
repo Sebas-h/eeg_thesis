@@ -64,10 +64,18 @@ cuda = False
 set_random_seeds(seed=20170629, cuda=cuda)
 n_classes = 4
 in_chans = train_set.X.shape[1]
+
 # final_conv_length = auto ensures we only get a single output in the time dimension
+
 model = ShallowFBCSPNet(in_chans=in_chans, n_classes=n_classes,
                         input_time_length=train_set.X.shape[2],
                         final_conv_length='auto').create_network()
+
+# model = Deep4Net(in_chans=in_chans, n_classes=n_classes, 
+#                 input_time_length=train_set.X.shape[2], final_conv_length='auto').create_network()
+
+# model = EEGNetv4(in_chans=in_chans, n_classes=n_classes, input_time_length=train_set.X.shape[2]).create_network()
+
 if cuda:
     model.cuda()
 
