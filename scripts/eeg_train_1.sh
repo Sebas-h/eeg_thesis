@@ -24,4 +24,5 @@ source ~/anaconda3/bin/activate eeg
 # python -u shallow_cnn.py
 # python -u experiment.py
 # python -u concat_subject_data.py
-python -u trial_wise_ntbk.py
+# python -u trial_wise_ntbk.py
+python -u my_exp_cropped.py
