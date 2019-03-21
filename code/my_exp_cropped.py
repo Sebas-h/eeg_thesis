@@ -112,7 +112,7 @@ optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these
 # optimizer = optim.Adam(model.parameters())
 
 # Need to determine number of batch passes per epoch for cosine annealing
-n_epochs = 40
+n_epochs = 100
 n_updates_per_epoch = len([None for b in iterator.get_batches(train_set, True)])
 scheduler = CosineAnnealing(n_epochs * n_updates_per_epoch)
 
