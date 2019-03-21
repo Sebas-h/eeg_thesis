@@ -13,7 +13,7 @@
 # BSUB -W 99:99
 
 ### Request memory you need for your job in TOTAL in MB
-#BSUB -M 16000
+#BSUB -M 64000
 
 ### Change to the work directory
 cd /home/no316758/projects/eeg_thesis/code
