@@ -20,7 +20,7 @@ from braindecode.experiments.experiment import Experiment
 from braindecode.experiments.monitors import LossMonitor, MisclassMonitor, \
     RuntimeMonitor, CroppedTrialMisclassMonitor
 from braindecode.experiments.stopcriteria import MaxEpochs, NoDecrease, Or
-from braindecode.datautil.iterators import CropsFromTrialsIterator, BalancedBatchSizeIterator
+from braindecode.datautil.iterators import CropsFromTrialsIterator, BalancedBatchSizeIterator, ClassBalancedBatchSizeIterator
 from braindecode.torch_ext.constraints import MaxNormDefaultConstraint
 from braindecode.torch_ext.util import set_random_seeds, np_to_var
 
@@ -87,10 +87,16 @@ print("Model: \n{:s}".format(str(model)))
 rng = RandomState((2018,8,7))
 #optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep model
 optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
+
 # Need to determine number of batch passes per epoch for cosine annealing
 n_epochs = 40
-n_updates_per_epoch = len(list(get_balanced_batches(len(train_set.X), rng, shuffle=True,
-                                            batch_size=30)))
+batch_size = 30
+# n_updates_per_epoch = len(list(get_balanced_batches(len(train_set.X), rng, shuffle=True, batch_size=30)))
+
+iterator = ClassBalancedBatchSizeIterator(batch_size)
+n_updates_per_epoch = len([None for b in iterator.get_batches(train_set, True)])
+
+# Optimzer scheduler
 scheduler = CosineAnnealing(n_epochs * n_updates_per_epoch)
 # schedule_weight_decay must be True for AdamW
 optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
@@ -100,14 +106,14 @@ optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 results_epochs_list = []
 
 for i_epoch in range(n_epochs):
-    i_trials_in_batch = get_balanced_batches(len(train_set.X), rng, shuffle=True,
-                                            batch_size=30)
+    # i_trials_in_batch = get_balanced_batches(len(train_set.X), rng, shuffle=True, batch_size=30)
     # Set model to training mode
     model.train()
-    for i_trials in i_trials_in_batch:
+    # for i_trials in i_trials_in_batch:
+    for batch_X, batch_y in iterator.get_batches(train_set, shuffle=True):
         # Have to add empty fourth dimension to X
-        batch_X = train_set.X[i_trials][:,:,:,None]
-        batch_y = train_set.y[i_trials]
+        # batch_X = train_set.X[i_trials][:,:,:,None]
+        # batch_y = train_set.y[i_trials]
         net_in = np_to_var(batch_X)
         if cuda:
             net_in = net_in.cuda()
