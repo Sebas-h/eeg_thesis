@@ -31,7 +31,7 @@ from braindecode.torch_ext.util import np_to_var, var_to_np
 from braindecode.experiments.monitors import compute_preds_per_trial_from_crops
 
 
-def shallow_convnet(data, num_epochs, model_in=None):
+def shallow_convnet(data, num_epochs, model_in=None, all_subjects=False):
     ####################################################################################
     # Parameters:
     ####################################################################################
@@ -258,5 +258,7 @@ def shallow_convnet(data, num_epochs, model_in=None):
         os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'results')) + "/" + timestamp + ".csv"
     )
 
+    if all_subjects:
+        return accuracy
     return model
 

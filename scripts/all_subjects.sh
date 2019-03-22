@@ -16,11 +16,11 @@
 #BSUB -M 16000
 
 ### Change to the work directory
-cd /home/no316758/projects/eeg_thesis/code/transfer_learning
+cd /home/no316758/projects/eeg_thesis/code
 
 ### Execute your application
-cat main_tl.py
-cat my_model.py
+cat exp_all_subjects.py
+cat transfer_learning/my_model.py
 source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-python -u main_tl.py
+python -u exp_all_subjects.py
