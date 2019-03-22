@@ -181,28 +181,28 @@ for i_epoch in range(n_epochs):
     #   TERM_MEMLIMIT: job killed after reaching LSF memory usage limit.
     #   Exited with exit code 137.
     # ON THE AACHEN CLUSTER!
-    for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
-        # Here, we will use the entire dataset at once, which is still possible
-        # for such smaller datasets. Otherwise we would have to use batches.
+    # for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
+    #     # Here, we will use the entire dataset at once, which is still possible
+    #     # for such smaller datasets. Otherwise we would have to use batches.
        
-        net_in = np_to_var(dataset.X[:,:,:,None])
-        if cuda:
-            net_in = net_in.cuda()
-        net_target = np_to_var(dataset.y)
-        if cuda:
-            net_target = net_target.cuda()
-        outputs = model(net_in)
-        loss = F.nll_loss(outputs, net_target)
-        print("{:6s} Loss: {:.5f}".format(
-            setname, float(var_to_np(loss))))
-        predicted_labels = np.argmax(var_to_np(outputs), axis=1)
-        accuracy = np.mean(dataset.y  == predicted_labels)
-        print("{:6s} Accuracy: {:.1f}%".format(
-            setname, accuracy * 100))
+    #     net_in = np_to_var(dataset.X[:,:,:,None])
+    #     if cuda:
+    #         net_in = net_in.cuda()
+    #     net_target = np_to_var(dataset.y)
+    #     if cuda:
+    #         net_target = net_target.cuda()
+    #     outputs = model(net_in)
+    #     loss = F.nll_loss(outputs, net_target)
+    #     print("{:6s} Loss: {:.5f}".format(
+    #         setname, float(var_to_np(loss))))
+    #     predicted_labels = np.argmax(var_to_np(outputs), axis=1)
+    #     accuracy = np.mean(dataset.y  == predicted_labels)
+    #     print("{:6s} Accuracy: {:.1f}%".format(
+    #         setname, accuracy * 100))
 
-        # save evaluation results of epoch:
-        res.append(loss)
-        res.append(accuracy)
+    #     # save evaluation results of epoch:
+    #     res.append(loss)
+    #     res.append(accuracy)
 
     # save evaluation results of all epochs
     results_epochs_list.append(res)
