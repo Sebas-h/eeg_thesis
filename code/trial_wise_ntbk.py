@@ -32,7 +32,7 @@ from numpy.random import RandomState
 import braindecode.datautil.splitters as splitters
 
 from braindecode.torch_ext.util import np_to_var, var_to_np
-from braindecode.experiments.monitors import compute_preds_per_trial_from_crops
+from braindecode.experiments.monitors import compute_preds_per_trial_from_crops, compute_pred_labels_from_trial_preds
 
 ####################################################################################
 ####################################################################################
@@ -89,7 +89,7 @@ rng = RandomState((2018,8,7))
 optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 
 # Need to determine number of batch passes per epoch for cosine annealing
-n_epochs = 40
+n_epochs = 100
 batch_size = 30
 # n_updates_per_epoch = len(list(get_balanced_batches(len(train_set.X), rng, shuffle=True, batch_size=30)))
 
@@ -131,14 +131,60 @@ for i_epoch in range(n_epochs):
         # Update parameters with the optimizer
         optimizer.step()
     
-    res = []
-
     # Print some statistics each epoch
     model.eval()
     print("Epoch {:d}".format(i_epoch))
+    res = []
+
+    for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
+        # Collect all predictions and losses
+        all_preds = []
+        all_losses = []
+        batch_sizes = []
+        for batch_X, batch_y in iterator.get_batches(dataset, shuffle=False):
+            net_in = np_to_var(batch_X)
+            if cuda:
+                net_in = net_in.cuda()
+            net_target = np_to_var(batch_y)
+            if cuda:
+                net_target = net_target.cuda()
+            outputs = model(net_in)
+            all_preds.append(var_to_np(outputs))
+            # outputs = th.mean(outputs, dim=2, keepdim=False)
+            loss = F.nll_loss(outputs, net_target)
+            loss = float(var_to_np(loss))
+            all_losses.append(loss)
+            batch_sizes.append(len(batch_X))
+
+        # Compute mean per-input loss
+        loss = np.mean(np.array(all_losses) * np.array(batch_sizes) / np.mean(batch_sizes))
+        print("{:6s} Loss: {:.5f}".format(setname, loss))
+
+        # Assign the predictions to the trials
+        # preds_per_trial = compute_preds_per_trial_from_crops(all_preds, input_time_length, dataset.X)
+        # preds per trial are now trials x classes x timesteps/predictions
+        # Now mean across timesteps for each trial to get per-trial predictions
+        # meaned_preds_per_trial = np.array([np.mean(p, axis=1) for p in preds_per_trial])
+
+        predicted_labels = compute_pred_labels_from_trial_preds(all_preds)
+
+        # predicted_labels = np.argmax(preds, axis=1)
+        accuracy = np.mean(predicted_labels == dataset.y)
+        print("{:6s} Accuracy: {:.1f}%".format(setname, accuracy * 100))
+
+         # save evaluation results of epoch:
+        res.append(loss)
+        res.append(accuracy)
+
+
+    # THIS CAUSES:
+    #   TERM_MEMLIMIT: job killed after reaching LSF memory usage limit.
+    #   Exited with exit code 137.
+    # ON THE AACHEN CLUSTER!
     for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
         # Here, we will use the entire dataset at once, which is still possible
         # for such smaller datasets. Otherwise we would have to use batches.
+       
         net_in = np_to_var(dataset.X[:,:,:,None])
         if cuda:
             net_in = net_in.cuda()

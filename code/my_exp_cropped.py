@@ -165,7 +165,6 @@ for i_epoch in range(n_epochs):
     # Set model to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
     model.eval()
     print("Epoch {:d}".format(i_epoch))
-
     res = []
 
     for setname, dataset in (('Train', train_set), ('Valid', valid_set)):
@@ -260,3 +259,4 @@ df.iat[-1, -2] = loss
 df.iat[-1, -1] = accuracy
 timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
 df.to_csv(os.path.abspath(os.path.join(os.path.dirname(__file__),'..', 'results')) + "/" + timestamp + ".csv")
+
