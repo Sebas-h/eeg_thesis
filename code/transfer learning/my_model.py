@@ -31,11 +31,11 @@ from braindecode.torch_ext.util import np_to_var, var_to_np
 from braindecode.experiments.monitors import compute_preds_per_trial_from_crops
 
 
-def shallow_convnet(data, model_in=None):
+def shallow_convnet(data, num_epochs, model_in=None):
     ####################################################################################
     # Parameters:
     ####################################################################################
-    model_type = 'shallow'  # 'shallow' or 'deep'
+    # model_type = 'shallow'  # 'shallow' or 'deep'
     cuda = False  # or do: torch.cuda.is_available()
 
     # This will determine how many crops are processed in parallel:
@@ -44,7 +44,7 @@ def shallow_convnet(data, model_in=None):
 
     batch_size = 60
 
-    n_epochs = 40
+    n_epochs = num_epochs
 
     ####################################################################################
     ####################################################################################
@@ -124,7 +124,7 @@ def shallow_convnet(data, model_in=None):
 
         # Set model to training mode
         model.train()
-        running_loss = 0.0
+        # running_loss = 0.0
         for batch_X, batch_y in iterator.get_batches(train_set, shuffle=True):
             # Define the input X and output/target y of the current batch:
             net_in = np_to_var(batch_X)
@@ -253,6 +253,7 @@ def shallow_convnet(data, model_in=None):
     df.iat[-1,-2]= loss
     df.iat[-1,-1]= accuracy
     timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
+    print(timestamp)
     df.to_csv(
         os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'results')) + "/" + timestamp + ".csv"
     )
