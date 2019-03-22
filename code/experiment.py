@@ -159,7 +159,7 @@ if __name__ == '__main__':
     exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda)
 
     # save result dataframe to csv
-    timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
     exp.epochs_df.to_csv(
         os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')) + "/" + timestamp + ".csv"
     )
