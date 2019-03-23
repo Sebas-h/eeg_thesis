@@ -77,7 +77,7 @@ def shallow_cnn_800_epochs():
 
 
 def analyse_shallow_OG_experiment():
-    path = '/Users/sebas/code/thesis/results/190319_005027.csv'
+    path = '/Users/sebas/code/thesis/results/shallow_cropped/190319_005027.csv'
     df = pd.read_csv(path)
 
     fig, ax1 = plt.subplots(nrows=1)
@@ -89,14 +89,16 @@ def analyse_shallow_OG_experiment():
     
     df.iloc[:, -4] = 1 - df.iloc[:, -4]
     df.iloc[:, -3] = 1 - df.iloc[:, -3]
+    df.iloc[:, -2] = 1 - df.iloc[:, -2]
 
     ax1.plot(df.iloc[start_epoch:end_epoch, -4], label="Train")
     ax1.plot(df.iloc[start_epoch:end_epoch, -3], label="Valid")
+    ax1.plot(df.iloc[start_epoch:end_epoch, -2], label="Test")
     ax1.set_ylim([0, 1.1])
     ax1.legend()
 
     fig.tight_layout()
-    # plt.show()
+    plt.show()
 
 
 
@@ -115,7 +117,7 @@ def analyse_shallow_variants():
         fig, ax0 = plt.subplots(nrows=1)
 
         start_epoch = 0
-        end_epoch = 40
+        # end_epoch = 40
 
         ax0.set_title(f'Accuracy {path[-17:]}')
         ax0.plot(df.iloc[start_epoch:,2], label='Train')
@@ -131,4 +133,4 @@ def analyse_shallow_variants():
 
 if __name__ == "__main__":
     analyse_shallow_OG_experiment()
-    analyse_shallow_variants()
+    # analyse_shallow_variants()

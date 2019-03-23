@@ -13,15 +13,13 @@
 # BSUB -W 99:99
 
 ### Request memory you need for your job in TOTAL in MB
-#BSUB -M 64000
+#BSUB -M 16000
 
 ### Change to the work directory
 cd /home/no316758/projects/eeg_thesis/code
+cat trialwise_exp.py
 
 ### Execute your application
 source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-# python -u shallow_cnn.py
-# python -u experiment.py
-# python -u concat_subject_data.py
-python -u trial_wise_ntbk.py
+python -u trialwise_exp.py
