@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
@@ -76,41 +77,50 @@ def shallow_cnn_800_epochs():
         plt.show()
 
 
-def analyse_shallow_OG_experiment():
+def analyse_shallow_og_experiment():
     path = '/Users/sebas/code/thesis/results/shallow_cropped/190319_005027.csv'
     df = pd.read_csv(path)
+    path = '/Users/sebas/code/thesis/results/230319/results/190323_004855.csv'
+    # path = '/Users/sebas/code/thesis/results/190323_165924.csv'
+    df2 = pd.read_csv(path)
 
-    fig, ax1 = plt.subplots(nrows=1)
+    fig, (ax0, ax1) = plt.subplots(nrows=2)
 
     start_epoch = 0
-    end_epoch = 40
+    end_epoch = 200
 
-    ax1.set_title('Accuracy 190319_005027.csv')
-    
-    df.iloc[:, -4] = 1 - df.iloc[:, -4]
-    df.iloc[:, -3] = 1 - df.iloc[:, -3]
-    df.iloc[:, -2] = 1 - df.iloc[:, -2]
+    ax0.set_title('Error Cropped Shallow')
+    ax1.set_title('Error Cropped Deep')
 
-    ax1.plot(df.iloc[start_epoch:end_epoch, -4], label="Train")
-    ax1.plot(df.iloc[start_epoch:end_epoch, -3], label="Valid")
-    ax1.plot(df.iloc[start_epoch:end_epoch, -2], label="Test")
-    ax1.set_ylim([0, 1.1])
+    # df.iloc[:, -4] = 1 - df.iloc[:, -4]
+    # df.iloc[:, -3] = 1 - df.iloc[:, -3]
+    # df.iloc[:, -2] = 1 - df.iloc[:, -2]
+
+    ax0.plot(df.iloc[start_epoch:, -4], label="Train")
+    ax0.plot(df.iloc[start_epoch:, -3], label="Valid")
+    ax0.plot(df.iloc[start_epoch:, -2], label="Test")
+    ax0.set_ylim([-0.1, 1.1])
+    ax0.legend()
+
+    ax1.plot(df2.iloc[start_epoch:, -4], label="Train")
+    ax1.plot(df2.iloc[start_epoch:, -3], label="Valid")
+    ax1.plot(df2.iloc[start_epoch:, -2], label="Test")
+    ax1.set_ylim([-0.1, 1.1])
     ax1.legend()
 
     fig.tight_layout()
     plt.show()
 
 
-
 def analyse_shallow_variants():
     paths = [
-    '/Users/sebas/code/thesis/results/190319_124018.csv'
-    , '/Users/sebas/code/thesis/results/190319_131808.csv'
-    , '/Users/sebas/code/thesis/results/190319_134814.csv'
-    , '/Users/sebas/code/thesis/results/190319_144135.csv'
-    , '/Users/sebas/code/thesis/results/190319_185336.csv'
+        '/Users/sebas/code/thesis/results/190319_124018.csv'
+        , '/Users/sebas/code/thesis/results/190319_131808.csv'
+        , '/Users/sebas/code/thesis/results/190319_134814.csv'
+        , '/Users/sebas/code/thesis/results/190319_144135.csv'
+        , '/Users/sebas/code/thesis/results/190319_185336.csv'
     ]
-
+    paths = ['/Users/sebas/code/thesis/results/230319/results/190322_173546.csv']
     for path in paths:
         df = pd.read_csv(path)
 
@@ -120,17 +130,41 @@ def analyse_shallow_variants():
         # end_epoch = 40
 
         ax0.set_title(f'Accuracy {path[-17:]}')
-        ax0.plot(df.iloc[start_epoch:,2], label='Train')
-        ax0.plot(df.iloc[start_epoch:,4], label='Valid')
+        ax0.plot(df.iloc[start_epoch:, 2], label='Train')
+        ax0.plot(df.iloc[start_epoch:, 4], label='Valid')
         ax0.set_ylim([0, 1.1])
         ax0.legend()
 
         fig.tight_layout()
-        
+
     plt.show()
 
 
+def analyse_difference_mycsv():
+    # path = "/Users/sebas/code/thesis/results/230319/results/190322_173546.csv"
+    # path = "/Users/sebas/code/thesis/results/230319/results/190322_183625.csv"
+    path = '/Users/sebas/code/thesis/results/shallow_cropped/190319_005027.csv'
+    og = True
+
+    df = pd.read_csv(path)
+    print("Diffs:")
+
+    if og:
+        for index, row in df.iterrows():
+            if index == df.shape[0] - 1:
+                break
+            diff = (1 - df.iloc[index+1, -3]) - (1 - df.iloc[index, -3])
+            print(f"{index} & {index + 1} = {diff}")
+
+    else:
+        for index, row in df.iterrows():
+            if index == df.shape[0] - 1:
+                break
+            diff = df.iloc[index+1, 4] -df.iloc[index, 4]
+            print(f"{index} & {index + 1} = {diff}")
+
 
 if __name__ == "__main__":
-    analyse_shallow_OG_experiment()
-    # analyse_shallow_variants()
+    # analyse_difference_mycsv()
+    # analyse_shallow_og_experiment()
+    analyse_shallow_variants()

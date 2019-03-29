@@ -35,9 +35,10 @@ log = logging.getLogger(__name__)
 
 def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
     input_time_length = 1000
-    max_epochs = 800
+    max_epochs = 2
     max_increase_epochs = 80
     batch_size = 60
+    run_after_early_stop = False
 
     # ival = [-500, 4000]
     # high_cut_hz = 38
@@ -105,9 +106,10 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
         data = pickle.load(f)
     data = data[subject_id - 1]
 
-    # Split data into train, validation and test sets:
-    train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0)
+    rng = np.random.RandomState((2018, 8, 7))
 
+    # Split data into train, validation and test sets:
+    train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0, rng=rng)
 
     set_random_seeds(seed=20190706, cuda=cuda)
 
@@ -120,12 +122,12 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
         model = Deep4Net(n_chans, n_classes, input_time_length=input_time_length,
                             final_conv_length=2).create_network()
 
-
     to_dense_prediction_model(model)
     if cuda:
         model.cuda()
 
     log.info("Model: \n{:s}".format(str(model)))
+    
     dummy_input = np_to_var(train_set.X[:1, :, :, None])
     if cuda:
         dummy_input = dummy_input.cuda()
@@ -139,17 +141,14 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
                                        input_time_length=input_time_length,
                                        n_preds_per_input=n_preds_per_input)
 
-    stop_criterion = Or([MaxEpochs(max_epochs),
-                         NoDecrease('valid_misclass', max_increase_epochs)])
+    stop_criterion = Or([MaxEpochs(max_epochs), NoDecrease('valid_misclass', max_increase_epochs)])
 
     monitors = [LossMonitor(), MisclassMonitor(col_suffix='sample_misclass'),
-                CroppedTrialMisclassMonitor(
-                    input_time_length=input_time_length), RuntimeMonitor()]
+                CroppedTrialMisclassMonitor(input_time_length=input_time_length), RuntimeMonitor()]
 
     model_constraint = MaxNormDefaultConstraint()
 
-    loss_function = lambda preds, targets: F.nll_loss(
-        th.mean(preds, dim=2, keepdim=False), targets)
+    loss_function = lambda preds, targets: F.nll_loss(th.mean(preds, dim=2, keepdim=False), targets)
 
     exp = Experiment(model, train_set, valid_set, test_set, iterator=iterator,
                      loss_function=loss_function, optimizer=optimizer,
@@ -157,26 +156,31 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
                      monitors=monitors,
                      stop_criterion=stop_criterion,
                      remember_best_column='valid_misclass',
-                     run_after_early_stop=True, cuda=cuda)
+                     run_after_early_stop=run_after_early_stop, cuda=cuda)
     exp.run()
     return exp
 
-def save_exp_to_csv(exp, target_dir_path):
+def save_exp_to_csv(exp, target_dir_path, subject_id):
     timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
-    file_name = timestamp + ".csv"
+    file_name = "subject " + subject_id + timestamp + ".csv"
     exp.epochs_df.to_csv(target_dir_path + "/" + file_name)
 
 
 if __name__ == '__main__':
+    remember_setup = []
     logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s', level=logging.DEBUG, stream=sys.stdout)
     data_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data')) + \
         "/bcic_iv_2a_all_9_subjects.pickle"
     subject_id = 1 # 1-9
     low_cut_hz = 4 # 0 or 4
-    model = 'deep' #'shallow' or 'deep'
-    cuda = False
+    model = 'shallow' #'shallow' or 'deep'
+    cuda = th.cuda.is_available()
     exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda)
     # Save expirement:
-    save_exp_to_csv(exp, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')))
+    save_exp_to_csv(
+        exp, 
+        os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')),
+        subject_id
+        )
     log.info("Last 10 epochs")
     log.info("\n" + str(exp.epochs_df.iloc[-10:]))

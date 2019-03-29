@@ -7,6 +7,7 @@ import pickle
 import datetime
 
 import numpy as np
+import torch as th
 import torch.nn.functional as F
 from torch import optim
 
@@ -33,9 +34,10 @@ log = logging.getLogger(__name__)
 
 
 def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, pickle_path=None):
-    max_epochs = 1600
+    max_epochs = 2
     max_increase_epochs = 160
     batch_size = 60
+    run_after_early_stop = False
     
     ival = [-500, 4000]
     high_cut_hz = 38
@@ -152,7 +154,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, pickle_path=None):
                      monitors=monitors,
                      stop_criterion=stop_criterion,
                      remember_best_column='valid_misclass',
-                     run_after_early_stop=True, cuda=cuda)
+                     run_after_early_stop=run_after_early_stop, cuda=cuda)
     exp.run()
     return exp
 
@@ -170,7 +172,7 @@ if __name__ == '__main__':
     subject_id = 1 # 1-9
     low_cut_hz = 4 # 0 or 4
     model = 'eegnet' #'shallow' or 'deep'
-    cuda = False
+    cuda = th.cuda.is_available()
     exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda, pickle_path=pickle_folder)
     # Save expirement:
     save_exp_to_csv(exp, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')))

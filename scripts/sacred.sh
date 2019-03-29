@@ -16,11 +16,9 @@
 #BSUB -M 16000
 
 ### Change to the work directory
-cd /home/no316758/projects/eeg_thesis/code
+cd /home/no316758/projects/eeg_thesis/sacredexp
 
 ### Execute your application
-cat exp_all_subjects.py
-cat transfer_learning/my_model.py
 source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-python -u exp_all_subjects.py
+python -u sacred_experiment.py.py

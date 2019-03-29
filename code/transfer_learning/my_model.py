@@ -36,7 +36,7 @@ def shallow_convnet(data, num_epochs, model_in=None, all_subjects=False):
     # Parameters:
     ####################################################################################
     # model_type = 'shallow'  # 'shallow' or 'deep'
-    cuda = False  # or do: torch.cuda.is_available()
+    cuda = th.cuda.is_available()
 
     # This will determine how many crops are processed in parallel:
     input_time_length = 1000
