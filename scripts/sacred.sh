@@ -21,4 +21,4 @@ cd /home/no316758/projects/eeg_thesis/sacredexp
 ### Execute your application
 source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-python -u sacred_experiment.py.py
+python -u sacred_experiment.py
