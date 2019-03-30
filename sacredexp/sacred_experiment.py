@@ -43,7 +43,7 @@ def my_config(dataset):
     cv = False  # cross validation yes or no
     tl_abo = True  # transfer learning, all but one training method
     training = {
-        'max_epochs': 1,  # max number of epochs if early stopping criteria not satisfied
+        'max_epochs': 900,  # max number of epochs if early stopping criteria not satisfied
         'max_increase_epochs': 100,  # early stopping patience value
         'run_after_early_stop': True,  # see experiment
         'n_classes': dataset['n_classes'],  # num of classes in dataset
