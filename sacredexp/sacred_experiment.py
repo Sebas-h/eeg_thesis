@@ -41,9 +41,9 @@ def my_config(dataset):
     model_name = 'shallow'  # 'shallow' or 'deep' or 'eegnet'
     cropped = False  # cropped or trialwise training
     cv = False  # cross validation yes or no
-    tl_abo = False  # transfer learning, all but one training method
+    tl_abo = True  # transfer learning, all but one training method
     training = {
-        'max_epochs': 900,  # max number of epochs if early stopping criteria not satisfied
+        'max_epochs': 1,  # max number of epochs if early stopping criteria not satisfied
         'max_increase_epochs': 100,  # early stopping patience value
         'run_after_early_stop': True,  # see experiment
         'n_classes': dataset['n_classes'],  # num of classes in dataset
@@ -171,6 +171,13 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
             subject = a[2][0]
             subjects = a[2][1]
 
+            optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+            # Need to determine number of batch passes per epoch for cosine annealing
+            n_updates_per_epoch = len([None for _ in iterator.get_batches(train_abo, True)])
+            scheduler = CosineAnnealing((max_epochs + max_increase_epochs) * n_updates_per_epoch)
+            # schedule_weight_decay must be True for AdamW
+            optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
+
             exp = Experiment(model, train_abo, valid_abo, test_set=None, iterator=iterator,
                              loss_function=loss_function, optimizer=optimizer,
                              model_constraint=model_constraint,
@@ -179,6 +186,7 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
                              remember_best_column='valid_misclass',
                              run_after_early_stop=run_after_early_stop, cuda=cuda, ex=ex)
             exp.run()
+            # model_state = exp.model.state_dict()
             ex.info['{}_subjects_{}'.format(i, subject)] = {'epochs_loss_misclass': exp.epochs_df}
 
             # Reset exp for training on subject
@@ -186,6 +194,13 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
             exp.epochs_df = pd.DataFrame()
             exp.before_stop_df = None
             exp.rememberer = None
+
+            optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+            # Need to determine number of batch passes per epoch for cosine annealing
+            n_updates_per_epoch = len([None for _ in iterator.get_batches(train_set, True)])
+            scheduler = CosineAnnealing((max_epochs + max_increase_epochs) * n_updates_per_epoch)
+            # schedule_weight_decay must be True for AdamW
+            optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
             exp.optimizer = optimizer
 
             exp.run()
