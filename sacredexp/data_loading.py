@@ -38,13 +38,47 @@ def cfg():
 
 
 @data_ingredient.capture
+def get_data_tl(n_folds, cv=False):
+    # train:[1,2,..,6] valid:[7,8] => model, warmstart with model on [9] (train, valid, test)
+    # [ [train_abo, valid_abo], [train, valid, test] ] , [ [...], [...] ], ..., [       ]
+    # return :=
+    #  [
+    #   [ [train_abo, valid_abo], [train, valid, test], [subject_id, subject_ids_others] ] ,
+    #   [ [...], [...] ],
+    #   ...,
+    #   [       ]
+    #  ]
+
+    result_datasets = []
+    data_all = load_bcic_iv_2a_data()
+    for i in range(len(data_all)):
+        subject_id = i + 1
+        subject_ids = list(filter(lambda x: x != subject_id, [1, 2, 3, 4, 5, 6, 7, 8, 9]))
+        data_one = data_all[i]
+        data_rest = []
+        for si in subject_ids:
+            data_rest.append(data_all[si - 1])
+        train_abo = splitters.concatenate_sets(data_rest[:-2])
+        valid_abo = splitters.concatenate_sets(data_rest[-2:])
+        train, valid, test = splitters.split_into_train_valid_test(data_one, n_folds, 0)
+        result_datasets.append(
+            [
+                [train_abo, valid_abo],
+                [train, valid, test],
+                [subject_id, subject_ids]
+            ]
+        )
+    return result_datasets
+
+
+@data_ingredient.capture
 def get_data(n_folds, cv=False):
     if cv:
         cv_folds = n_folds - 1
     else:
         cv_folds = 1
-    res_datasets = []
     subjects_data = load_bcic_iv_2a_data()
+    res_datasets = []
     for data in subjects_data:
         train_valid_set, test_set = splitters.split_into_train_test(data, n_folds, 0)
         # Cross validation folds (train and valid folds)

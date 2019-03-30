@@ -311,25 +311,21 @@ class Experiment(object):
         remember_best: bool
             Whether to remember parameters if this epoch is best epoch.
         """
-        batch_generator = self.iterator.get_batches(datasets['train'],
-                                                    shuffle=True)
+        batch_generator = self.iterator.get_batches(datasets['train'], shuffle=True)
         start_train_epoch_time = time.time()
         for inputs, targets in batch_generator:
             if self.batch_modifier is not None:
-                inputs, targets = self.batch_modifier.process(inputs,
-                                                              targets)
+                inputs, targets = self.batch_modifier.process(inputs, targets)
             # could happen that batch modifier has removed all inputs...
             if len(inputs) > 0:
                 self.train_batch(inputs, targets)
         end_train_epoch_time = time.time()
-        log.info("Time only for training updates: {:.2f}s".format(
-            end_train_epoch_time - start_train_epoch_time))
+        log.info("Time only for training updates: {:.2f}s".format(end_train_epoch_time - start_train_epoch_time))
 
         self.monitor_epoch(datasets)
         self.log_epoch()
         if remember_best:
-            self.rememberer.remember_epoch(self.epochs_df, self.model,
-                                           self.optimizer)
+            self.rememberer.remember_epoch(self.epochs_df, self.model, self.optimizer)
 
     def train_batch(self, inputs, targets):
         """

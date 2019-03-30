@@ -105,7 +105,7 @@ iterator = CropsFromTrialsIterator(batch_size=batch_size, input_time_length=inpu
 # rng = RandomState((2018, 8, 7))
 
 # Deep ConvNet:
-optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep model
+optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001)  # these are good values for the deep model
 # Shallow ConvNet:
 # optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 # EEGNetv4:
