@@ -156,7 +156,7 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
     log.info("Model: \n{:s}".format(str(model)))
     log.info("Optimizer: \n{:s}".format(str(optimizer)))
     ex.info['model'] = str(model)
-    ex.info['optimizer'] = str(optimizer.optimizer)
+    ex.info['optimizer'] = str(optimizer)
 
     if cuda:
         model.cuda()
