@@ -147,10 +147,10 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
     # Configure optimizer:
     optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     # Need to determine number of batch passes per epoch for cosine annealing
-    n_updates_per_epoch = len([None for _ in iterator.get_batches(first_train_set, True)])
-    scheduler = CosineAnnealing((max_epochs + max_increase_epochs) * n_updates_per_epoch)
-    # schedule_weight_decay must be True for AdamW
-    optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
+    # n_updates_per_epoch = len([None for _ in iterator.get_batches(first_train_set, True)])
+    # scheduler = CosineAnnealing((max_epochs + max_increase_epochs) * n_updates_per_epoch)
+    # # schedule_weight_decay must be True for AdamW
+    # optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 
     # Log model
     log.info("Model: \n{:s}".format(str(model)))
@@ -187,7 +187,7 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
                              run_after_early_stop=run_after_early_stop, cuda=cuda, ex=ex)
             exp.run()
             # model_state = exp.model.state_dict()
-            ex.info['{}_subjects_{}'.format(i, subject)] = {'epochs_loss_misclass': exp.epochs_df}
+            ex.info['{}_subjects_{}'.format(i, subjects)] = {'epochs_loss_misclass': exp.epochs_df}
 
             # Reset exp for training on subject
             exp.datasets = OrderedDict((('train', train_set), ('valid', valid_set), ('test', test_set)))
@@ -204,8 +204,9 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
             exp.optimizer = optimizer
 
             exp.run()
-            ex.info['{}_subject_{}'.format(i, subjects)] = {'epochs_loss_misclass': exp.epochs_df}
+            ex.info['{}_subject_{}'.format(i, subject)] = {'epochs_loss_misclass': exp.epochs_df}
 
+            log.info(f"Done with subject {subject}")
             log.info("Last 5 epochs")
             log.info("\n" + str(exp.epochs_df.iloc[-5:]))
     else:
@@ -225,5 +226,6 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
                 epochs_loss_misclass=exp.epochs_df,
             )
             ex.info['subject_{}'.format(index)] = info
+            log.info(f"Done with subject {index + 1}")
             log.info("Last 5 epochs")
             log.info("\n" + str(exp.epochs_df.iloc[-5:]))
