@@ -41,7 +41,7 @@ def my_config(dataset):
     model_name = 'shallow'  # 'shallow' or 'deep' or 'eegnet'
     cropped = False  # cropped or trialwise training
     cv = False  # cross validation yes or no
-    tl_abo = True  # transfer learning, all but one training method
+    tl_abo = False  # transfer learning, all but one training method
     training = {
         'max_epochs': 900,  # max number of epochs if early stopping criteria not satisfied
         'max_increase_epochs': 100,  # early stopping patience value
