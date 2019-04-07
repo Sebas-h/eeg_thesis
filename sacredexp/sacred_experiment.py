@@ -214,13 +214,16 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
             train_set, valid_set = subject_dataset[0][0]
             test_set = subject_dataset[1]
 
-            exp = Experiment(model, train_set, valid_set, test_set, iterator=iterator,
-                             loss_function=loss_function, optimizer=optimizer,
+            exp = Experiment(model, train_set, valid_set, test_set,
+                             iterator=iterator,
+                             loss_function=loss_function,
+                             optimizer=optimizer,
                              model_constraint=model_constraint,
                              monitors=monitors,
                              stop_criterion=stop_criterion,
                              remember_best_column='valid_misclass',
-                             run_after_early_stop=run_after_early_stop, cuda=cuda, ex=ex)
+                             run_after_early_stop=run_after_early_stop,
+                             cuda=cuda, ex=ex)
             exp.run()
             info = dict(
                 epochs_loss_misclass=exp.epochs_df,

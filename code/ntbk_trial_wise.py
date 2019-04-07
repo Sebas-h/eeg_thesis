@@ -165,7 +165,6 @@ for i_epoch in range(n_epochs):
         # preds per trial are now trials x classes x timesteps/predictions
         # Now mean across timesteps for each trial to get per-trial predictions
         # meaned_preds_per_trial = np.array([np.mean(p, axis=1) for p in preds_per_trial])
-
         predicted_labels = compute_pred_labels_from_trial_preds(all_preds)
 
         # predicted_labels = np.argmax(preds, axis=1)

@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
     input_time_length = 1000
-    max_epochs = 2
+    max_epochs = 50
     max_increase_epochs = 80
     batch_size = 60
     run_after_early_stop = False
@@ -100,7 +100,6 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
     # train_set, valid_set = split_into_two_sets(
     #     train_set, first_set_fraction=1-valid_set_fraction)
 
-
     # Load data:
     with open(path_to_data, 'rb') as f:
         data = pickle.load(f)
@@ -117,17 +116,17 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
     n_chans = int(train_set.X.shape[1])
     if model == 'shallow':
         model = ShallowFBCSPNet(n_chans, n_classes, input_time_length=input_time_length,
-                            final_conv_length=30).create_network()
+                                final_conv_length=30).create_network()
     elif model == 'deep':
         model = Deep4Net(n_chans, n_classes, input_time_length=input_time_length,
-                            final_conv_length=2).create_network()
+                         final_conv_length=2).create_network()
 
     to_dense_prediction_model(model)
     if cuda:
         model.cuda()
 
     log.info("Model: \n{:s}".format(str(model)))
-    
+
     dummy_input = np_to_var(train_set.X[:1, :, :, None])
     if cuda:
         dummy_input = dummy_input.cuda()
@@ -160,6 +159,7 @@ def run_exp(path_to_data, subject_id, low_cut_hz, model, cuda):
     exp.run()
     return exp
 
+
 def save_exp_to_csv(exp, target_dir_path, subject_id):
     timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
     file_name = "subject " + subject_id + timestamp + ".csv"
@@ -170,17 +170,17 @@ if __name__ == '__main__':
     remember_setup = []
     logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s', level=logging.DEBUG, stream=sys.stdout)
     data_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data')) + \
-        "/bcic_iv_2a_all_9_subjects.pickle"
-    subject_id = 1 # 1-9
-    low_cut_hz = 4 # 0 or 4
-    model = 'shallow' #'shallow' or 'deep'
+                  "/bcic_iv_2a_all_9_subjects.pickle"
+    subject_id = 1  # 1-9
+    low_cut_hz = 4  # 0 or 4
+    model = 'shallow'  # 'shallow' or 'deep'
     cuda = th.cuda.is_available()
     exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda)
     # Save expirement:
-    save_exp_to_csv(
-        exp, 
-        os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')),
-        subject_id
-        )
+    # save_exp_to_csv(
+    #     exp,
+    #     os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results')),
+    #     subject_id
+    # )
     log.info("Last 10 epochs")
     log.info("\n" + str(exp.epochs_df.iloc[-10:]))

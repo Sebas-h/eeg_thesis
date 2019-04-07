@@ -11,7 +11,7 @@ from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 import braindecode.datautil.splitters as splitters
 
 
-def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
+def run_exp(data_folder, subject_id, low_cut_hz):
     ival = [-500, 4000]
     high_cut_hz = 38
     factor_new = 1e-3
@@ -61,8 +61,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
                                                   eps=1e-4).T,
         test_cnt)
 
-    marker_def = OrderedDict([('Left Hand', [1]), ('Right Hand', [2],),
-                              ('Foot', [3]), ('Tongue', [4])])
+    marker_def = OrderedDict([('Left Hand', [1]), ('Right Hand', [2],),('Foot', [3]), ('Tongue', [4])])
 
     train_set = create_signal_target_from_raw_mne(train_cnt, marker_def, ival)
     test_set = create_signal_target_from_raw_mne(test_cnt, marker_def, ival)
@@ -74,19 +73,13 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
 
 if __name__ == '__main__':
     # Should contain both .gdf files and .mat-labelfiles from competition
-    data_folder = '/Users/sebas/code/_eeg_data/BCICIV_2a_gdf/'
-
-    subject_id = 1  # 1-9
-    low_cut_hz = 4  # 0 or 4
-    model = 'shallow'  # 'shallow' or 'deep'
-    cuda = True
-
+    data_dir = '/Users/sebas/code/_eeg_data/BCICIV_2a_gdf/'
+    low_cut = 0  # 0 or 4
     subject_list = []
-
-    for subject_id in range(1, 10):
-        exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda)
+    for subject_i in range(1, 10):
+        exp = run_exp(data_dir, subject_i, low_cut)
         subject_list.append(exp)
-    
-    with open(f'bcic_iv_2a_all_9_subjects.pickle', 'wb') as f:
+    # Save as pickle:
+    with open(f'bcic_iv_2a_all_9_subjects_lowcut_0.pickle', 'wb') as f:
         pickle.dump(subject_list, f, pickle.HIGHEST_PROTOCOL)
 
