@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 import jsonpickle
+import numpy as np
 
 
 class ExpResult:
@@ -47,14 +48,18 @@ all_test_errors = []
 for df in er.df_loss_error_per_subject:
     test_error = df['test_misclass'].iloc[-1]
     all_test_errors.append(test_error)
-    print(df['test_misclass'].iloc[-1])
+    print(
+        'test acc:',
+        1 - df['test_misclass'].iloc[-1], df.shape[0],
+        f"max valid acc: {1 - np.min(df['valid_misclass'][:354])}",
+        f"min valid loss: {np.min(df['valid_loss'][:354])}"
+    )
 avg_test_error = sum(all_test_errors) / len(all_test_errors)
-print("Avg test error and acc (1 - error)")
-print(avg_test_error)
+print("Avg test acc")
 print(1 - avg_test_error)
 
 # test misclass transfer learning:
-tl_test_errors = [0.2916666667, 0.4722222222, 0.1666666667, 0.2291666667,
-                  0.5208333333, 0.4861111111, 0.1597222222, 0.2152777778, 0.2430555556]
-print('tl acc:')
-print(1 - (sum(tl_test_errors) / len(tl_test_errors)))
+# tl_test_errors = [0.2916666667, 0.4722222222, 0.1666666667, 0.2291666667,
+#                   0.5208333333, 0.4861111111, 0.1597222222, 0.2152777778, 0.2430555556]
+# print('tl acc:')
+# print(1 - (sum(tl_test_errors) / len(tl_test_errors)))
