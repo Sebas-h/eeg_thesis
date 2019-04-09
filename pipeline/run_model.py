@@ -17,7 +17,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'myresnet'
+        model_name = 'resnet18'
         # cropped or trialwise training
         cropped = False
         # cross validation yes or no
