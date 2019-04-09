@@ -105,6 +105,3 @@ if __name__ == '__main__':
     optimiser.zero_grad()
     output = model(inputs)
     print(output)
-    # loss = F.nll_loss(output, targets)
-    # loss.backward()
-    # optimiser.step()
