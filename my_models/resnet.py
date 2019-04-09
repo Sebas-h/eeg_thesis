@@ -1,186 +1,259 @@
-import numpy as np
-from torch import nn
-from torch.nn import init
-from torch.nn.functional import elu
+import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
 
-from braindecode.models.base import BaseModel
-from braindecode.torch_ext.modules import Expression, AvgPool2dWithConv
-from braindecode.torch_ext.functions import identity
-from braindecode.torch_ext.util import np_to_var
+__all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
+           'resnet152', 'resnext50_32x4d', 'resnext101_32x8d']
 
-
-class Deep4Net(BaseModel):
-    """
-    Deep ConvNet model from [1]_.
-
-    References
-    ----------
-
-    .. [1] Schirrmeister, R. T., Springenberg, J. T., Fiederer, L. D. J.,
-       Glasstetter, M., Eggensperger, K., Tangermann, M., Hutter, F. & Ball, T. (2017).
-       Deep learning with convolutional neural networks for EEG decoding and
-       visualization.
-       Human Brain Mapping , Aug. 2017. Online: http://dx.doi.org/10.1002/hbm.23730
-    """
-
-    def __init__(self, in_chans,
-                 n_classes,
-                 input_time_length,
-                 final_conv_length,
-                 n_filters_time=25,
-                 n_filters_spat=25,
-                 filter_time_length=10,
-                 pool_time_length=3,
-                 pool_time_stride=3,
-                 n_filters_2=50,
-                 filter_length_2=10,
-                 n_filters_3=100,
-                 filter_length_3=10,
-                 n_filters_4=200,
-                 filter_length_4=10,
-                 first_nonlin=elu,
-                 first_pool_mode='max',
-                 first_pool_nonlin=identity,
-                 later_nonlin=elu,
-                 later_pool_mode='max',
-                 later_pool_nonlin=identity,
-                 drop_prob=0.5,
-                 double_time_convs=False,
-                 split_first_layer=True,
-                 batch_norm=True,
-                 batch_norm_alpha=0.1,
-                 stride_before_pool=False):
-        if final_conv_length == 'auto':
-            assert input_time_length is not None
-
-        self.__dict__.update(locals())
-        del self.self
-
-    def create_network(self):
-        if self.stride_before_pool:
-            conv_stride = self.pool_time_stride
-            pool_stride = 1
-        else:
-            conv_stride = 1
-            pool_stride = self.pool_time_stride
-        pool_class_dict = dict(max=nn.MaxPool2d, mean=AvgPool2dWithConv)
-        first_pool_class = pool_class_dict[self.first_pool_mode]
-        later_pool_class = pool_class_dict[self.later_pool_mode]
-        model = nn.Sequential()
-        if self.split_first_layer:
-            model.add_module('dimshuffle', Expression(_transpose_time_to_spat))
-            model.add_module('conv_time', nn.Conv2d(1, self.n_filters_time,
-                                                    (
-                                                        self.filter_time_length, 1),
-                                                    stride=1, ))
-            model.add_module('conv_spat',
-                             nn.Conv2d(self.n_filters_time, self.n_filters_spat,
-                                       (1, self.in_chans),
-                                       stride=(conv_stride, 1),
-                                       bias=not self.batch_norm))
-            n_filters_conv = self.n_filters_spat
-        else:
-            model.add_module('conv_time',
-                             nn.Conv2d(self.in_chans, self.n_filters_time,
-                                       (self.filter_time_length, 1),
-                                       stride=(conv_stride, 1),
-                                       bias=not self.batch_norm))
-            n_filters_conv = self.n_filters_time
-        if self.batch_norm:
-            model.add_module('bnorm',
-                             nn.BatchNorm2d(n_filters_conv,
-                                            momentum=self.batch_norm_alpha,
-                                            affine=True,
-                                            eps=1e-5), )
-        model.add_module('conv_nonlin', Expression(self.first_nonlin))
-        model.add_module('pool',
-                         first_pool_class(
-                             kernel_size=(self.pool_time_length, 1),
-                             stride=(pool_stride, 1)))
-        model.add_module('pool_nonlin', Expression(self.first_pool_nonlin))
-
-        def add_conv_pool_block(model, n_filters_before,
-                                n_filters, filter_length, block_nr):
-            suffix = '_{:d}'.format(block_nr)
-            model.add_module('drop' + suffix,
-                             nn.Dropout(p=self.drop_prob))
-            model.add_module('conv' + suffix,
-                             nn.Conv2d(n_filters_before, n_filters,
-                                       (filter_length, 1),
-                                       stride=(conv_stride, 1),
-                                       bias=not self.batch_norm))
-            if self.batch_norm:
-                model.add_module('bnorm' + suffix,
-                                 nn.BatchNorm2d(n_filters,
-                                                momentum=self.batch_norm_alpha,
-                                                affine=True,
-                                                eps=1e-5))
-            model.add_module('nonlin' + suffix,
-                             Expression(self.later_nonlin))
-
-            model.add_module('pool' + suffix,
-                             later_pool_class(
-                                 kernel_size=(self.pool_time_length, 1),
-                                 stride=(pool_stride, 1)))
-            model.add_module('pool_nonlin' + suffix,
-                             Expression(self.later_pool_nonlin))
-
-        add_conv_pool_block(model, n_filters_conv, self.n_filters_2,
-                            self.filter_length_2, 2)
-        add_conv_pool_block(model, self.n_filters_2, self.n_filters_3,
-                            self.filter_length_3, 3)
-        add_conv_pool_block(model, self.n_filters_3, self.n_filters_4,
-                            self.filter_length_4, 4)
-
-        model.eval()
-        if self.final_conv_length == 'auto':
-            out = model(np_to_var(np.ones(
-                (1, self.in_chans, self.input_time_length, 1),
-                dtype=np.float32)))
-            n_out_time = out.cpu().data.numpy().shape[2]
-            self.final_conv_length = n_out_time
-        model.add_module('conv_classifier',
-                         nn.Conv2d(self.n_filters_4, self.n_classes,
-                                   (self.final_conv_length, 1), bias=True))
-        model.add_module('softmax', nn.LogSoftmax(dim=1))
-        model.add_module('squeeze', Expression(_squeeze_final_output))
-
-        # Initialization, xavier is same as in our paper...
-        # was default from lasagne
-        init.xavier_uniform_(model.conv_time.weight, gain=1)
-        # maybe no bias in case of no split layer and batch norm
-        if self.split_first_layer or (not self.batch_norm):
-            init.constant_(model.conv_time.bias, 0)
-        if self.split_first_layer:
-            init.xavier_uniform_(model.conv_spat.weight, gain=1)
-            if not self.batch_norm:
-                init.constant_(model.conv_spat.bias, 0)
-        if self.batch_norm:
-            init.constant_(model.bnorm.weight, 1)
-            init.constant_(model.bnorm.bias, 0)
-        param_dict = dict(list(model.named_parameters()))
-        for block_nr in range(2, 5):
-            conv_weight = param_dict['conv_{:d}.weight'.format(block_nr)]
-            init.xavier_uniform_(conv_weight, gain=1)
-            if not self.batch_norm:
-                conv_bias = param_dict['conv_{:d}.bias'.format(block_nr)]
-                init.constant_(conv_bias, 0)
-            else:
-                bnorm_weight = param_dict['bnorm_{:d}.weight'.format(block_nr)]
-                bnorm_bias = param_dict['bnorm_{:d}.bias'.format(block_nr)]
-                init.constant_(bnorm_weight, 1)
-                init.constant_(bnorm_bias, 0)
-
-        init.xavier_uniform_(model.conv_classifier.weight, gain=1)
-        init.constant_(model.conv_classifier.bias, 0)
-
-        # Start in eval mode
-        model.eval()
-        return model
+model_urls = {
+    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
+}
 
 
-# remove empty dim at end and potentially remove empty time dim
-# do not just use squeeze as we never want to remove first dim
+def conv3x3(in_planes, out_planes, stride=1, groups=1):
+    """3x3 convolution with padding"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                     padding=1, groups=groups, bias=False)
+
+
+def conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
+
+def conv3x1(in_planes, out_planes, stride=1):
+    """3x1 convolution"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=(3, 1), stride=stride, bias=False)
+
+
+class MyBasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self,
+                 inplanes,
+                 planes,
+                 stride=1,
+                 padding=(0, 0),
+                 downsample=None,
+                 groups=1,
+                 norm_layer=None
+                 ):
+        super(MyBasicBlock, self).__init__()
+
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        if groups != 1:
+            raise ValueError('BasicBlock only supports groups=1')
+
+        # self.conv2 = conv3x1(planes, planes)
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=(3, 1), stride=stride, padding=padding, bias=False)
+        self.bn1 = norm_layer(planes)
+        self.elu = nn.ELU(inplace=True)
+
+        # self.conv2 = conv3x1(planes, planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=(3, 1), padding=padding, bias=False)
+        self.bn2 = norm_layer(planes)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.elu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.elu(out)
+
+        return out
+
+
+class MyResNet(nn.Module):
+
+    def __init__(self,
+                 block,
+                 num_classes,
+                 layers=None,
+                 zero_init_residual=False,
+                 width_per_group=64,
+                 groups=1,
+                 norm_layer=None
+                 ):
+        super(MyResNet, self).__init__()
+
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        # planes = [int(width_per_group * groups * 2 ** i) for i in range(4)]
+        # self.inplanes = planes[0]
+
+        ##################
+        # My code
+        ##################
+        self.inplanes = 48
+        # 22, 1125
+        # self.conv_temporal = nn.Conv2d(1, self.n_filters_time, (self.filter_time_length, 1), stride=1)
+        #
+        # self.conv_spatial = nn.Conv2d(self.n_filters_time, self.n_filters_spat, (1, self.in_chans), stride=1,
+        #                               bias=not self.batch_norm)
+        # n_filters_conv = self.n_filters_spat
+
+        # self.bn0 = nn.BatchNorm2d(n_filters_conv)
+        # self.elu1 = nn.ELU()
+        # in_chans is .., out channels is number of kernels/filters
+
+        self.dimsuffle = _transpose_time_to_spat
+        self.conv_temp = nn.Conv2d(1, 48, kernel_size=(3, 1), padding=(1, 0))
+        self.conv_spat = nn.Conv2d(48, 48, kernel_size=(1, 22))
+        self.bn1 = nn.BatchNorm2d(48)
+        self.elu = nn.ELU()
+
+        # self.layer1 = self._make_layer(block, 1, 2, groups=groups, norm_layer=norm_layer)
+        # self.layer1 = MyBasicBlock(48, 48)
+        # self.layer2 = MyBasicBlock(48, 48)
+
+        self.layer1 = self._make_layer(block, planes=48, blocks=2, stride=1, padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+
+        self.layer2 = self._make_layer(block, planes=96, blocks=1, stride=(2, 1), padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+        self.layer3 = self._make_layer(block, planes=96, blocks=1, stride=1, padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+
+        self.layer4 = self._make_layer(block, planes=144, blocks=1, stride=(2, 1), padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+        self.layer5 = self._make_layer(block, planes=144, blocks=1, stride=1, padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+
+        self.layer6 = self._make_layer(block, planes=144, blocks=1, stride=(2, 1), padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+        self.layer7 = self._make_layer(block, planes=144, blocks=1, stride=1, padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+
+        self.layer8 = self._make_layer(block, planes=144, blocks=1, stride=(2, 1), padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+        self.layer9 = self._make_layer(block, planes=144, blocks=1, stride=1, padding=(1, 0), groups=groups,
+                                       norm_layer=norm_layer)
+
+        self.layer10 = self._make_layer(block, planes=144, blocks=1, stride=(2, 1), padding=(1, 0), groups=groups,
+                                        norm_layer=norm_layer)
+        self.layer11 = self._make_layer(block, planes=144, blocks=1, stride=1, padding=(1, 0), groups=groups,
+                                        norm_layer=norm_layer)
+
+        self.layer12 = self._make_layer(block, planes=144, blocks=1, stride=(2, 1), padding=(1, 0), groups=groups,
+                                        norm_layer=norm_layer)
+        self.layer13 = self._make_layer(block, planes=144, blocks=1, stride=1, padding=(1, 0), groups=groups,
+                                        norm_layer=norm_layer)
+
+        self.avgpool = nn.AdaptiveAvgPool2d((10, 1))
+
+        self.final_conv = nn.Conv2d(144, num_classes, (10, 1), bias=True)
+        self.softmax = nn.LogSoftmax(dim=1)
+        self.squeeze = _squeeze_final_output
+
+        ##################
+        # End my code
+        ##################
+
+        # self.conv1 = nn.Conv2d(3, planes[0], kernel_size=7, stride=2, padding=3, bias=False)
+        # self.bn1 = norm_layer(planes[0])
+        # self.relu = nn.ReLU(inplace=True)
+        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # self.layer1 = self._make_layer(block, planes[0], layers[0], groups=groups, norm_layer=norm_layer)
+        # self.layer2 = self._make_layer(block, planes[1], layers[1], stride=2, groups=groups, norm_layer=norm_layer)
+        # self.layer3 = self._make_layer(block, planes[2], layers[2], stride=2, groups=groups, norm_layer=norm_layer)
+        # self.layer4 = self._make_layer(block, planes[3], layers[3], stride=2, groups=groups, norm_layer=norm_layer)
+
+        # Last layers
+
+        # self.fc = nn.Linear(planes[3] * block.expansion, num_classes)
+        # self.conv_final = nn.Conv2d(self.n_filters_4, self.n_classes, (self.final_conv_length, 1), bias=True)
+        # self.conv_final = nn.Conv2d(self.n_filters_4, self.n_classes, (1, 1), bias=True)
+        # self.softmax = nn.LogSoftmax(dim=1)
+
+        # Weight initialization stuff (?):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+        # Zero-initialize the last BN in each residual branch,
+        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # if zero_init_residual:
+        #     for m in self.modules():
+        #         if isinstance(m, Bottleneck):
+        #             nn.init.constant_(m.bn3.weight, 0)
+        #         elif isinstance(m, BasicBlock):
+        #             nn.init.constant_(m.bn2.weight, 0)
+
+    # Make res block
+    def _make_layer(self, block, planes, blocks, stride=1, padding=(0, 0), groups=1, norm_layer=None):
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        downsample = None
+
+        if (stride != 1) or (self.inplanes != planes * block.expansion):
+            downsample = nn.Sequential(
+                conv1x1(self.inplanes, planes * block.expansion, stride),
+                norm_layer(planes * block.expansion),
+            )
+
+        layers = [block(self.inplanes, planes, stride, padding, downsample, groups, norm_layer)]
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes, padding=padding, groups=groups, norm_layer=norm_layer))
+
+        return nn.Sequential(*layers)
+
+    # Define forward pass behavior
+    def forward(self, x):
+        x = self.dimsuffle(x)
+        x = self.conv_temp(x)
+        x = self.conv_spat(x)
+        x = self.bn1(x)
+        x = self.elu(x)
+
+        x = self.layer1(x)
+
+        x = self.layer2(x)
+        x = self.layer3(x)
+
+        x = self.layer4(x)
+        x = self.layer5(x)
+
+        x = self.layer6(x)
+        x = self.layer7(x)
+
+        x = self.layer8(x)
+        x = self.layer9(x)
+
+        x = self.layer10(x)
+        x = self.layer11(x)
+
+        x = self.layer12(x)
+        x = self.layer13(x)
+
+        x = self.avgpool(x)
+
+        x = self.final_conv(x)
+        x = self.softmax(x)
+
+        x = self.squeeze(x)
+        return x
+
+
 def _squeeze_final_output(x):
     assert x.size()[3] == 1
     x = x[:, :, :, 0]
@@ -191,3 +264,273 @@ def _squeeze_final_output(x):
 
 def _transpose_time_to_spat(x):
     return x.permute(0, 3, 2, 1)
+###################################################################################################
+###################################################################################################
+# OG PyTorsch Resnet implementation below:
+###################################################################################################
+###################################################################################################
+# class BasicBlock(nn.Module):
+#     expansion = 1
+#
+#     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1, norm_layer=None):
+#         super(BasicBlock, self).__init__()
+#         if norm_layer is None:
+#             norm_layer = nn.BatchNorm2d
+#         if groups != 1:
+#             raise ValueError('BasicBlock only supports groups=1')
+#         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+#         self.conv1 = conv3x3(inplanes, planes, stride)
+#         self.bn1 = norm_layer(planes)
+#         self.relu = nn.ReLU(inplace=True)
+#         self.conv2 = conv3x3(planes, planes)
+#         self.bn2 = norm_layer(planes)
+#         self.downsample = downsample
+#         self.stride = stride
+#
+#     def forward(self, x):
+#         identity = x
+#
+#         out = self.conv1(x)
+#         out = self.bn1(out)
+#         out = self.relu(out)
+#
+#         out = self.conv2(out)
+#         out = self.bn2(out)
+#
+#         if self.downsample is not None:
+#             identity = self.downsample(x)
+#
+#         out += identity
+#         out = self.relu(out)
+#
+#         return out
+#
+#
+# class Bottleneck(nn.Module):
+#     expansion = 4
+#
+#     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1, norm_layer=None):
+#         super(Bottleneck, self).__init__()
+#         if norm_layer is None:
+#             norm_layer = nn.BatchNorm2d
+#         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
+#         self.conv1 = conv1x1(inplanes, planes)
+#         self.bn1 = norm_layer(planes)
+#         self.conv2 = conv3x3(planes, planes, stride, groups)
+#         self.bn2 = norm_layer(planes)
+#         self.conv3 = conv1x1(planes, planes * self.expansion)
+#         self.bn3 = norm_layer(planes * self.expansion)
+#         self.relu = nn.ReLU(inplace=True)
+#         self.downsample = downsample
+#         self.stride = stride
+#
+#     def forward(self, x):
+#         identity = x
+#
+#         out = self.conv1(x)
+#         out = self.bn1(out)
+#         out = self.relu(out)
+#
+#         out = self.conv2(out)
+#         out = self.bn2(out)
+#         out = self.relu(out)
+#
+#         out = self.conv3(out)
+#         out = self.bn3(out)
+#
+#         if self.downsample is not None:
+#             identity = self.downsample(x)
+#
+#         out += identity
+#         out = self.relu(out)
+#
+#         return out
+#
+#
+# class ResNet(nn.Module):
+#
+#     def __init__(self, block, layers,
+#                  num_classes=1000,
+#                  zero_init_residual=False,
+#                  groups=1,
+#                  width_per_group=64,
+#                  norm_layer=None):
+#
+#         super(ResNet, self).__init__()
+#
+#         if norm_layer is None:
+#             norm_layer = nn.BatchNorm2d
+#         planes = [int(width_per_group * groups * 2 ** i) for i in range(4)]
+#         self.inplanes = planes[0]
+#         self.conv1 = nn.Conv2d(3, planes[0], kernel_size=7, stride=2, padding=3, bias=False)
+#         self.bn1 = norm_layer(planes[0])
+#         self.relu = nn.ReLU(inplace=True)
+#         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+#         self.layer1 = self._make_layer(block, planes[0], layers[0], groups=groups, norm_layer=norm_layer)
+#         self.layer2 = self._make_layer(block, planes[1], layers[1], stride=2, groups=groups, norm_layer=norm_layer)
+#         self.layer3 = self._make_layer(block, planes[2], layers[2], stride=2, groups=groups, norm_layer=norm_layer)
+#         self.layer4 = self._make_layer(block, planes[3], layers[3], stride=2, groups=groups, norm_layer=norm_layer)
+#         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+#         self.fc = nn.Linear(planes[3] * block.expansion, num_classes)
+#
+#         for m in self.modules():
+#             if isinstance(m, nn.Conv2d):
+#                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+#             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+#                 nn.init.constant_(m.weight, 1)
+#                 nn.init.constant_(m.bias, 0)
+#
+#         # Zero-initialize the last BN in each residual branch,
+#         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
+#         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+#         if zero_init_residual:
+#             for m in self.modules():
+#                 if isinstance(m, Bottleneck):
+#                     nn.init.constant_(m.bn3.weight, 0)
+#                 elif isinstance(m, BasicBlock):
+#                     nn.init.constant_(m.bn2.weight, 0)
+#
+#     def _make_layer(self, block, planes, blocks, stride=1, groups=1, norm_layer=None):
+#         if norm_layer is None:
+#             norm_layer = nn.BatchNorm2d
+#         downsample = None
+#         if stride != 1 or self.inplanes != planes * block.expansion:
+#             downsample = nn.Sequential(
+#                 conv1x1(self.inplanes, planes * block.expansion, stride),
+#                 norm_layer(planes * block.expansion),
+#             )
+#
+#         layers = []
+#         layers.append(block(self.inplanes, planes, stride, downsample, groups, norm_layer))
+#         self.inplanes = planes * block.expansion
+#         for _ in range(1, blocks):
+#             layers.append(block(self.inplanes, planes, groups=groups, norm_layer=norm_layer))
+#
+#         return nn.Sequential(*layers)
+#
+#     def forward(self, x):
+#         x = self.conv1(x)
+#         x = self.bn1(x)
+#         x = self.relu(x)
+#         x = self.maxpool(x)
+#
+#         x = self.layer1(x)
+#         x = self.layer2(x)
+#         x = self.layer3(x)
+#         x = self.layer4(x)
+#
+#         x = self.avgpool(x)
+#         x = x.view(x.size(0), -1)
+#         x = self.fc(x)
+#
+#         return x
+#
+#
+# def resnet18(pretrained=False, **kwargs):
+#     """Constructs a ResNet-18 model.
+#
+#     Args:
+#         pretrained (bool): If True, returns a model pre-trained on ImageNet
+#     """
+#     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+#     if pretrained:
+#         model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
+#     return model
+#
+#
+# def resnet34(pretrained=False, **kwargs):
+#     """Constructs a ResNet-34 model.
+#
+#     Args:
+#         pretrained (bool): If True, returns a model pre-trained on ImageNet
+#     """
+#     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
+#     if pretrained:
+#         model.load_state_dict(model_zoo.load_url(model_urls['resnet34']))
+#     return model
+#
+#
+# def resnet50(pretrained=False, **kwargs):
+#     """Constructs a ResNet-50 model.
+#
+#     Args:
+#         pretrained (bool): If True, returns a model pre-trained on ImageNet
+#     """
+#     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+#     if pretrained:
+#         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+#     return model
+#
+#
+# def resnet101(pretrained=False, **kwargs):
+#     """Constructs a ResNet-101 model.
+#
+#     Args:
+#         pretrained (bool): If True, returns a model pre-trained on ImageNet
+#     """
+#     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+#     if pretrained:
+#         model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
+#     return model
+#
+#
+# def resnet152(pretrained=False, **kwargs):
+#     """Constructs a ResNet-152 model.
+#
+#     Args:
+#         pretrained (bool): If True, returns a model pre-trained on ImageNet
+#     """
+#     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
+#     if pretrained:
+#         model.load_state_dict(model_zoo.load_url(model_urls['resnet152']))
+#     return model
+#
+#
+# def resnext50_32x4d(pretrained=False, **kwargs):
+#     model = ResNet(Bottleneck, [3, 4, 6, 3], groups=4, width_per_group=32, **kwargs)
+#     # if pretrained:
+#     #     model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+#     return model
+#
+#
+# def resnext101_32x8d(pretrained=False, **kwargs):
+#     model = ResNet(Bottleneck, [3, 4, 23, 3], groups=8, width_per_group=32, **kwargs)
+#     # if pretrained:
+#     #     model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+#     return model
+
+
+if __name__ == '__main__':
+    import os
+    import pickle
+    from torch import optim
+    from torch.functional import F
+    from braindecode.torch_ext.util import np_to_var
+    from braindecode.models.deep4 import Deep4Net
+    import numpy as np
+
+    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"
+    with open(pickle_path, 'rb') as f:
+        data = pickle.load(f)
+    train_example = data[0]
+    inputs = train_example.X[:3]
+    targets = train_example.y[0]
+
+    # inputs = np.expand_dims(inputs, axis=0)
+    inputs = np.expand_dims(inputs, axis=3)
+    inputs = np_to_var(inputs)
+
+    # Model:
+    # model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
+    model = MyResNet(MyBasicBlock, num_classes=4)
+    # model = Deep4Net(22, 4, 1125, 'auto').create_network()
+    optimiser = optim.Adam(model.parameters())
+
+    # Train on one example
+    model.train()
+    optimiser.zero_grad()
+    output = model(inputs)
+    loss = F.nll_loss(output, targets)
+    loss.backward()
+    optimiser.step()

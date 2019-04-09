@@ -4,7 +4,7 @@ import braindecode.datautil.splitters as data_splitters
 from run_model import RunModel
 
 #######################
-# CONFIG AND PARAMETERS
+# CONFIG AND PARAMETERS`
 #######################
 
 # Data config
@@ -37,7 +37,7 @@ data_subject_1 = dataset_bcic_iv_2a[0]
 data_subject_4 = dataset_bcic_iv_2a[1]
 
 # Split data into train, valid, test
-train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_4, n_folds, 0)
+train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
 # train_set, valid_set = data_splitters.split_into_train_test(data_subject, 3, 0)
 # test_set = None
 ################################################################################################################

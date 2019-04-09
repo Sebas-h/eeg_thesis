@@ -9,6 +9,7 @@ from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var
 from braindecode.models.util import to_dense_prediction_model
 from braindecode.models.eegnet import EEGNetv4
+from my_models.resnet import MyResNet, MyBasicBlock
 
 
 class TrainSetup:
@@ -20,7 +21,8 @@ class TrainSetup:
         if self.cropped:
             assert self.model_name in ['shallow', 'deep'], "Model not available with cropped training"
         else:
-            assert self.model_name in ['shallow', 'deep', 'eegnet'], "Model not available with trialwise training"
+            assert self.model_name in ['shallow', 'deep', 'eegnet', 'resnet'], \
+                "Model not available with trialwise training"
 
         self.train_set = train_set
         self.batch_size = batch_size
@@ -59,6 +61,7 @@ class TrainSetup:
             return model
 
         n_chans = int(self.train_set.X.shape[1])  # input channels to ConvNet, corresponds with EEG channels here
+
         if self.model_name == 'shallow':
             model = ShallowFBCSPNet(n_chans, self.n_classes, input_time_length=self.input_time_length,
                                     final_conv_length='auto').create_network()
@@ -67,6 +70,9 @@ class TrainSetup:
                              final_conv_length='auto').create_network()
         elif self.model_name == 'eegnet':
             model = EEGNetv4(n_chans, self.n_classes, input_time_length=self.input_time_length).create_network()
+        elif self.model_name == 'resnet':
+            model = MyResNet(MyBasicBlock, num_classes=self.n_classes)
+
         return model
 
     def _set_iterator(self):
