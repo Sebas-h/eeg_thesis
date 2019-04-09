@@ -31,7 +31,8 @@ class TrainModel:
             self._run_one_epoch()
 
         # Load the last checkpoint with the best model, b/c of potential early stop
-        self.model.load_state_dict(th.load('checkpoint.pt'))
+        # self.model.load_state_dict(th.load('checkpoint.pt'))
+        self.model.load_state_dict(self.stop_criterion.checkpoint)
 
         # Final evalulation
         if self.test_set is not None:

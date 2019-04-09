@@ -94,33 +94,20 @@ class MyResNet(nn.Module):
 
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
-        # planes = [int(width_per_group * groups * 2 ** i) for i in range(4)]
-        # self.inplanes = planes[0]
 
         ##################
         # My code
         ##################
         self.inplanes = 48
         # 22, 1125
-        # self.conv_temporal = nn.Conv2d(1, self.n_filters_time, (self.filter_time_length, 1), stride=1)
-        #
-        # self.conv_spatial = nn.Conv2d(self.n_filters_time, self.n_filters_spat, (1, self.in_chans), stride=1,
-        #                               bias=not self.batch_norm)
-        # n_filters_conv = self.n_filters_spat
-
-        # self.bn0 = nn.BatchNorm2d(n_filters_conv)
-        # self.elu1 = nn.ELU()
-        # in_chans is .., out channels is number of kernels/filters
+        # in_chans is among which dimension to take slices of the remaining two dimensions,
+        # out channels is number of kernels/filters
 
         self.dimsuffle = _transpose_time_to_spat
         self.conv_temp = nn.Conv2d(1, 48, kernel_size=(3, 1), padding=(1, 0))
         self.conv_spat = nn.Conv2d(48, 48, kernel_size=(1, 22))
         self.bn1 = nn.BatchNorm2d(48)
         self.elu = nn.ELU()
-
-        # self.layer1 = self._make_layer(block, 1, 2, groups=groups, norm_layer=norm_layer)
-        # self.layer1 = MyBasicBlock(48, 48)
-        # self.layer2 = MyBasicBlock(48, 48)
 
         self.layer1 = self._make_layer(block, planes=48, blocks=2, stride=1, padding=(1, 0), groups=groups,
                                        norm_layer=norm_layer)
@@ -160,26 +147,9 @@ class MyResNet(nn.Module):
         self.final_conv = nn.Conv2d(144, num_classes, (10, 1), bias=True)
         self.softmax = nn.LogSoftmax(dim=1)
         self.squeeze = _squeeze_final_output
-
         ##################
         # End my code
         ##################
-
-        # self.conv1 = nn.Conv2d(3, planes[0], kernel_size=7, stride=2, padding=3, bias=False)
-        # self.bn1 = norm_layer(planes[0])
-        # self.relu = nn.ReLU(inplace=True)
-        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        # self.layer1 = self._make_layer(block, planes[0], layers[0], groups=groups, norm_layer=norm_layer)
-        # self.layer2 = self._make_layer(block, planes[1], layers[1], stride=2, groups=groups, norm_layer=norm_layer)
-        # self.layer3 = self._make_layer(block, planes[2], layers[2], stride=2, groups=groups, norm_layer=norm_layer)
-        # self.layer4 = self._make_layer(block, planes[3], layers[3], stride=2, groups=groups, norm_layer=norm_layer)
-
-        # Last layers
-
-        # self.fc = nn.Linear(planes[3] * block.expansion, num_classes)
-        # self.conv_final = nn.Conv2d(self.n_filters_4, self.n_classes, (self.final_conv_length, 1), bias=True)
-        # self.conv_final = nn.Conv2d(self.n_filters_4, self.n_classes, (1, 1), bias=True)
-        # self.softmax = nn.LogSoftmax(dim=1)
 
         # Weight initialization stuff (?):
         for m in self.modules():
@@ -199,7 +169,7 @@ class MyResNet(nn.Module):
         #         elif isinstance(m, BasicBlock):
         #             nn.init.constant_(m.bn2.weight, 0)
 
-    # Make res block
+    # Make res layers, with x num of res blocks in it
     def _make_layer(self, block, planes, blocks, stride=1, padding=(0, 0), groups=1, norm_layer=None):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d

@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 import torch
 
 
@@ -24,6 +25,7 @@ class EarlyStopping:
         self.max_epoch_stop = False
         self.epoch_counter = 0
         self.should_stop = False
+        self.checkpoint = None
 
     def __call__(self, val_loss, model):
         # my addition:
@@ -59,5 +61,6 @@ class EarlyStopping:
         """
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), 'checkpoint.pt')
+        # torch.save(model.state_dict(), 'checkpoint.pt')
+        self.checkpoint = deepcopy(model.state_dict())
         self.val_loss_min = val_loss
