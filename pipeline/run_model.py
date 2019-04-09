@@ -17,7 +17,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'resnet18'
+        model_name = 'myresnet'
         # cropped or trialwise training
         cropped = False
         # cross validation yes or no
@@ -59,6 +59,7 @@ class RunModel:
         )
 
         model = train_setup.model
+        print(model)
         if tl_model_state is not None:
             model.load_state_dict(th.load(tl_model_state))
         iterator = train_setup.iterator
