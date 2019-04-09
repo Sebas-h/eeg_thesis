@@ -75,7 +75,7 @@ class DenseNet(nn.Module):
 
         # First convolution
         self.features = nn.Sequential(OrderedDict([
-            ('conv0', nn.Conv2d(3, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+            ('conv0', nn.Conv2d(1, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
             ('norm0', nn.BatchNorm2d(num_init_features)),
             ('relu0', nn.ReLU(inplace=True)),
             ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
@@ -110,6 +110,8 @@ class DenseNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
+        x = x.permute(0, 3, 2, 1)  # added for the EEG data
+
         features = self.features(x)
         out = F.relu(features, inplace=True)
         out = F.adaptive_avg_pool2d(out, (1, 1)).view(features.size(0), -1)
@@ -188,3 +190,43 @@ def densenet161(pretrained=False, **kwargs):
     if pretrained:
         _load_state_dict(model, model_urls['densenet161'])
     return model
+
+
+if __name__ == '__main__':
+    import os
+    import pickle
+    from torch import optim
+    from torch.functional import F
+    from braindecode.torch_ext.util import np_to_var
+    from braindecode.models.deep4 import Deep4Net
+    import numpy as np
+
+    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"
+    with open(pickle_path, 'rb') as f:
+        data = pickle.load(f)
+    train_example = data[0]
+    inputs = train_example.X[:3]
+    targets = train_example.y[0]
+
+    # inputs = np.expand_dims(inputs, axis=0)
+    inputs = np.expand_dims(inputs, axis=3)
+    inputs = np_to_var(inputs)
+    # inputs = inputs.permute(0, 3, 2, 1)
+    # Model:
+    # model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
+    # model = MyResNet(MyBasicBlock, num_classes=4)
+    # model = Deep4Net(22, 4, 1125, 'auto').create_network()
+    # model = DenseNet(growth_rate=12, num_classes=4)
+    model = densenet121(num_classes=4)
+    # print(model)
+    optimiser = optim.Adam(model.parameters())
+
+    # Train on one example
+    model.train()
+    optimiser.zero_grad()
+    output = model(inputs)
+    print(output)
+    # loss = F.nll_loss(output, targets)
+    # loss.backward()
+    # optimiser.step()

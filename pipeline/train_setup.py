@@ -9,7 +9,8 @@ from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var
 from braindecode.models.util import to_dense_prediction_model
 from braindecode.models.eegnet import EEGNetv4
-from my_models.resnet import MyResNet, MyBasicBlock
+from my_models.resnet import myresnet, resnet18
+from my_models.densenet import densenet121
 
 
 class TrainSetup:
@@ -21,7 +22,7 @@ class TrainSetup:
         if self.cropped:
             assert self.model_name in ['shallow', 'deep'], "Model not available with cropped training"
         else:
-            assert self.model_name in ['shallow', 'deep', 'eegnet', 'resnet'], \
+            assert self.model_name in ['shallow', 'deep', 'eegnet', 'myresnet', 'resnet18', 'densenet121'], \
                 "Model not available with trialwise training"
 
         self.train_set = train_set
@@ -70,8 +71,12 @@ class TrainSetup:
                              final_conv_length='auto').create_network()
         elif self.model_name == 'eegnet':
             model = EEGNetv4(n_chans, self.n_classes, input_time_length=self.input_time_length).create_network()
-        elif self.model_name == 'resnet':
-            model = MyResNet(MyBasicBlock, num_classes=self.n_classes)
+        elif self.model_name == 'myresnet':
+            model = myresnet(num_classes=self.n_classes)
+        elif self.model_name == 'resnet18':
+            model = resnet18(num_classes=self.n_classes)
+        elif self.model_name == 'densenet121':
+            model = densenet121(num_classes=self.n_classes)
 
         return model
 
