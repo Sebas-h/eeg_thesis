@@ -37,21 +37,21 @@ data_subject_1 = dataset_bcic_iv_2a[0]
 data_subject_4 = dataset_bcic_iv_2a[1]
 
 # Split data into train, valid, test
-train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
+train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_4, n_folds, 0)
 # train_set, valid_set = data_splitters.split_into_train_test(data_subject, 3, 0)
 # test_set = None
 ################################################################################################################
 
 run_model = RunModel()
-run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_ids[0])
+run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_ids[1])
 
 # seond run with tl
-# run_model = RunModel()
-# train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_4, n_folds, 0)
-# run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_ids[1],
-#              tl_model_state=f'model_sate_s{subject_ids[0]}.pt')
-#
-# print('done with tl')
+run_model = RunModel()
+train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
+run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_ids[0],
+             tl_model_state=f'model_sate_s{subject_ids[1]}_deep.pt')
+
+print('done with tl')
 
 ################################################################################################################
 # train_setup = TrainSetup(

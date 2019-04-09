@@ -80,7 +80,7 @@ if __name__ == '__main__':
     from braindecode.models.deep4 import Deep4Net
     import numpy as np
 
-    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data'))
     pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"
     with open(pickle_path, 'rb') as f:
         data = pickle.load(f)
@@ -91,13 +91,12 @@ if __name__ == '__main__':
     # inputs = np.expand_dims(inputs, axis=0)
     inputs = np.expand_dims(inputs, axis=3)
     inputs = np_to_var(inputs)
-    inputs = inputs.permute(0, 3, 2, 1)
+
     # Model:
-    # model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
-    # model = MyResNet(MyBasicBlock, num_classes=4)
-    # model = Deep4Net(22, 4, 1125, 'auto').create_network()
-    model = TemporalConvNet(3, 1)
+    inputs = inputs.permute(0, 3, 2, 1)
+    model = TemporalConvNet(3, [1, 48, 48])
     print(model)
+    # exit()
     optimiser = optim.Adam(model.parameters())
 
     # Train on one example

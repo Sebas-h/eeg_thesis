@@ -17,7 +17,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'densenet121'
+        model_name = 'deep'
         # cropped or trialwise training
         cropped = False
         # cross validation yes or no
@@ -96,5 +96,5 @@ class RunModel:
         train_model.epochs_df.to_csv(file_name)
 
         # Save model state (parameters)
-        th.save(model.state_dict(), f'model_sate_s{subject_id}.pt')
+        th.save(model.state_dict(), f'model_sate_s{subject_id}_deep.pt')
         ################################################################################################################
