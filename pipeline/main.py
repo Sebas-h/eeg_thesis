@@ -42,9 +42,9 @@ train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data
 # test_set = None
 ################################################################################################################
 
-# run_model = RunModel()
-# run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_ids[1])
-#
+run_model = RunModel()
+run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=1)
+
 # # seond run with tl
 # run_model = RunModel()
 # train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
