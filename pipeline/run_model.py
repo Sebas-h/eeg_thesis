@@ -12,12 +12,12 @@ class RunModel:
     def __init__(self):
         pass
 
-    def go(self, train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None):
+    def go(self, train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None, tl_freeze=False):
         ############################################
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'tcn'
+        model_name = 'deep'
         # cropped or trialwise training
         cropped = False
         # cross validation yes or no
@@ -62,6 +62,9 @@ class RunModel:
         print(model)
         if tl_model_state is not None:
             model.load_state_dict(th.load(tl_model_state))
+            if tl_freeze:
+                for param in model.parameters():
+                    param.requires_grad = False
         iterator = train_setup.iterator
         loss_function = train_setup.loss_function
         func_compute_pred_labels = train_setup.compute_pred_labels_func
