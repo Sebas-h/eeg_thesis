@@ -17,7 +17,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'shallow'
+        model_name = 'eegnet'
         # cropped or trialwise training
         cropped = False
         # cross validation yes or no
