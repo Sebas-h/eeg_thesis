@@ -60,15 +60,34 @@ class TemporalConvNet(nn.Module):
         num_levels = len(num_channels)
         for i in range(num_levels):
             dilation_size = 2 ** i
-            in_channels = num_inputs if i == 0 else num_channels[i-1]
+            in_channels = num_inputs if i == 0 else num_channels[i - 1]
             out_channels = num_channels[i]
             layers += [TemporalBlock(in_channels, out_channels, kernel_size, stride=1, dilation=dilation_size,
-                                     padding=(kernel_size-1) * dilation_size, dropout=dropout)]
+                                     padding=(kernel_size - 1) * dilation_size, dropout=dropout)]
 
         self.network = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.network(x)
+
+
+# My tcn implementation, adds fc and classification layers to end
+class TCN(nn.Module):
+    def __init__(self, input_size, output_size, num_channels, kernel_size, dropout):
+        super(TCN, self).__init__()
+        self.tcn = TemporalConvNet(input_size, num_channels, kernel_size=kernel_size, dropout=dropout)
+        self.linear = nn.Linear(num_channels[-1], output_size)  # fully connected layer
+        self.softmax = nn.LogSoftmax(dim=1)
+
+    def forward(self, inputss):
+        """Inputs have to have dimension (N, C_in, L_in)"""
+        inputss = inputss[:, :, :, -1]  # same as: inputss = torch.unbind(inputss, dim=3)[0]
+        y1 = self.tcn(inputss)  # input should have dimension (N, C, L)
+        y1 = y1[:, :, -1]
+        o = self.linear(y1)
+        o = self.softmax(o)
+        o = torch.exp(o)
+        return o
 
 
 if __name__ == '__main__':
@@ -93,8 +112,16 @@ if __name__ == '__main__':
     inputs = np_to_var(inputs)
 
     # Model:
-    inputs = inputs.permute(0, 3, 2, 1)
-    model = TemporalConvNet(3, [1, 48, 48])
+    # inputs = inputs.permute(0, 3, 2, 1)
+    channel_sizes = [25] * 8
+    # model = TemporalConvNet(22, [25, 25, 25, 25])
+    model = TCN(
+        input_size=22,
+        output_size=4,
+        num_channels=channel_sizes,
+        kernel_size=2,
+        dropout=0.2
+    )
     print(model)
     # exit()
     optimiser = optim.Adam(model.parameters())
@@ -104,3 +131,4 @@ if __name__ == '__main__':
     optimiser.zero_grad()
     output = model(inputs)
     print(output)
+    print(output.shape)

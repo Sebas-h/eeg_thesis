@@ -11,6 +11,7 @@ from braindecode.models.util import to_dense_prediction_model
 from braindecode.models.eegnet import EEGNetv4
 from my_models.resnet import myresnet, resnet18
 from my_models.densenet import densenet121
+from my_models.tcn import TCN
 
 
 class TrainSetup:
@@ -22,7 +23,7 @@ class TrainSetup:
         if self.cropped:
             assert self.model_name in ['shallow', 'deep'], "Model not available with cropped training"
         else:
-            assert self.model_name in ['shallow', 'deep', 'eegnet', 'myresnet', 'resnet18', 'densenet121'], \
+            assert self.model_name in ['shallow', 'deep', 'eegnet', 'myresnet', 'resnet18', 'densenet121', 'tcn'], \
                 "Model not available with trialwise training"
 
         self.train_set = train_set
@@ -77,6 +78,15 @@ class TrainSetup:
             model = resnet18(num_classes=self.n_classes)
         elif self.model_name == 'densenet121':
             model = densenet121(num_classes=self.n_classes)
+        elif self.model_name == 'tcn':
+            channel_sizes = [25] * 8
+            model = TCN(
+                input_size=22,
+                output_size=self.n_classes,
+                num_channels=channel_sizes,
+                kernel_size=2,
+                dropout=0.2
+            )
 
         return model
 
