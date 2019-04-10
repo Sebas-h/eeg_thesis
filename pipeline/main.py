@@ -51,7 +51,7 @@ test_set = None
 ################################################################################################################
 
 run_model = RunModel()
-subject_id = 12
+subject_id = 13
 run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
 # todo: implement freezing weights/biases (parameters) of model with TL, only train last two layers/blocks for deepnet!
