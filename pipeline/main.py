@@ -34,33 +34,34 @@ data_preprocessing = {
 # Data loading
 dataset_bcic_iv_2a = data_loading.load_bcic_iv_2a_data(from_pickle, subject_ids='all')
 data_subject_1 = dataset_bcic_iv_2a[0]
-# data_subject_4 = dataset_bcic_iv_2a[3]
+data_subject_4 = dataset_bcic_iv_2a[3]
 data_subjects_allbut1 = data_splitters.concatenate_sets(dataset_bcic_iv_2a[1:])
 
 # Split data into train, valid, test
 # train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
 
 # TL with retraining:
-train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
+train_set, valid_set = data_splitters.split_into_train_test(data_subject_4, 3, 0)
 test_set = None
 
 # TL without retraining:
 # train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
 # _, _, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
 
-################################################################################################################
-
+# FIRST TRAINING ROUND:
 run_model = RunModel()
-subject_id = 13
+subject_id = 4
 run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
-# todo: implement freezing weights/biases (parameters) of model with TL, only train last two layers/blocks for deepnet!
-# seond run with tl
-run_model = RunModel()
+################################################################################################################
+
+# SECOND TRAINING ROUND:
 train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
+run_model = RunModel()
 run_model.go(
     train_set, valid_set, test_set,
     n_classes=n_classes,
     subject_id=1,
     tl_model_state=f'model_sate_s{subject_id}_deep.pt'
 )
+# todo: implement freezing weights/biases (parameters) of model with TL, only train last two layers/blocks for deepnet!
