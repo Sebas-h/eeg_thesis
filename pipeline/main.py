@@ -50,13 +50,13 @@ test_set = None
 
 ################################################################################################################
 # FIRST TRAINING ROUND:
-subject_id = 22
+subject_id = 23
 run_model = RunModel()
 run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
 
 # SECOND TRAINING ROUND:
-train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
+train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 1)
 
 run_model = RunModel()
 run_model.go(
@@ -64,7 +64,7 @@ run_model.go(
     n_classes=n_classes,
     subject_id=1,
     tl_model_state=f'model_sate_s{subject_id}_deep.pt',
-    tl_freeze=True
+    tl_freeze=False
 )
 
 # todo: implement freezing weights/biases (parameters)
