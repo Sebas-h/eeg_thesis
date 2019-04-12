@@ -38,7 +38,7 @@ data_subject_4 = dataset_bcic_iv_2a[3]
 data_subjects_allbut1 = data_splitters.concatenate_sets(dataset_bcic_iv_2a[1:])
 
 # Split data into train, valid, test
-train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 1)
+train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 2)
 
 # TL with retraining:
 # train_set, valid_set = data_splitters.split_into_train_test(data_subject_4, 3, 0)
