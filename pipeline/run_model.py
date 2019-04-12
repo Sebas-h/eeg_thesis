@@ -59,18 +59,27 @@ class RunModel:
         )
 
         model = train_setup.model
-        print(model)
+        print(model)  # log model config/architecture
+
+        # Transfer learning:
         if tl_model_state is not None:
             model.load_state_dict(th.load(tl_model_state))
             if tl_freeze:
-                for param in model.parameters():
-                    param.requires_grad = False
+                for idx, child in enumerate(model.named_children()):
+                    # print(idx, child[0], [x.shape for x in child[1].parameters()])
+                    if idx > 13:
+                        continue
+                    for param in child[1].parameters():
+                        param.requires_grad = False
+
         iterator = train_setup.iterator
         loss_function = train_setup.loss_function
         func_compute_pred_labels = train_setup.compute_pred_labels_func
         stop_criterion = pytorchtools.EarlyStopping(patience=max_increase_epochs, verbose=False, max_epochs=max_epochs)
         model_constraint = MaxNormDefaultConstraint()
-        optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        # optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
+
         ################################################################################################################
 
         ################################################################################################################
@@ -92,6 +101,9 @@ class RunModel:
         print('Done')
         print(train_model.epochs_df)
         print(train_model.test_result)
+        # print([p for p in model.conv_temporal.parameters()])
+        # print([p for p in model.conv_separable_point.parameters()])
+        # print([p for p in model.conv_classifier.parameters()])
 
         # Save results and model
         timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
