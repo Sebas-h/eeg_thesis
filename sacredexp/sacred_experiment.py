@@ -24,9 +24,9 @@ from experiment import Experiment
 from sacred import Experiment as SacredExperiment
 from sacred.observers import FileStorageObserver
 # import the Ingredient and the function we want to use:
-import data_loading
+import data_loading_sacred
 
-ex = SacredExperiment(ingredients=[data_loading.data_ingredient])
+ex = SacredExperiment(ingredients=[data_loading_sacred.data_ingredient])
 # template='/Users/sebas/code/thesis/sacredexp/template.html'
 ex.observers.append(FileStorageObserver.create('my_runs'))
 
@@ -69,7 +69,7 @@ def variant1():
 
 
 # Update data Ingredient cfg
-@data_loading.data_ingredient.config
+@data_loading_sacred.data_ingredient.config
 def update_cfg():
     # todo: if tl_abo then subject_ids > 1 (prefereably 'all')
     subject_ids = 'all'
@@ -94,7 +94,7 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
     weight_decay = adamw_optimizer['weight_decay']
 
     # Load data
-    subject_datasets = data_loading.get_data(cv=cv)
+    subject_datasets = data_loading_sacred.get_data(cv=cv)
     first_train_set = subject_datasets[0][0][0][0]
     n_chans = int(first_train_set.X.shape[1])  # input channels to ConvNet, corresponds with EEG channels here
 
@@ -162,7 +162,7 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
         model.cuda()
 
     if tl_abo:
-        for i, a in enumerate(data_loading.get_data_tl()):
+        for i, a in enumerate(data_loading_sacred.get_data_tl()):
             train_abo = a[0][0]
             valid_abo = a[0][1]
             train_set = a[1][0]
