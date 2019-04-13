@@ -43,9 +43,9 @@ gcca.transform(a, b, c, d, e, f, g, h, i)
 # gcca.transform(input_data)
 
 # save
-gcca.save_params("save/gcca.h5")
+gcca.save_params("gcca.h5")
 # load
-gcca.load_params("save/gcca.h5")
+gcca.load_params("gcca.h5")
 # plot
 # gcca.plot_gcca_result()
 

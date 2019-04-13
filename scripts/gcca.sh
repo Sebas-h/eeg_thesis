@@ -16,7 +16,7 @@
 #BSUB -M 16000
 
 ### Change to the work directory
-cd /home/no316758/projects/eeg_thesis/pipeline/cca
+cd /home/no316758/projects/eeg_thesis/pipeline
 
 ### Execute your application
 source ~/anaconda3/bin/activate eeg
