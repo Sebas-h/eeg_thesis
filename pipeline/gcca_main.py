@@ -1,7 +1,7 @@
 import data_loading
 import logging
 import numpy as np
-from gcca import GCCA
+from cca.gcca import GCCA
 
 # load data
 dataset_bcic_iv_2a = data_loading.load_bcic_iv_2a_data(from_pickle=True, subject_ids='all')
