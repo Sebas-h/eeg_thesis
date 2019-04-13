@@ -13,3 +13,4 @@ results/*
 my_runs/
 
 *.pt
+*.h5
