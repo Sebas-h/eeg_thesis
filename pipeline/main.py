@@ -55,7 +55,7 @@ test_set = None
 
 ################################################################################################################
 # FIRST TRAINING ROUND:
-subject_id = 26
+subject_id = 27
 run_model = RunModel()
 run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 

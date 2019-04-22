@@ -26,7 +26,7 @@ class RunModel:
         tl_abo = False
 
         # Max number of epochs if early stopping criteria not satisfied:
-        max_epochs = 880
+        max_epochs = 750
         # Early stopping (patience) value:
         max_increase_epochs = 100
         # Number of training examples to train per optimization step (i.e. per batch):
