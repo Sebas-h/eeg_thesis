@@ -12,7 +12,7 @@ from braindecode.models.eegnet import EEGNetv4
 from my_models.resnet import myresnet, resnet18
 from my_models.densenet import densenet121
 from my_models.tcn import TCN
-
+from my_models.conv_autoencoder import ConvAutoEncoder
 
 class TrainSetup:
     def __init__(self, cropped, train_set, model_name, cuda, batch_size,
@@ -23,7 +23,8 @@ class TrainSetup:
         if self.cropped:
             assert self.model_name in ['shallow', 'deep'], "Model not available with cropped training"
         else:
-            assert self.model_name in ['shallow', 'deep', 'eegnet', 'myresnet', 'resnet18', 'densenet121', 'tcn'], \
+            assert self.model_name in ['shallow', 'deep', 'eegnet', 'myresnet', 'resnet18', 'densenet121', 'tcn',
+                                       'eegnet_cae'], \
                 "Model not available with trialwise training"
 
         self.train_set = train_set
@@ -87,6 +88,8 @@ class TrainSetup:
                 kernel_size=2,
                 dropout=0.2
             )
+        elif self.model_name == 'eegnet_cae':
+            model = ConvAutoEncoder(in_chans=n_chans, n_classes=self.n_classes)
 
         return model
 
@@ -105,11 +108,17 @@ class TrainSetup:
         return BalancedBatchSizeIterator(batch_size=self.batch_size)
 
     def _set_loss_function(self):
+        if self.model_name == 'eegnet_cae':
+            return th.nn.MSELoss()
         if self.cropped:
             return lambda preds, targets: F.nll_loss(th.mean(preds, dim=2, keepdim=False), targets)
         return F.nll_loss
 
     def _set_compute_pred_labels_func(self):
+        if self.model_name == 'eegnet_cae':
+            def pred_0(all_preds, dataset):
+                return [1]
+            return pred_0
         if self.cropped:
             return ComputePredictions(cropped_training=self.cropped,
                                       input_time_length=self.input_time_length).compute_pred_labels

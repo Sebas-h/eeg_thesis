@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+import torch
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
@@ -52,7 +53,8 @@ class MyBasicBlock(nn.Module):
         # self.conv2 = conv3x1(planes, planes)
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=(3, 1), stride=stride, padding=padding, bias=False)
         self.bn1 = norm_layer(planes)
-        self.elu = nn.ELU(inplace=True)
+        # self.elu = nn.ELU(inplace=True)
+        self.elu = nn.ELU()
 
         # self.conv2 = conv3x1(planes, planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=(3, 1), padding=padding, bias=False)
@@ -488,7 +490,7 @@ if __name__ == '__main__':
     from braindecode.models.deep4 import Deep4Net
     import numpy as np
 
-    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data'))
     pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"
     with open(pickle_path, 'rb') as f:
         data = pickle.load(f)
@@ -503,8 +505,8 @@ if __name__ == '__main__':
 
     # Model:
     # model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
-    model = resnet18(num_classes=4)
-    # model = MyResNet(MyBasicBlock, num_classes=4)
+    # model = resnet18(num_classes=4)
+    model = MyResNet(MyBasicBlock, num_classes=4)
     # model = Deep4Net(22, 4, 1125, 'auto').create_network()
     optimiser = optim.Adam(model.parameters())
 
