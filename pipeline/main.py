@@ -76,7 +76,7 @@ run_model.go(
     train_set, valid_set, test_set,
     n_classes=n_classes,
     subject_id=1,
-    tl_model_state='model_sate_s26_deep.pt',
-    tl_freeze=True,
+    tl_model_state='model_sate_s25_deep.pt',
+    tl_freeze=False,
     tl_eegnetautoencoder=True
 )
