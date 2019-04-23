@@ -14,6 +14,7 @@ from my_models.densenet import densenet121
 from my_models.tcn import TCN
 from my_models.conv_autoencoder import ConvAutoEncoder
 
+
 class TrainSetup:
     def __init__(self, cropped, train_set, model_name, cuda, batch_size,
                  n_classes, input_time_length, final_conv_length_shallow, final_conv_length_deep):
@@ -118,6 +119,7 @@ class TrainSetup:
         if self.model_name == 'eegnet_cae':
             def pred_0(all_preds, dataset):
                 return [1]
+
             return pred_0
         if self.cropped:
             return ComputePredictions(cropped_training=self.cropped,

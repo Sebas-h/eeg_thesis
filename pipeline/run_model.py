@@ -78,13 +78,13 @@ class RunModel:
                 model.load_state_dict(model_state_dict)
             else:
                 model.load_state_dict(th.load(tl_model_state))
-                if tl_freeze:
-                    for idx, child in enumerate(model.named_children()):
-                        # print(idx, child[0], [x.shape for x in child[1].parameters()])
-                        if idx > 13:
-                            continue
-                        for param in child[1].parameters():
-                            param.requires_grad = False
+            if tl_freeze:
+                for idx, child in enumerate(model.named_children()):
+                    # print(idx, child[0], [x.shape for x in child[1].parameters()])
+                    if idx > 13:
+                        continue
+                    for param in child[1].parameters():
+                        param.requires_grad = False
 
         iterator = train_setup.iterator
         loss_function = train_setup.loss_function
