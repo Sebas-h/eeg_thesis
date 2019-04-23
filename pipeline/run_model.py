@@ -12,12 +12,15 @@ class RunModel:
     def __init__(self):
         pass
 
-    def go(self, train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None, tl_freeze=False):
+    def go(self, train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None,
+           tl_freeze=False,
+           tl_eegnetautoencoder=False):
+
         ############################################
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'eegnet_cae'
+        model_name = 'eegnet'
         # cropped or trialwise training
         cropped = False
         # cross validation yes or no
@@ -26,7 +29,7 @@ class RunModel:
         tl_abo = False
 
         # Max number of epochs if early stopping criteria not satisfied:
-        max_epochs = 750
+        max_epochs = 2
         # Early stopping (patience) value:
         max_increase_epochs = 100
         # Number of training examples to train per optimization step (i.e. per batch):
@@ -63,14 +66,25 @@ class RunModel:
 
         # Transfer learning:
         if tl_model_state is not None:
-            model.load_state_dict(th.load(tl_model_state))
-            if tl_freeze:
-                for idx, child in enumerate(model.named_children()):
-                    # print(idx, child[0], [x.shape for x in child[1].parameters()])
-                    if idx > 13:
-                        continue
-                    for param in child[1].parameters():
-                        param.requires_grad = False
+            if tl_eegnetautoencoder:
+                ae_params_dict = th.load(tl_model_state)
+                ae_params_values = list(ae_params_dict.values())[:-4]  # -4 for eegnet ae
+                model_state_dict = model.state_dict()
+                for idx, (param_name, value) in enumerate(model_state_dict.items()):
+                    if idx > (len(ae_params_values) - 1):
+                        break
+                    if value.shape == ae_params_values[idx].shape:
+                        model_state_dict[param_name] = ae_params_values[idx]
+                model.load_state_dict(model_state_dict)
+            else:
+                model.load_state_dict(th.load(tl_model_state))
+                if tl_freeze:
+                    for idx, child in enumerate(model.named_children()):
+                        # print(idx, child[0], [x.shape for x in child[1].parameters()])
+                        if idx > 13:
+                            continue
+                        for param in child[1].parameters():
+                            param.requires_grad = False
 
         iterator = train_setup.iterator
         loss_function = train_setup.loss_function
@@ -113,3 +127,30 @@ class RunModel:
         # Save model state (parameters)
         th.save(model.state_dict(), f'model_sate_s{subject_id}_deep.pt')
         ################################################################################################################
+
+
+if __name__ == '__main__':
+    from braindecode.models.eegnet import EEGNetv4
+
+
+    def test_tl_eegnet_ae():
+        params_dict = th.load("/Users/sebas/code/thesis/pipeline/model_sate_s26_deep.pt")
+        params_values = list(params_dict.values())[:-4]
+        model = EEGNetv4(22, 4, input_time_length=1125).create_network()
+        model_dict = model.state_dict()
+
+        for idx, (key, value) in enumerate(model_dict.items()):
+            if idx > (len(params_values) - 1):
+                break
+            if value.shape == params_values[idx].shape:
+                print(f"model {value.shape} == pretrained {params_values[idx].shape}")
+                model_dict[key] = params_values[idx]
+
+        print(model.state_dict())
+        model.load_state_dict(model_dict)
+        print('###########\n###########')
+        print(model.state_dict())
+
+
+    test_tl_eegnet_ae()
+    print('done')
