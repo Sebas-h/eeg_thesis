@@ -1,21 +1,21 @@
 #!/usr/bin/env zsh
 
 ### Job name
-#BSUB -J SERIALJOB -P um_dke
+#SBATCH --job-name=MYJOB
 
-### File / path where STDOUT & STDERR will be written
-###    %J is the job ID, %I is the array ID
-#BSUB -o /home/no316758/bsub_results/SERIALJOB.%J.%I
+### File for the output
+#SBATCH --output=/home/no316758/SLURM_output/MYJOB_OUTPUT.%j
 
-### Request the time you need for execution in minutes
-### The format for the parameter is: [hour:]minute,
-### that means for 80 minutes you could also use this: 1:20
-# BSUB -W 23:59
+### Time your job needs to execute, e. g. 15 min 30 sec
+#SBATCH --time=99:15:30
 
-### Request memory you need for your job in TOTAL in MB
-#BSUB -M 16000
+### Memory your job needs per node, e. g. 1 GB
+#SBATCH --mem=16G
 
-### Change to the work directory
+echo "This is Job $SLURM_JOB_ID"
+
+### The last part consists of regular shell commands:
+### Change to working directory
 cd /home/no316758/projects/eeg_thesis/pipeline
 
 ### Execute your application
