@@ -4,7 +4,7 @@
 #SBATCH --job-name=MYJOB
 
 ### File for the output
-#SBATCH --output=/home/no316758/SLURM_output/MYJOB_OUTPUT.%j
+#SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.%j
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
 #SBATCH --time=99:15:30
