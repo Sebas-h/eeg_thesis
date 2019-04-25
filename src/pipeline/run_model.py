@@ -1,7 +1,7 @@
 import torch as th
-import pytorchtools
-from train_model import TrainModel
-from train_setup import TrainSetup
+from src.pipeline import pytorchtools
+from src.pipeline.train_model import TrainModel
+from src.pipeline.train_setup import TrainSetup
 from braindecode.torch_ext.constraints import MaxNormDefaultConstraint
 from braindecode.torch_ext.optimizers import AdamW
 import pandas as pd
@@ -12,7 +12,8 @@ class RunModel:
     def __init__(self):
         pass
 
-    def go(self, train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None,
+    @staticmethod
+    def go(train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None,
            tl_freeze=False,
            tl_eegnetautoencoder=False):
 

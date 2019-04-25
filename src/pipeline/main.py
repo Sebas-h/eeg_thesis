@@ -1,10 +1,10 @@
 import os
-import data_loading
 import braindecode.datautil.splitters as data_splitters
-from run_model import RunModel
+from src.pipeline import data_loading
+from src.pipeline.run_model import RunModel
 
 #######################
-# CONFIG AND PARAMETERS`
+# CONFIG AND PARAMETERS
 #######################
 
 # Data config

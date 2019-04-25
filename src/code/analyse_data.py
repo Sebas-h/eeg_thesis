@@ -30,6 +30,44 @@ def analyse_input_data():
         print(f"subject {subject_id}: {list(stat)}")
 
 
+def analyse_subject_eeg_signals():
+    def index_first_occurence(nparray, target):
+        for i, val in enumerate(nparray):
+            if val == target:
+                return i
+
+    from src.pipeline.data_loading import load_bcic_iv_2a_data
+    data = load_bcic_iv_2a_data(True, 'all')
+    # task 0 (= left hand)
+    # task_num = 0
+    # channels indices: 7=c3, 9=cz, 11=c4
+    channel_idx = 11
+
+    tasks_nums = [0, 1, 2, 3]
+    colors = ('b', 'g', 'r', 'c')
+
+    for task_num, color in zip(tasks_nums, colors):
+        fig, axs = plt.subplots(nrows=3, ncols=3)
+        fig.suptitle(f"Task {task_num + 1}")
+        for idx, (ax, subject) in enumerate(zip(axs.flat, data)):
+            # task_idx = index_first_occurence(subject.y, task_num)
+            # data_to_plot = subject.X[task_idx][channel_idx]
+            task_idx = np.where(subject.y == task_num)
+            tasks = subject.X[task_idx[0]]
+            mean_task = np.mean(tasks, axis=0)
+
+            data_to_plot = mean_task[channel_idx]
+            ax.plot(data_to_plot, color)
+            ax.set_title(f"Subject {idx + 1}")
+            ax.set_ylim([-0.75, 0.75])
+
+        fig.tight_layout()
+
+    mng = plt.get_current_fig_manager()
+    mng.resize(*mng.window.maxsize())
+    plt.show()
+
+
 def shallow_cnn_800_epochs():
     path = "/Users/sebas/code/thesis/results/AASERIALJOB.47021214.0"
 
@@ -134,7 +172,6 @@ def analyse_shallow_variants():
         ax0.plot(df.iloc[start_epoch:, 4], label='Valid')
         ax0.set_ylim([0, 1.1])
         ax0.legend()
-
         fig.tight_layout()
 
     plt.show()
@@ -153,18 +190,19 @@ def analyse_difference_mycsv():
         for index, row in df.iterrows():
             if index == df.shape[0] - 1:
                 break
-            diff = (1 - df.iloc[index+1, -3]) - (1 - df.iloc[index, -3])
+            diff = (1 - df.iloc[index + 1, -3]) - (1 - df.iloc[index, -3])
             print(f"{index} & {index + 1} = {diff}")
 
     else:
         for index, row in df.iterrows():
             if index == df.shape[0] - 1:
                 break
-            diff = df.iloc[index+1, 4] -df.iloc[index, 4]
+            diff = df.iloc[index + 1, 4] - df.iloc[index, 4]
             print(f"{index} & {index + 1} = {diff}")
 
 
 if __name__ == "__main__":
     # analyse_difference_mycsv()
     # analyse_shallow_og_experiment()
-    analyse_shallow_variants()
+    # analyse_shallow_variants()
+    analyse_subject_eeg_signals()

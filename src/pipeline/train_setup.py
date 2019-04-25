@@ -9,10 +9,10 @@ from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.torch_ext.util import np_to_var
 from braindecode.models.util import to_dense_prediction_model
 from braindecode.models.eegnet import EEGNetv4
-from my_models.resnet import myresnet, resnet18
-from my_models.densenet import densenet121
-from my_models.tcn import TCN
-from my_models.conv_autoencoder import ConvAutoEncoder
+from src.pipeline.my_models.resnet import myresnet, resnet18
+from src.pipeline.my_models.densenet import densenet121
+from src.pipeline.my_models.tcn import TCN
+from src.pipeline.my_models.conv_autoencoder import ConvAutoEncoder
 
 
 class TrainSetup:

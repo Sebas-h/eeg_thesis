@@ -1,6 +1,7 @@
 import pickle
 import os
 from collections import OrderedDict
+import glob
 
 import braindecode.datautil.splitters as splitters
 from braindecode.datasets.bcic_iv_2a import BCICompetition4Set2A
@@ -10,9 +11,20 @@ from braindecode.datautil.signalproc import (bandpass_cnt,
 from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 from braindecode.datautil.splitters import split_into_two_sets
 
+import logging
+import numpy as np
+from braindecode.datasets.bbci import BBCIDataset
+from braindecode.datautil.signalproc import highpass_cnt
+from braindecode.mne_ext.signalproc import mne_apply, resample_cnt
+import h5py
+import scipy.io as sio
+
 from sacred import Ingredient
 
 data_ingredient = Ingredient('dataset')
+
+log = logging.getLogger(__name__)
+log.setLevel('INFO')
 
 
 @data_ingredient.config
@@ -93,10 +105,14 @@ def get_data(n_folds, cv=False):
 # def load_bcic_iv_2a_data(raw_data_path, pickle_path, from_pickle, data_preprocessing, subject_ids):
 def load_bcic_iv_2a_data(from_pickle, subject_ids):
     ##########################################################
+    ##########################################################
     # cfg
-    raw_data_path = "/Users/../../..gdf&mat"  # path to original raw gdf and mat files from BCIC IV 2a
-    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
-    pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"  # path to pickle dir
+    # path to original raw gdf and mat files from BCIC IV 2a:
+    raw_data_path = "/Users/sebas/code/_eeg_data/BCICIV_2a_gdf"
+    # path to pickle dir:
+    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data'))
+    # full path:
+    pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"
 
     data_preprocessing = {
         'ival': [-500, 4000],
@@ -105,6 +121,7 @@ def load_bcic_iv_2a_data(from_pickle, subject_ids):
         'factor_new': 1e-3,
         'init_block_size': 1000
     }
+    ##########################################################
     ##########################################################
 
     if from_pickle and pickle_path is not None:
@@ -181,3 +198,124 @@ def load_bcic_iv_2a_data(from_pickle, subject_ids):
             data.append(data_subject)
 
     return data
+
+
+def load_bbci_data(filename, low_cut_hz, debug=False):
+    load_sensor_names = None
+    if debug:
+        load_sensor_names = ['C3', 'C4', 'C2']
+    # we loaded all sensors to always get same cleaning results independent of sensor selection
+    # There is an inbuilt heuristic that tries to use only EEG channels and that definitely
+    # works for datasets in our paper
+    loader = BBCIDataset(filename, load_sensor_names=load_sensor_names)
+
+    log.info("Loading data...")
+    cnt = loader.load()
+
+    # Cleaning: First find all trials that have absolute microvolt values
+    # larger than +- 800 inside them and remember them for removal later
+    log.info("Cutting trials...")
+
+    marker_def = OrderedDict([('Right Hand', [1]), ('Left Hand', [2],),
+                              ('Rest', [3]), ('Feet', [4])])
+    clean_ival = [0, 4000]
+
+    set_for_cleaning = create_signal_target_from_raw_mne(cnt, marker_def,
+                                                         clean_ival)
+
+    clean_trial_mask = np.max(np.abs(set_for_cleaning.X), axis=(1, 2)) < 800
+
+    log.info("Clean trials: {:3d}  of {:3d} ({:5.1f}%)".format(
+        np.sum(clean_trial_mask),
+        len(set_for_cleaning.X),
+        np.mean(clean_trial_mask) * 100))
+
+    # now pick only sensors with C in their name
+    # as they cover motor cortex
+    C_sensors = ['FC5', 'FC1', 'FC2', 'FC6', 'C3', 'C4', 'CP5',
+                 'CP1', 'CP2', 'CP6', 'FC3', 'FCz', 'FC4', 'C5', 'C1', 'C2',
+                 'C6',
+                 'CP3', 'CPz', 'CP4', 'FFC5h', 'FFC3h', 'FFC4h', 'FFC6h',
+                 'FCC5h',
+                 'FCC3h', 'FCC4h', 'FCC6h', 'CCP5h', 'CCP3h', 'CCP4h', 'CCP6h',
+                 'CPP5h',
+                 'CPP3h', 'CPP4h', 'CPP6h', 'FFC1h', 'FFC2h', 'FCC1h', 'FCC2h',
+                 'CCP1h',
+                 'CCP2h', 'CPP1h', 'CPP2h']
+    if debug:
+        C_sensors = load_sensor_names
+    cnt = cnt.pick_channels(C_sensors)
+
+    # Further preprocessings as descibed in paper
+    log.info("Resampling...")
+    cnt = resample_cnt(cnt, 250.0)
+    log.info("Highpassing...")
+    cnt = mne_apply(
+        lambda a: highpass_cnt(
+            a, low_cut_hz, cnt.info['sfreq'], filt_order=3, axis=1),
+        cnt)
+    log.info("Standardizing...")
+    cnt = mne_apply(
+        lambda a: exponential_running_standardize(a.T, factor_new=1e-3,
+                                                  init_block_size=1000,
+                                                  eps=1e-4).T,
+        cnt)
+
+    # Trial interval, start at -500 already, since improved decoding for networks
+    ival = [-500, 4000]
+
+    dataset = create_signal_target_from_raw_mne(cnt, marker_def, ival)
+    dataset.X = dataset.X[clean_trial_mask]
+    dataset.y = dataset.y[clean_trial_mask]
+    return dataset
+
+
+def load_high_gamma_dataset():
+    low_cut_hz = 0  # 0 or 4 Hz
+    debug = True
+    test_set_path = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data/test'
+    train_set_path = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data/train'
+
+    test_set_mat_files = glob.glob(test_set_path + '/*.mat')
+    train_set_mat_files = glob.glob(train_set_path + '/*.mat')
+    test_filename = test_set_mat_files[0]
+    train_filename = train_set_mat_files[0]
+
+    log.info("Loading train...")
+    full_train_set = load_bbci_data(train_filename, low_cut_hz=low_cut_hz, debug=debug)
+    log.info("Loading test...")
+    test_set = load_bbci_data(test_filename, low_cut_hz=low_cut_hz, debug=debug)
+    print('done')
+
+
+def load_high_gamma_parameters():
+    from collections import OrderedDict
+    import torch
+    from braindecode.models.deep4 import Deep4Net
+
+    model_type = 'shallow'  # 'deep' or 'shallow' weights are available
+    path = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data/trained-parameters/' + model_type
+    param_pickles = glob.glob(path + "/*.pkl")
+    file_name = param_pickles[0]
+    # file_name = "/Users/sebas/code/thesis/pipeline/1.pkl"
+
+    model_params = torch.load(file_name, map_location='cpu')
+    # model_iv = torch.load('/Users/sebas/code/thesis/pipeline/model_sate_s2_deep.pt', map_location='cpu')
+    dataset_bcic_iv_2a = load_bcic_iv_2a_data(from_pickle=True, subject_ids='all')
+    # data_subject_1 = dataset_bcic_iv_2a[0]
+    data_subject_2 = dataset_bcic_iv_2a[1]
+    inputs = data_subject_2.X
+    targets = data_subject_2.y
+
+    model = Deep4Net(22, 4, input_time_length=1125, final_conv_length='auto').create_network()
+    model.load_state_dict(model_params)
+    model.eval()
+    outputs = model(inputs)
+    pred_labels = np.argmax(outputs, axis=1).squeeze()
+    accuracy = np.mean(pred_labels == targets)
+    print(accuracy)
+    print('done')
+
+
+if __name__ == '__main__':
+    load_high_gamma_parameters()

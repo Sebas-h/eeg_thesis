@@ -3,6 +3,7 @@
 *.pickle
 *.csv
 *.pyc
+*.pyo
 **/.ipynb_checkpoints/*
 braindecode/*
 results/*
