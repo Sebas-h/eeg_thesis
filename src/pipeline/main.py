@@ -39,15 +39,15 @@ index_subject = 1
 data_subject = dataset_bcic_iv_2a[index_subject]
 
 # All but selected subjects:
-del dataset_bcic_iv_2a[index_subject]
-data_subjects_allbut1 = data_splitters.concatenate_sets(dataset_bcic_iv_2a)
+# del dataset_bcic_iv_2a[index_subject]
+# data_subjects_allbut1 = data_splitters.concatenate_sets(dataset_bcic_iv_2a)
 
 # Split data into train, valid, test
-# train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 0)
+train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 0)
 
 # TL with retraining:
-train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
-test_set = None
+# train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
+# test_set = None
 
 # TL without retraining:
 # train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
@@ -60,21 +60,21 @@ test_set = None
 
 ################################################################################################################
 # FIRST TRAINING ROUND:
-# subject_id = index_subject + 1
-subject_id = 28
+subject_id = index_subject + 1
+# subject_id = 28
 run_model = RunModel()
 run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
 # SECOND TRAINING ROUND:
-train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 0)
-run_model = RunModel()
-run_model.go(
-    train_set, valid_set, test_set,
-    n_classes=n_classes,
-    subject_id=index_subject+1,
-    tl_model_state=f'model_sate_s{subject_id}_deep.pt',
-    tl_freeze=False
-)
+# train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 0)
+# run_model = RunModel()
+# run_model.go(
+#     train_set, valid_set, test_set,
+#     n_classes=n_classes,
+#     subject_id=index_subject+1,
+#     tl_model_state=f'model_sate_s{subject_id}_deep.pt',
+#     tl_freeze=False
+# )
 
 # TL TRAINING WITH PRETRAINED AUTOENCODER WEIGHTS:
 # run_model = RunModel()
