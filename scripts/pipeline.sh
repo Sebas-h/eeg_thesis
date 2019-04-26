@@ -18,9 +18,9 @@ echo "This is Job $SLURM_JOB_ID"
 
 ### The last part consists of regular shell commands:
 ### Change to working directory
-cd /home/no316758/projects/eeg_thesis/src/pipeline
+cd /home/no316758/projects/eeg_thesis
 
 ### Execute your application
 source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-python -u main.py
+python -m -u src.pipeline.main
