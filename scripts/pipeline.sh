@@ -16,7 +16,7 @@ echo "This is Job $SLURM_JOB_ID"
 
 ### The last part consists of regular shell commands:
 ### Change to working directory
-cd /home/no316758/projects/eeg_thesis/pipeline
+cd /home/no316758/projects/eeg_thesis/src/pipeline
 
 ### Execute your application
 source ~/anaconda3/bin/activate eeg
