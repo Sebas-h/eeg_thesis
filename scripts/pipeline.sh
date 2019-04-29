@@ -1,7 +1,5 @@
 #!/usr/bin/env zsh
 
-### SBATCH --partition=c18m
-
 ### Job name
 #SBATCH --job-name=MYJOB
 
