@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-#SBATCH --partition=c18m
+### SBATCH --partition=c18m
 
 ### Job name
 #SBATCH --job-name=MYJOB
@@ -13,8 +13,6 @@
 
 ### Memory your job needs per node, e. g. 1 GB
 #SBATCH --mem=16G
-
-echo "This is Job $SLURM_JOB_ID"
 
 ### The last part consists of regular shell commands:
 ### Change to working directory

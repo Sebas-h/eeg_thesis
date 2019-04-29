@@ -1,15 +1,16 @@
 #!/usr/bin/python
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 __author__ = 'rupy'
 
-from gcca import GCCA
+from src.pipeline.cca.gcca import GCCA
 import numpy as np
 import logging
 import os
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import h5py
+
 
 class CCA(GCCA):
 
@@ -34,7 +35,7 @@ class CCA(GCCA):
             self.logger.info("data shape x_%d: %s", i, x.shape)
 
         self.logger.info("normalizing")
-        x_norm_list = [ self.normalize(x) for x in x_list]
+        x_norm_list = [self.normalize(x) for x in x_list]
 
         d_list = [0] + [sum([len(x.T) for x in x_list][:i + 1]) for i in range(data_num)]
         cov_mat = self.calc_cov_mat(x_norm_list)
@@ -46,7 +47,7 @@ class CCA(GCCA):
         self.logger.info("calculating generalized eigenvalue problem ( A*u = (lambda)*B*u )")
 
         # 1
-        left_1 = np.dot(c_01, np.linalg.solve(c_11,c_01.T))
+        left_1 = np.dot(c_01, np.linalg.solve(c_11, c_01.T))
         right_1 = c_00
         eigvals_1, eigvecs_1 = self.solve_eigprob(left_1, right_1)
         eigvecs_1_norm = self.eigvec_normalization(eigvecs_1, right_1)
@@ -67,14 +68,14 @@ class CCA(GCCA):
 
         I = np.eye(len(self.eigvals))
         lamb = np.diag(self.eigvals)
-        mat1 = np.linalg.solve(I - np.diag(self.eigvals**2), I)
+        mat1 = np.linalg.solve(I - np.diag(self.eigvals ** 2), I)
         mat2 = -np.dot(mat1, lamb)
         mat12 = np.vstack((mat1, mat2))
         mat21 = np.vstack((mat2, mat1))
         mat = np.hstack((mat12, mat21))
-        p = np.vstack((lamb**beta, lamb**(1-beta)))
+        p = np.vstack((lamb ** beta, lamb ** (1 - beta)))
         q = np.vstack((x0_projected.T, x1_projected.T))
-        z = np.dot(p.T, np.dot(mat, q)).T[:,:self.n_components]
+        z = np.dot(p.T, np.dot(mat, q)).T[:, :self.n_components]
 
         self.z_p = z
 
@@ -125,9 +126,9 @@ class CCA(GCCA):
             plt.title('Z(PCCA)')
 
         plt.show()
-        
-def main():
 
+
+def main():
     # set log level
     logging.root.setLevel(level=logging.INFO)
 
@@ -152,6 +153,14 @@ def main():
     # calc correlations
     cca.calc_correlations()
 
-if __name__=="__main__":
 
-    main()
+if __name__ == "__main__":
+    from sklearn.cross_decomposition import CCA
+    X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [3., 5., 4.]]
+    Y = [[0.1, -0.2, -0.5], [0, 0.9, 1.1], [3.2, 6.2, 5.9], [11.1, 11.9, 12.3]]
+    cca = CCA(n_components=1)
+    cca.fit(X, Y)
+    CCA(copy=True, max_iter=500, n_components=1, scale=True, tol=1e-06)
+    X_c, Y_c = cca.transform(X, Y)
+    print(X_c)
+    print(Y_c)
