@@ -7,6 +7,6 @@ do
 #    for j in 0 1 2 3 4
     for j in 0
     do
-        sbatch --job-name=MYJOB.$1.$2 /home/no316758/projects/eeg_thesis/scripts/args_pipeline.sh $i $j
+        sbatch --job-name=MYJOB.$i.$j /home/no316758/projects/eeg_thesis/scripts/args_pipeline.sh $i $j
     done
 done
