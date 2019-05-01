@@ -32,7 +32,7 @@ class RunModel:
         tl_abo = False
 
         # Max number of epochs if early stopping criteria not satisfied:
-        max_epochs = 900
+        max_epochs = 1
         # Early stopping (patience) value:
         max_increase_epochs = 100
         # Number of training examples to train per optimization step (i.e. per batch):
@@ -144,7 +144,7 @@ class RunModel:
         train_model.epochs_df.to_csv(file_name)
 
         # Save model state (parameters)
-        file_name_state_dict = f'model_sate_s{subject_id}_{unique_id}.pt'
+        file_name_state_dict = f'model_sate_subject_{subject_id}_{unique_id}.pt'
         th.save(model.state_dict(), file_name_state_dict)
         return file_name_state_dict
         ################################################################################################################
