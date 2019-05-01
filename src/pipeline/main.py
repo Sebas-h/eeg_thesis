@@ -84,7 +84,7 @@ def train_subject_transfer_learning_allbutone(index_subject, index_test_fold):
 
     ################################################################################################################
     # FIRST TRAINING ROUND, (pre-)train:
-    subject_id = f"{index_subject + 1}-excluded_testfldidx_{index_test_fold}_source_allbutsubject"
+    subject_id = f"{index_subject + 1}-excluded_source"
     run_model = RunModel()
     file_name_state_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
@@ -94,7 +94,7 @@ def train_subject_transfer_learning_allbutone(index_subject, index_test_fold):
     run_model.go(
         train_set, valid_set, test_set,
         n_classes=n_classes,
-        subject_id=f"{index_subject + 1}_testfldidx_{index_test_fold}_target",
+        subject_id=f"{index_subject + 1}_target",
         tl_model_state=file_name_state_dict,
         tl_freeze=False
     )
