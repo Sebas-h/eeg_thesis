@@ -31,19 +31,12 @@ data_preprocessing = {
 
 
 def main(args):
-    # import time
-    # import random
-    # num = random.randint(1, 10)
-    # index_subject = args.subject_index
-    # index_test_fold = args.test_fold_index
-    #
-    # print('start sleep', index_subject, index_test_fold, 'sleep time=', num)
-    # time.sleep(num)
-    # print('done sleep', index_subject, index_test_fold)
-    #
-    # exit()
-    index_subject = 0
-    index_test_fold = 0
+    # Unfold arguments
+    index_subject = args.subject_index
+    index_test_fold = args.test_fold_index
+    print("Subject and test fold indices", index_subject, index_test_fold)
+
+    # Run experiment
     train_single_subject(index_subject, index_test_fold)
 
 
@@ -94,13 +87,10 @@ def train_subject_transfer_learning_allbutone(index_subject, index_test_fold):
 
     ################################################################################################################
     # FIRST TRAINING ROUND:
-    subject_id = index_subject + 1
+    subject_id = f"{index_subject + 1}_testfldidx_{index_test_fold}"
     # subject_id = 30
     run_model = RunModel()
     file_name_state_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
-
-    # log file name state dict:
-    # print(file_name_state_dict)
 
     # SECOND TRAINING ROUND:
     # train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 3)
