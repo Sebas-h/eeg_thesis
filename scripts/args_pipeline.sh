@@ -1,15 +1,15 @@
 #!/usr/bin/env zsh
 
 ### Job name
-#SBATCH --job-name=MYJOB
+##SBATCH --job-name=MYJOB
 
 ### File for the output
-#SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.$1.$2.%j
+#SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.%j.%x
 
-### Time your job needs to execute, e. g. 15 min 30 sec
+### Time your job needs to execute, e. g. 99 hours 15 min 30 sec
 #SBATCH --time=99:15:30
 
-### Memory your job needs per node, e. g. 1 GB
+### Memory your job needs per node, e. g. 16 GB
 #SBATCH --mem=16G
 
 ### The last part consists of regular shell commands:
