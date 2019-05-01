@@ -30,60 +30,108 @@ data_preprocessing = {
 #######################
 
 
-################################################################################################################
-# Data loading
-dataset_bcic_iv_2a = data_loading.load_bcic_iv_2a_data(from_pickle, subject_ids='all')
+def main(args):
+    # import time
+    # import random
+    # num = random.randint(1, 10)
+    # index_subject = args.subject_index
+    # index_test_fold = args.test_fold_index
+    #
+    # print('start sleep', index_subject, index_test_fold, 'sleep time=', num)
+    # time.sleep(num)
+    # print('done sleep', index_subject, index_test_fold)
+    #
+    # exit()
+    index_subject = 0
+    index_test_fold = 0
+    train_single_subject(index_subject, index_test_fold)
 
-# Select subject
-index_subject = 1
-data_subject = dataset_bcic_iv_2a[index_subject]
 
-# All but selected subjects:
-# del dataset_bcic_iv_2a[index_subject]
-# data_subjects_allbut1 = data_splitters.concatenate_sets(dataset_bcic_iv_2a)
+def train_single_subject(index_subject, index_test_fold):
+    # Data loading
+    dataset_bcic_iv_2a = data_loading.load_bcic_iv_2a_data(from_pickle, subject_ids='all')
 
-# Split data into train, valid, test
-train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 3)
+    # Select subject
+    data_subject = dataset_bcic_iv_2a[index_subject]
 
-# TL with retraining:
-# train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
-# test_set = None
-# train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subjects_allbut1, n_folds, 3)
+    # Split data into train, valid, test
+    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, index_test_fold)
 
-# TL without retraining:
-# train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
-# _, _, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
+    # TRAINING:
+    subject_id = index_subject + 1
+    # subject_id = 30
+    run_model = RunModel()
+    file_name_state_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
-# Conv AutoEncoder, input and target are the same:
-# data_subjects_allbut1.y = data_subjects_allbut1.X
-# train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
-# test_set = None
 
-################################################################################################################
-# FIRST TRAINING ROUND:
-subject_id = index_subject + 1
-# subject_id = 30
-run_model = RunModel()
-run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
+def train_subject_transfer_learning_allbutone(index_subject, index_test_fold):
+    # Data loading
+    dataset_bcic_iv_2a = data_loading.load_bcic_iv_2a_data(from_pickle, subject_ids='all')
 
-# SECOND TRAINING ROUND:
-# train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 3)
-# run_model = RunModel()
-# run_model.go(
-#     train_set, valid_set, test_set,
-#     n_classes=n_classes,
-#     subject_id=index_subject+1,
-#     tl_model_state=f'model_sate_s{subject_id}_deep.pt',
-#     tl_freeze=False
-# )
+    # Select subject
+    data_subject = dataset_bcic_iv_2a[index_subject]
 
-# TL TRAINING WITH PRETRAINED AUTOENCODER WEIGHTS:
-# run_model = RunModel()
-# run_model.go(
-#     train_set, valid_set, test_set,
-#     n_classes=n_classes,
-#     subject_id=1,
-#     tl_model_state='model_sate_s26_deep.pt',
-#     tl_freeze=False,
-#     tl_eegnetautoencoder=True
-# )
+    # All but selected subjects:
+    # del dataset_bcic_iv_2a[index_subject]
+    # data_subjects_allbut1 = data_splitters.concatenate_sets(dataset_bcic_iv_2a)
+
+    # Split data into train, valid, test
+    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, index_test_fold)
+
+    # TL with retraining:
+    # train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
+    # test_set = None
+    # train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subjects_allbut1, n_folds, 3)
+
+    # TL without retraining:
+    # train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
+    # _, _, test_set = data_splitters.split_into_train_valid_test(data_subject_1, n_folds, 0)
+
+    # Conv AutoEncoder, input and target are the same:
+    # data_subjects_allbut1.y = data_subjects_allbut1.X
+    # train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
+    # test_set = None
+
+    ################################################################################################################
+    # FIRST TRAINING ROUND:
+    subject_id = index_subject + 1
+    # subject_id = 30
+    run_model = RunModel()
+    file_name_state_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
+
+    # log file name state dict:
+    # print(file_name_state_dict)
+
+    # SECOND TRAINING ROUND:
+    # train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, 3)
+    # run_model = RunModel()
+    # run_model.go(
+    #     train_set, valid_set, test_set,
+    #     n_classes=n_classes,
+    #     subject_id=index_subject+1,
+    #     tl_model_state=f'model_sate_s{subject_id}_deep.pt',
+    #     tl_freeze=False
+    # )
+
+    # TL TRAINING WITH PRETRAINED AUTOENCODER WEIGHTS:
+    # run_model = RunModel()
+    # run_model.go(
+    #     train_set, valid_set, test_set,
+    #     n_classes=n_classes,
+    #     subject_id=1,
+    #     tl_model_state='model_sate_s26_deep.pt',
+    #     tl_freeze=False,
+    #     tl_eegnetautoencoder=True
+    # )
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description='My args parse experiment')
+    parser.add_argument('-s', '--subject-index', type=int, default=0, metavar='N',
+                        help='subject index, possible values [0, ..., 8] (default: 0)')
+    parser.add_argument('-t', '--test-fold-index', type=int, default=0, metavar='N',
+                        help='test fold index, possible values [0, ..., 3] (default: 0)')
+    args = parser.parse_args()
+    main(args)

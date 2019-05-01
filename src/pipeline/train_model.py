@@ -48,7 +48,7 @@ class TrainModel:
         # Evaluate:
         results = self._eval_epoch((('train', self.train_set), ('valid', self.valid_set)))
         # Save epoch result:
-        results.update({'runtime': time.time() - start})
+        results.update(dict(runtime=time.time() - start))
         self.epochs_df = self.epochs_df.append(results, ignore_index=True)
         # Log:
         print(f'done epoch {self.epochs_df.shape[0]}')

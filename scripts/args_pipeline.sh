@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+##!/usr/bin/env zsh
 
 ### Job name
 #SBATCH --job-name=MYJOB
@@ -14,9 +14,10 @@
 
 ### The last part consists of regular shell commands:
 ### Change to working directory
-cd /home/no316758/projects/eeg_thesis
+#cd /home/no316758/projects/eeg_thesis
+cd /Users/sebas/code/thesis
 
 ### Execute your application
-source ~/anaconda3/bin/activate eeg
+#source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-python -m src.pipeline.main
+python -m src.pipeline.main -s $1 -t $2

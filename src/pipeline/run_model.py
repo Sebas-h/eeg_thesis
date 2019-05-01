@@ -6,6 +6,7 @@ from braindecode.torch_ext.constraints import MaxNormDefaultConstraint
 from braindecode.torch_ext.optimizers import AdamW
 import pandas as pd
 import datetime
+import uuid
 
 
 class RunModel:
@@ -13,7 +14,8 @@ class RunModel:
         pass
 
     @staticmethod
-    def go(train_set, valid_set, test_set, n_classes, subject_id, tl_model_state=None,
+    def go(train_set, valid_set, test_set, n_classes, subject_id,
+           tl_model_state=None,
            tl_freeze=False,
            tl_eegnetautoencoder=False):
 
@@ -50,6 +52,7 @@ class RunModel:
         ############################################
 
         ################################################################################################################
+        # Create setup for model training based on given config parameters
         train_setup = TrainSetup(
             cropped=cropped,
             train_set=train_set,
@@ -62,10 +65,17 @@ class RunModel:
             final_conv_length_deep=final_conv_length_deep
         )
 
+        # Assign created setup
         model = train_setup.model
-        print(model)  # log model config/architecture
+        iterator = train_setup.iterator
+        loss_function = train_setup.loss_function
+        func_compute_pred_labels = train_setup.compute_pred_labels_func
+
+        # Log model config/design/architecture
+        print(model)
 
         # Transfer learning:
+        # todo: clean up and make (at least some) generic
         if tl_model_state is not None:
             if tl_eegnetautoencoder:
                 ae_params_dict = th.load(tl_model_state)
@@ -87,18 +97,16 @@ class RunModel:
                     for param in child[1].parameters():
                         param.requires_grad = False
 
-        iterator = train_setup.iterator
-        loss_function = train_setup.loss_function
-        func_compute_pred_labels = train_setup.compute_pred_labels_func
+        # Set up additional model training variables:
         stop_criterion = pytorchtools.EarlyStopping(patience=max_increase_epochs, verbose=False, max_epochs=max_epochs)
         model_constraint = MaxNormDefaultConstraint()
         # optimizer = AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        # only include parameters that require grad (i.e. are not frozen)
         optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr, weight_decay=weight_decay)
-
         ################################################################################################################
 
         ################################################################################################################
-        # Train the model
+        # Initialize trainable model
         train_model = TrainModel(
             train_set=train_set,
             valid_set=valid_set,
@@ -112,21 +120,33 @@ class RunModel:
             cuda=cuda,
             func_compute_pred_labels=func_compute_pred_labels
         )
+
+        # Train model:
         train_model.run()
-        print('Done')
+
+        # Log training perfomance
         print(train_model.epochs_df)
+
+        # Log test perfomance
         print(train_model.test_result)
+
         # print([p for p in model.conv_temporal.parameters()])
         # print([p for p in model.conv_separable_point.parameters()])
         # print([p for p in model.conv_classifier.parameters()])
 
+        # Generate unique UUID for save files and log it
+        unique_id = uuid.uuid4().hex
+        print("UUID:", unique_id)
+
         # Save results and model
         timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
-        file_name = f"{timestamp}_subject_{subject_id}.csv"
+        file_name = f"{timestamp}_subject_{subject_id}_{unique_id}.csv"
         train_model.epochs_df.to_csv(file_name)
 
         # Save model state (parameters)
-        th.save(model.state_dict(), f'model_sate_s{subject_id}_deep.pt')
+        file_name_state_dict = f'model_sate_s{subject_id}_{unique_id}.pt'
+        th.save(model.state_dict(), file_name_state_dict)
+        return file_name_state_dict
         ################################################################################################################
 
 
