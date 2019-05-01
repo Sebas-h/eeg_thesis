@@ -71,7 +71,7 @@ def train_subject_transfer_learning_allbutone(index_subject, index_test_fold):
     # test_set = None
     train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subjects_allbut1,
                                                                                 n_folds,
-                                                                                index_subject)
+                                                                                index_test_fold)
 
     # TL without retraining:
     # train_set, valid_set = data_splitters.split_into_train_test(data_subjects_allbut1, 3, 0)
@@ -89,7 +89,7 @@ def train_subject_transfer_learning_allbutone(index_subject, index_test_fold):
     file_name_state_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=subject_id)
 
     # SECOND TRAINING ROUND, fine-tine/retrain:
-    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, index_subject)
+    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(data_subject, n_folds, index_test_fold)
     run_model = RunModel()
     run_model.go(
         train_set, valid_set, test_set,
