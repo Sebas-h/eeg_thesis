@@ -1,4 +1,4 @@
-##!/usr/bin/env zsh
+#!/usr/bin/env zsh
 
 ### Job name
 #SBATCH --job-name=MYJOB
@@ -14,8 +14,7 @@
 
 ### The last part consists of regular shell commands:
 ### Change to working directory
-#cd /home/no316758/projects/eeg_thesis
-cd /Users/sebas/code/thesis
+cd /home/no316758/projects/eeg_thesis
 
 ### Execute your application
 #source ~/anaconda3/bin/activate eeg
