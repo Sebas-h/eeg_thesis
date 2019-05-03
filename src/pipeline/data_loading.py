@@ -27,6 +27,24 @@ log = logging.getLogger(__name__)
 log.setLevel('INFO')
 
 
+def main():
+    load_high_gamma_dataset()
+
+
+def pickle_to_mat():
+    import scipy.io as sio
+    dire = "/Users/sebas/Downloads/"
+
+    data = load_bcic_iv_2a_data(True, 'all')
+
+    for idx, s in enumerate(data):
+        sio.savemat(dire + f"subject_{idx + 1}.mat", {'X': s.X, 'y': s.y})
+
+    # mm = sio.loadmat('tests1mat.mat')
+    # print(mm.items())
+    print('done')
+
+
 @data_ingredient.config
 def cfg():
     dataset_name = "bcic_iv_2a"
@@ -318,4 +336,4 @@ def load_high_gamma_parameters():
 
 
 if __name__ == '__main__':
-    load_high_gamma_parameters()
+    main()

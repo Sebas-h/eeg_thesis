@@ -66,10 +66,11 @@ class EEGNetSiamese(nn.Module):
         # Define kind of pooling used:
         pool_class = dict(max=nn.MaxPool2d, mean=nn.AvgPool2d)[self.pool_mode]
 
+        # Rearrange dimensions:
+        self.dimshuffle = _transpose_to_b_1_c_0
+
         # Convolutional (feature space extraction) part:
         self.conv = nn.Sequential(
-            # Rearrange dimensions:
-            _transpose_to_b_1_c_0,
             # Temporal conv layer:
             nn.Conv2d(in_channels=1, out_channels=self.F1,
                       kernel_size=(1, self.kernel_length),
@@ -107,27 +108,37 @@ class EEGNetSiamese(nn.Module):
         self.cls = nn.Sequential(
             nn.Conv2d(self.F2, self.n_classes, (n_out_virtual_chans, self.final_conv_length,), bias=True),
             nn.LogSoftmax(dim=1),
-            # Transpose back to the the logic of braindecode,
-            # so time in third dimension (axis=2)
-            _transpose_1_0,
-            _squeeze_final_output
         )
 
+        # Transpose back to the the logic of braindecode,
+        # so time in third dimension (axis=2)
+        self.permute_back = _transpose_1_0
+        self.squeeze = _squeeze_final_output
+
         # Initialize weights of the network
-        glorot_weight_zero_bias(self)
+        glorot_weight_zero_bias(self.conv)
+        glorot_weight_zero_bias(self.cls)
 
     # def forward(self, x1, x2):
-    #     x1_conv = self.conv(x1)
-    #     x1_cls = self.cls(x1_conv)
-    #     x2_conv = self.conv(x2)
-    #     return x1_conv, x1_cls, x2_conv
+    #     pass
 
     def forward(self, x):
         x1 = x[0]
         x2 = x[1]
+
+        # tranform to shape required by model
+        x1 = self.dimshuffle(x1)
+        x2 = self.dimshuffle(x2)
+
+        # forward pass
         x1_conv = self.conv(x1)
-        x1_cls = self.cls(x1_conv)
         x2_conv = self.conv(x2)
+        x1_cls = self.cls(x1_conv)
+
+        # transform back to original shape
+        x1_cls = self.permute_back(x1_cls)
+        x1_cls = self.squeeze(x1_cls)
+
         return x1_conv, x1_cls, x2_conv
 
 

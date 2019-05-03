@@ -14,7 +14,7 @@ data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data')
 pickle_path = data_dir + "/bcic_iv_2a_all_9_subjects.pickle"  # path to pickle dir
 # number of classes in dataset
 n_classes = 4
-subject_ids = [1, 4]  # 1-9, list of ids or 'all' for all subjects
+# subject_ids = [1, 4]  # 1-9, list of ids or 'all' for all subjects
 n_folds = 4  # one fold validation, one fold test, the rest is train fold(s)
 from_pickle = True  # if not from_pickle then data from raw with preprocessing
 # data preprocessing parameters
@@ -33,13 +33,12 @@ data_preprocessing = {
 
 
 def main(args):
-    # Unfold arguments
+    # Expand arguments
     index_subject = args.subject_index
     index_test_fold = args.test_fold_index
     print("Subject and test fold indices", index_subject, index_test_fold)
 
     # Run experiment
-
     # train_single_subject(index_subject, index_test_fold)
     train_subject_transfer_learning_allbutone(index_subject, index_test_fold)
 
