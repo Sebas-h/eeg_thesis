@@ -12,7 +12,7 @@ def eegnet_tl_finetune():
     (all layers finetuned, none frozen, seemed best from preliminary results)
     :return:
     """
-    path = "/Users/sebas/Downloads/slurm-results/eegnet_tl_finetune"
+    path = "/Users/sebas/Downloads/slurm-results/deep_cropped_tl"
     files = glob.glob(path + "/*")
 
     first_test = False

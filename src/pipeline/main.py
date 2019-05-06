@@ -26,7 +26,6 @@ data_preprocessing = {
     'init_block_size': 1000
 }
 
-
 #######################
 # END CFG
 #######################
@@ -39,8 +38,8 @@ def main(args):
     print("Subject and test fold indices", index_subject, index_test_fold)
 
     # Run experiment
-    # train_single_subject(index_subject, index_test_fold)
-    train_subject_transfer_learning_allbutone(index_subject, index_test_fold)
+    train_single_subject(index_subject, index_test_fold)
+    # train_subject_transfer_learning_allbutone(index_subject, index_test_fold)
 
 
 def train_single_subject(index_subject, index_test_fold):
