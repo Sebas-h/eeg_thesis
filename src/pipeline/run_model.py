@@ -44,11 +44,11 @@ class RunModel:
         lr = 1e-3
         weight_decay = 0
 
-        if model_name == 'shallow':
-            lr = 0.000625
-        elif model_name == 'deep':
-            lr = 0.01
-            weight_decay = 0.0005
+        # if model_name == 'shallow':
+        #     lr = 0.000625
+        # elif model_name == 'deep':
+        #     lr = 0.01
+        #     weight_decay = 0.0005
 
         # Cropped training parameters
         input_time_length = 1000
