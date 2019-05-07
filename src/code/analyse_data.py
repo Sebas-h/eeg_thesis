@@ -6,6 +6,41 @@ import matplotlib
 
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+
+def main():
+    show_eeg_data_subject()
+
+
+def show_eeg_data_subject():
+    from src.pipeline.data_loading import load_bcic_iv_2a_data
+    data = load_bcic_iv_2a_data(True, 'all')
+    data = data[0].X[0]
+
+    # 3d plot single brain state (4.5 sec task eeg recording 22 electrodes)
+    # fig = plt.figure()
+    # ax = plt.axes(projection='3d')
+    # x = np.arange(1125)
+    # y = np.arange(22)
+    # x, y = np.meshgrid(x, y)
+    # z = data
+    # ax.plot_surface(x, y, z, cmap=plt.cm.jet, rstride=1, cstride=1, linewidth=0)
+
+    fig, axs = plt.subplots(nrows=22, ncols=1)
+    # fig.suptitle(f"Task {task_num + 1}")
+    for idx, (ax, ch) in enumerate(zip(axs.flat, data)):
+        ax.plot(ch)
+        # ax.set_title(f"Channel (electrode) {idx + 1}", loc='left')
+        ax.set_ylabel(f'{idx+1}')
+        # ax.set_ylim([-0.75, 0.75])
+        ax.set_yticklabels([])
+
+    fig.tight_layout()
+    mng = plt.get_current_fig_manager()
+    mng.resize(*mng.window.maxsize())
+    plt.show()
+    # plt.savefig('eeg_plot.png', dpi=300, quality='100')
 
 
 def analyse_input_data():
@@ -205,4 +240,4 @@ if __name__ == "__main__":
     # analyse_difference_mycsv()
     # analyse_shallow_og_experiment()
     # analyse_shallow_variants()
-    analyse_subject_eeg_signals()
+    main()

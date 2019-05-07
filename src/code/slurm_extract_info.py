@@ -2,7 +2,7 @@ import glob
 
 
 def main():
-    eegnet_tl_finetune()
+    eegnet_no_tl()
 
 
 def eegnet_tl_finetune():
@@ -12,7 +12,7 @@ def eegnet_tl_finetune():
     (all layers finetuned, none frozen, seemed best from preliminary results)
     :return:
     """
-    path = "/Users/sebas/Downloads/slurm-results/deep_cropped_tl"
+    path = "/Users/sebas/Downloads/slurm-results/shallow_no_tl_defaultlr"
     files = glob.glob(path + "/*")
 
     first_test = False
@@ -20,6 +20,7 @@ def eegnet_tl_finetune():
     for file in files:
         with open(file, "r+") as f:
             for l in f.readlines():
+                print(l)
                 if 'test ' in l:
                     split = l.split()
                     subject_index = int(split[-2])
@@ -78,7 +79,7 @@ def eegnet_no_tl():
     learn model from subject (target) data only, no source data involved
     :return:
     """
-    path = "/Users/sebas/Downloads/slurm-results/eegnet_no_tl"
+    path = "/Users/sebas/Downloads/slurm-results/shallow_no_tl_defaultlr"
     files = glob.glob(path + "/*")
 
     results = []

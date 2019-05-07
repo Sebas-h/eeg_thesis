@@ -23,9 +23,9 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'shallow'
+        model_name = 'deep'
         # cropped or trialwise training
-        cropped = False
+        cropped = True
         # cross validation yes or no
         cv = False
         # Transfer learning: all but one training method, min dtw dist
