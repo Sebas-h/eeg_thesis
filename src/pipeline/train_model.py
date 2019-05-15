@@ -96,7 +96,10 @@ class TrainModel:
 
             # Compute predictions and accuracy/inverse_of_error
             predicted_labels = self.func_compute_pred_labels(all_preds, dataset)
-            accuracy = np.mean(predicted_labels == dataset.y)
+            if len(dataset.y.shape) > 1:  # for Siamase network (paired data) todo fix
+                accuracy = np.mean(predicted_labels == dataset.y[:, 1])
+            else:
+                accuracy = np.mean(predicted_labels == dataset.y)
 
             # early_stopping needs the validation loss to check if it has decresed,
             # and if it has, it will make a checkpoint of the current model
@@ -120,4 +123,6 @@ class TrainModel:
         outputs = self.model(net_in)
         loss = self.loss_function(outputs, net_target)
         loss = float(th_ext_util.var_to_np(loss))
+        if type(outputs) == dict:  # for Siamase network (paired data) todo fix
+            outputs = outputs['source_cls']
         return outputs, loss

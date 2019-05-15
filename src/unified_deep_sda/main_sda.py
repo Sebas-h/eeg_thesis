@@ -1,11 +1,10 @@
-# Unified Deep Supervised Domain Adaptation and Generalization
-# by Saeid Motiian et al.
-
 import os
 import braindecode.datautil.splitters as data_splitters
 from src.pipeline import data_loading
 from src.pipeline.run_model import RunModel
 import numpy as np
+from src.unified_deep_sda.dataset import BCICIV2a, SiameseBCICIV2A
+import pickle
 
 #######################
 # CONFIG AND PARAMETERS
@@ -30,32 +29,48 @@ data_preprocessing = {
     'init_block_size': 1000
 }
 
+
 #######################
 # END CFG
 #######################
+def main(args):
+    # Expand arguments
+    index_subject = args.subject_index
+    index_test_fold = args.test_fold_index
+    print("Subject and test fold indices", index_subject, index_test_fold)
+    # Run experiment
+    unified_deep_sda(index_subject, index_test_fold)
 
 
-def unified_deep_sda():
+def unified_deep_sda(target_idx, index_test_fold):
     # Data loading
-    dataset_bcic_iv_2a = data_loading.load_bcic_iv_2a_data(from_pickle, subject_ids='all')
+    target_idx = target_idx
+    bcic = BCICIV2a()
+    target = bcic.get_subject(target_idx)
+    source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
 
-    # Select subject, target domain
-    index_subject = 0
-    target_data = dataset_bcic_iv_2a[index_subject]
-    target_data.X = np.tile(target_data.X, (8, 1, 1))
-    target_data.y = np.tile(target_data.y, 8)
+    # Make pairs of target and sources suitable for siamese (two-stream) network:
+    siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
+    siamsese_bcic.create_paired_dataset()
 
-    # All but selected subjects, source domain
-    del dataset_bcic_iv_2a[index_subject]
-    source_data = data_splitters.concatenate_sets(dataset_bcic_iv_2a)
+    # from pickle
+    # siamsese_bcic = SiameseBCICIV2A(None, None, 4, 9)
+    # with open('siamese.pickle', 'rb') as f:
+    #     a = pickle.load(f)
+    # siamsese_bcic.paired_dataset = a
 
-    # Train model (or models) on source data
-    # kinda models, bc the weights/parameters are shared, so training one sets the parameters for the other
-
-    # Split data into train, valid, test
-    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target_data, n_folds, 3)
-    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(source_data, n_folds, 3)
+    train_set, valid_set, test_set = siamsese_bcic.split_into_train_valid_test(n_folds, index_test_fold)
+    run_model = RunModel()
+    run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
 
 
 if __name__ == '__main__':
-    unified_deep_sda()
+    import argparse
+
+    parser = argparse.ArgumentParser(description='My args parse experiment')
+    parser.add_argument('-s', '--subject-index', type=int, default=0, metavar='N',
+                        help='subject index, possible values [0, ..., 8] (default: 0)')
+    parser.add_argument('-t', '--test-fold-index', type=int, default=0, metavar='N',
+                        help='test fold index, possible values [0, ..., 3] (default: 0)')
+    args = parser.parse_args()
+    main(args)

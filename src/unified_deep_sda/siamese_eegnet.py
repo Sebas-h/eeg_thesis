@@ -20,7 +20,7 @@ class Conv2dWithConstraint(nn.Conv2d):
         return super(Conv2dWithConstraint, self).forward(x)
 
 
-class EEGNetSiamese(nn.Module):
+class SiameseEEGNet(nn.Module):
     """
     EEGNet v4 model from [EEGNet4]_.
 
@@ -51,7 +51,7 @@ class EEGNetSiamese(nn.Module):
                  third_kernel_size=(8, 4),
                  drop_prob=0.25
                  ):
-        super(EEGNetSiamese, self).__init__()
+        super(SiameseEEGNet, self).__init__()
 
         if final_conv_length == 'auto':
             assert input_time_length is not None
@@ -66,11 +66,10 @@ class EEGNetSiamese(nn.Module):
         # Define kind of pooling used:
         pool_class = dict(max=nn.MaxPool2d, mean=nn.AvgPool2d)[self.pool_mode]
 
-        # Rearrange dimensions:
-        self.dimshuffle = _transpose_to_b_1_c_0
-
-        # Convolutional (feature space extraction) part:
-        self.conv = nn.Sequential(
+        # Embedding (feature space extraction) part:
+        self.embed = nn.Sequential(
+            # Rearrange dimensions, dimshuffle, tranform to shape required by pytorch:
+            Expression(_transpose_to_b_1_c_0),
             # Temporal conv layer:
             nn.Conv2d(in_channels=1, out_channels=self.F1,
                       kernel_size=(1, self.kernel_length),
@@ -81,6 +80,8 @@ class EEGNetSiamese(nn.Module):
             # Spatial conv layer:
             Conv2dWithConstraint(self.F1, self.F1 * self.D, (self.in_chans, 1), max_norm=1, stride=1, bias=False,
                                  groups=self.F1, padding=(0, 0)),
+            # nn.Conv2d(self.F1, self.F1 * self.D, (self.in_chans, 1), stride=1, bias=False,
+            #           groups=self.F1, padding=(0, 0)),
             nn.BatchNorm2d(self.F1 * self.D, momentum=0.01, affine=True, eps=1e-3),
             nn.ELU(),
             pool_class(kernel_size=(1, 4), stride=(1, 4)),
@@ -95,51 +96,37 @@ class EEGNetSiamese(nn.Module):
             nn.Dropout(p=self.drop_prob)
         )
 
-        # out = self(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32)))
-        # n_out_virtual_chans = out.cpu().data.numpy().shape[2]
-        n_out_virtual_chans = 1
+        out = self.embed(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32)))
+        n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
-        # if self.final_conv_length == 'auto':
-        #     n_out_time = out.cpu().data.numpy().shape[3]
-        #     self.final_conv_length = n_out_time
-        self.final_conv_length = 35
+        if self.final_conv_length == 'auto':
+            n_out_time = out.cpu().data.numpy().shape[3]
+            self.final_conv_length = n_out_time
 
         # Classifier part:
         self.cls = nn.Sequential(
             nn.Conv2d(self.F2, self.n_classes, (n_out_virtual_chans, self.final_conv_length,), bias=True),
             nn.LogSoftmax(dim=1),
+            # Transpose back to the the logic of braindecode, so time in third dimension (axis=2)
+            # Transform back to original shape and squeeze to (batch_size, n_classes) size
+            Expression(_transpose_1_0),
+            Expression(_squeeze_final_output)
         )
 
-        # Transpose back to the the logic of braindecode,
-        # so time in third dimension (axis=2)
-        self.permute_back = _transpose_1_0
-        self.squeeze = _squeeze_final_output
-
         # Initialize weights of the network
-        glorot_weight_zero_bias(self.conv)
-        glorot_weight_zero_bias(self.cls)
-
-    # def forward(self, x1, x2):
-    #     pass
+        self.apply(glorot_weight_zero_bias)
 
     def forward(self, x):
-        x1 = x[0]
-        x2 = x[1]
+        # Separate streams '0/1' and add empty dimension at end 'None':
+        target = x[:, 0, :, :, None]
+        source = x[:, 1, :, :, None]
 
-        # tranform to shape required by model
-        x1 = self.dimshuffle(x1)
-        x2 = self.dimshuffle(x2)
+        # Forward pass
+        target_embedding = self.embed(target)
+        source_embedding = self.embed(source)
+        source_cls = self.cls(source_embedding)
 
-        # forward pass
-        x1_conv = self.conv(x1)
-        x2_conv = self.conv(x2)
-        x1_cls = self.cls(x1_conv)
-
-        # transform back to original shape
-        x1_cls = self.permute_back(x1_cls)
-        x1_cls = self.squeeze(x1_cls)
-
-        return x1_conv, x1_cls, x2_conv
+        return {'target_embedding': target_embedding, 'source_embedding': source_embedding, 'source_cls': source_cls}
 
 
 def _transpose_to_b_1_c_0(x):
@@ -150,9 +137,13 @@ def _transpose_1_0(x):
     return x.permute(0, 1, 3, 2)
 
 
-# remove empty dim at end and potentially remove empty time dim
-# do not just use squeeze as we never want to remove first dim
 def _squeeze_final_output(x):
+    """
+    Remove empty dim at end and potentially remove empty time dim
+    Do not just use squeeze as we never want to remove first dim
+    :param x:
+    :return:
+    """
     assert x.size()[3] == 1
     x = x[:, :, :, 0]
     if x.size()[2] == 1:
@@ -183,7 +174,7 @@ if __name__ == '__main__':
     inputs = np_to_var(inputs)
 
     # Model:
-    model = EEGNetSiamese(
+    model = SiameseEEGNet(
         in_chans=22,
         n_classes=4,
         input_time_length=1125
@@ -197,7 +188,6 @@ if __name__ == '__main__':
     output = model(inputs)
     # print(output)
     print(output.shape)
-
 
 # OLD/ALTERNATIVE MODEL DEFINITION
 # Rearrange dimensions
