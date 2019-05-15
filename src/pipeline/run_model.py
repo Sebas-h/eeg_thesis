@@ -7,6 +7,7 @@ from braindecode.torch_ext.optimizers import AdamW
 import pandas as pd
 import datetime
 import uuid
+from src.unified_deep_sda.siamese_train_model import SiameseTrainModel
 
 
 class RunModel:
@@ -33,7 +34,7 @@ class RunModel:
         tl_abo = False
 
         # Max number of epochs if early stopping criteria not satisfied:
-        max_epochs = 900
+        max_epochs = 1
         # Early stopping (patience) value:
         max_increase_epochs = 100
         # Number of training examples to train per optimization step (i.e. per batch):
@@ -114,19 +115,34 @@ class RunModel:
 
         ################################################################################################################
         # Initialize trainable model
-        train_model = TrainModel(
-            train_set=train_set,
-            valid_set=valid_set,
-            test_set=test_set,
-            model=model,
-            optimizer=optimizer,
-            iterator=iterator,
-            loss_function=loss_function,
-            stop_criterion=stop_criterion,
-            model_constraint=model_constraint,
-            cuda=cuda,
-            func_compute_pred_labels=func_compute_pred_labels
-        )
+        if model_name == 'siamese_eegnet':
+            train_model = SiameseTrainModel(
+                train_set=train_set,
+                valid_set=valid_set,
+                test_set=test_set,
+                model=model,
+                optimizer=optimizer,
+                iterator=iterator,
+                loss_function=loss_function,
+                stop_criterion=stop_criterion,
+                model_constraint=model_constraint,
+                cuda=cuda,
+                func_compute_pred_labels=func_compute_pred_labels
+            )
+        else:
+            train_model = TrainModel(
+                train_set=train_set,
+                valid_set=valid_set,
+                test_set=test_set,
+                model=model,
+                optimizer=optimizer,
+                iterator=iterator,
+                loss_function=loss_function,
+                stop_criterion=stop_criterion,
+                model_constraint=model_constraint,
+                cuda=cuda,
+                func_compute_pred_labels=func_compute_pred_labels
+            )
 
         # Train model:
         train_model.run()

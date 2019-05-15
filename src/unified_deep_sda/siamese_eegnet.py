@@ -116,7 +116,7 @@ class SiameseEEGNet(nn.Module):
         # Initialize weights of the network
         self.apply(glorot_weight_zero_bias)
 
-    def forward(self, x):
+    def forward(self, x, setname):
         # Separate streams '0/1' and add empty dimension at end 'None':
         target = x[:, 0, :, :, None]
         source = x[:, 1, :, :, None]
@@ -124,9 +124,13 @@ class SiameseEEGNet(nn.Module):
         # Forward pass
         target_embedding = self.embed(target)
         source_embedding = self.embed(source)
-        source_cls = self.cls(source_embedding)
 
-        return {'target_embedding': target_embedding, 'source_embedding': source_embedding, 'source_cls': source_cls}
+        if setname == 'test':
+            cls = self.cls(target_embedding)
+        else:
+            cls = self.cls(source_embedding)
+
+        return {'target_embedding': target_embedding, 'source_embedding': source_embedding, 'source_cls': cls}
 
 
 def _transpose_to_b_1_c_0(x):

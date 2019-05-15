@@ -6,7 +6,7 @@ import pandas as pd
 from collections import OrderedDict
 
 
-class TrainModel:
+class SiameseTrainModel:
     def __init__(self, train_set, valid_set, test_set, model, optimizer, iterator, loss_function, stop_criterion,
                  model_constraint, cuda, func_compute_pred_labels):
         # Config
@@ -68,7 +68,7 @@ class TrainModel:
             input_vars = input_vars.cuda()
             target_vars = target_vars.cuda()
         self.optimizer.zero_grad()
-        outputs = self.model(input_vars)
+        outputs = self.model(input_vars, 'train')
         loss = self.loss_function(outputs, target_vars)
         loss.backward()
         self.optimizer.step()
@@ -84,7 +84,7 @@ class TrainModel:
             all_losses = []
             batch_sizes = []
             for batch_X, batch_y in self.iterator.get_batches(dataset, shuffle=False):
-                preds, loss = self._eval_batch(batch_X, batch_y)
+                preds, loss = self._eval_batch(batch_X, batch_y, setname)
                 all_preds.append(th_ext_util.var_to_np(preds))
                 all_losses.append(loss)
                 batch_sizes.append(len(batch_X))
@@ -96,7 +96,10 @@ class TrainModel:
 
             # Compute predictions and accuracy/inverse_of_error
             predicted_labels = self.func_compute_pred_labels(all_preds, dataset)
-            accuracy = np.mean(predicted_labels == dataset.y)
+            if len(dataset.y.shape) > 1:  # for Siamase network (paired data) todo clean up
+                accuracy = np.mean(predicted_labels == dataset.y[:, 1])
+            else:
+                accuracy = np.mean(predicted_labels == dataset.y)
 
             # early_stopping needs the validation loss to check if it has decresed,
             # and if it has, it will make a checkpoint of the current model
@@ -110,14 +113,16 @@ class TrainModel:
             })
         return epoch_results
 
-    def _eval_batch(self, inputs, targets):
+    def _eval_batch(self, inputs, targets, setname):
         net_in = th_ext_util.np_to_var(inputs)
         net_target = th_ext_util.np_to_var(targets)
         if self.cuda:
             net_in = net_in.cuda()
         if self.cuda:
             net_target = net_target.cuda()
-        outputs = self.model(net_in)
+        outputs = self.model(net_in, setname)
         loss = self.loss_function(outputs, net_target)
         loss = float(th_ext_util.var_to_np(loss))
+        if type(outputs) == dict:  # for Siamase network (paired data) todo clean up
+            outputs = outputs['source_cls']
         return outputs, loss
