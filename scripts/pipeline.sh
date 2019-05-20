@@ -10,10 +10,10 @@
 ###SBATCH --nodes=1
 
 # request one gpu per node
-###SBATCH --gres=gpu:volta:1
+#SBATCH --gres=gpu:volta:1
 
 # set the number of nodes
-#SBATCH --partition=c16m
+###SBATCH --partition=c16m
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
 #SBATCH --time=99:15:30
