@@ -74,7 +74,7 @@ def unified_deep_sda(target_idx, index_test_fold):
         train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
         run_model = RunModel()
         run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
-                     sda_freeze=False,
+                     sda_freeze=True,
                      tl_model_state=server_model_state_0_0)
 
 
