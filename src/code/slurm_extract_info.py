@@ -2,7 +2,8 @@ import glob
 
 
 def main():
-    eegnet_no_tl()
+    # eegnet_no_tl()
+    eegnet_tl_finetune()
 
 
 def eegnet_tl_finetune():
@@ -12,7 +13,8 @@ def eegnet_tl_finetune():
     (all layers finetuned, none frozen, seemed best from preliminary results)
     :return:
     """
-    path = "/Users/sebas/Downloads/slurm-results/shallow_no_tl_defaultlr"
+    path = "/Users/sebas/Downloads/slurm-results/eegnet_tl_finetune"
+    # path = "/Users/sebas/Downloads/slurm-results/shallow_trial_tl"
     files = glob.glob(path + "/*")
 
     first_test = False
@@ -20,7 +22,7 @@ def eegnet_tl_finetune():
     for file in files:
         with open(file, "r+") as f:
             for l in f.readlines():
-                print(l)
+                # print(l)
                 if 'test ' in l:
                     split = l.split()
                     subject_index = int(split[-2])
@@ -80,6 +82,7 @@ def eegnet_no_tl():
     :return:
     """
     path = "/Users/sebas/Downloads/slurm-results/eegnet_SDA_first"
+    # path = "/Users/sebas/Downloads/slurm-results/shallow_no_tl_defaultlr"
     files = glob.glob(path + "/*")
 
     results = []

@@ -1,10 +1,16 @@
-#!/usr/bin/env zsh
+#!/usr/local_rwth/bin/zsh
 
 ### Job name
 #SBATCH --job-name=MYJOB
 
 ### File for the output
 #SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.%j
+
+# set the number of nodes
+#SBATCH --nodes=1
+
+# set the number of nodes
+#SBATCH --partition=c18g
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
 #SBATCH --time=99:15:30
