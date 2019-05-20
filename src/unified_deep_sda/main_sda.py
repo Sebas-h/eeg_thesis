@@ -67,7 +67,7 @@ def unified_deep_sda(target_idx, index_test_fold):
     # run_model = RunModel()
     # path_to_saved_model_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
 
-    server_model_state_0_0 = '/rwthfs/rz/cluster/home/no316758/projects/eeg_thesis/model_sate_subject_0_0ed87556ffbf45ad90cb02b0871ebfd7.pt'
+    server_model_state_0_0 = '/home/no316758/projects/eeg_thesis/model_sate_subject_0_0ed87556ffbf45ad90cb02b0871ebfd7.pt'
     # server_model_state_0_0 = '/Users/sebas/code/thesis/src/unified_deep_sda/model_sate_subject_0_29e3ea143d6f4ccab7983d0630d30fac.pt'
 
     if target_finetune_cls:
