@@ -62,7 +62,7 @@ class RunModel:
 
         ################################################################################################################
         # Create setup for model training based on given config parameters
-        if sda_freeze:
+        if model_name == 'siamese_eegnet' and tl_model_state is not None:
             train_setup = TrainSetup(
                 cropped=cropped,
                 train_set=train_set,
@@ -73,7 +73,7 @@ class RunModel:
                 input_time_length=input_time_length,
                 final_conv_length_shallow=final_conv_length_shallow,
                 final_conv_length_deep=final_conv_length_deep,
-                sda_freeze=True
+                sda_finetune=True
             )
         else:
             train_setup = TrainSetup(
@@ -138,7 +138,7 @@ class RunModel:
 
         ################################################################################################################
         # Initialize trainable model
-        if model_name == 'siamese_eegnet' and sda_freeze:
+        if model_name == 'siamese_eegnet' and tl_model_state is not None:
             train_model = SiameseTrainModel(
                 train_set=train_set,
                 valid_set=valid_set,
@@ -151,7 +151,7 @@ class RunModel:
                 model_constraint=model_constraint,
                 cuda=cuda,
                 func_compute_pred_labels=func_compute_pred_labels,
-                target_finetune_cls=sda_freeze
+                target_finetune_cls=True
             )
         else:
             train_model = TrainModel(
