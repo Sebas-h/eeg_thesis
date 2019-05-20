@@ -20,7 +20,7 @@ from braindecode.torch_ext.init import glorot_weight_zero_bias
 
 class TrainSetup:
     def __init__(self, cropped, train_set, model_name, cuda, batch_size,
-                 n_classes, input_time_length, final_conv_length_shallow, final_conv_length_deep):
+                 n_classes, input_time_length, final_conv_length_shallow, final_conv_length_deep, sda_freeze=False):
         # Config:
         self.cropped = cropped
         self.model_name = model_name
@@ -42,6 +42,7 @@ class TrainSetup:
             self.input_time_length = input_time_length
         else:
             self.input_time_length = self.train_set.X.shape[2]
+        self.sda_freeze = sda_freeze
 
         # Set up (setting order necessary):
         self.model = self._set_model()
@@ -95,10 +96,12 @@ class TrainSetup:
         elif self.model_name == 'eegnet_cae':
             model = ConvAutoEncoder(in_chans=n_chans, n_classes=self.n_classes)
         elif self.model_name == 'siamese_eegnet':
-            n_chans = int(self.train_set.X.shape[2])
-            input_time_length = int(self.train_set.X.shape[3])
-            model = SiameseEEGNet(n_chans, self.n_classes, input_time_length=input_time_length)
-            # model.apply(glorot_weight_zero_bias)
+            if not self.sda_freeze:
+                n_chans = int(self.train_set.X.shape[2])
+                input_time_length = int(self.train_set.X.shape[3])
+                model = SiameseEEGNet(n_chans, self.n_classes, input_time_length=input_time_length)
+            else:
+                model = SiameseEEGNet(n_chans, self.n_classes, input_time_length=self.input_time_length)
 
         return model
 

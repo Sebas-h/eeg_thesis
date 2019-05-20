@@ -43,30 +43,40 @@ def main(args):
 
 
 def unified_deep_sda(target_idx, index_test_fold):
+    # sfrom_pickle = True
+    target_finetune_cls = True
+
     # Data loading
     target_idx = target_idx
+    # if sfrom_pickle:
+    #     # from pickle
+    #     siamsese_bcic = SiameseBCICIV2A(None, None, 4, 9)
+    #     with open('siamese.pickle', 'rb') as f:
+    #         a = pickle.load(f)
+    #     siamsese_bcic.paired_dataset = a
+    # else:
     bcic = BCICIV2a()
     target = bcic.get_subject(target_idx)
-    source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
+    # source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
+    #
+    # # Make pairs of target and sources suitable for siamese (two-stream) network:
+    # siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
+    # siamsese_bcic.create_paired_dataset()
+    #
+    # train_set, valid_set, test_set = siamsese_bcic.split_into_train_valid_test(n_folds, index_test_fold)
+    # run_model = RunModel()
+    # path_to_saved_model_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
 
-    # Make pairs of target and sources suitable for siamese (two-stream) network:
-    siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
-    siamsese_bcic.create_paired_dataset()
-
-    # from pickle
-    # siamsese_bcic = SiameseBCICIV2A(None, None, 4, 9)
-    # with open('siamese.pickle', 'rb') as f:
-    #     a = pickle.load(f)
-    # siamsese_bcic.paired_dataset = a
-
-    train_set, valid_set, test_set = siamsese_bcic.split_into_train_valid_test(n_folds, index_test_fold)
-    run_model = RunModel()
-    run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
+    if target_finetune_cls:
+        train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
+        run_model = RunModel()
+        run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
+                     sda_freeze=True,
+                     tl_model_state='/Users/sebas/code/thesis/src/unified_deep_sda/model_sate_subject_0_29e3ea143d6f4ccab7983d0630d30fac.pt')
 
 
 if __name__ == '__main__':
     import argparse
-
     parser = argparse.ArgumentParser(description='My args parse experiment')
     parser.add_argument('-s', '--subject-index', type=int, default=0, metavar='N',
                         help='subject index, possible values [0, ..., 8] (default: 0)')

@@ -79,7 +79,7 @@ def eegnet_no_tl():
     learn model from subject (target) data only, no source data involved
     :return:
     """
-    path = "/Users/sebas/Downloads/slurm-results/shallow_no_tl_defaultlr"
+    path = "/Users/sebas/Downloads/slurm-results/eegnet_SDA_first"
     files = glob.glob(path + "/*")
 
     results = []

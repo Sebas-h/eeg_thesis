@@ -8,7 +8,7 @@ import pandas as pd
 import datetime
 import uuid
 from src.unified_deep_sda.siamese_train_model import SiameseTrainModel
-
+import torch.nn.functional as F
 
 class RunModel:
     def __init__(self):
@@ -18,7 +18,8 @@ class RunModel:
     def go(train_set, valid_set, test_set, n_classes, subject_id,
            tl_model_state=None,
            tl_freeze=False,
-           tl_eegnetautoencoder=False):
+           tl_eegnetautoencoder=False,
+           sda_freeze=False):
 
         ############################################
         # config
@@ -34,7 +35,7 @@ class RunModel:
         tl_abo = False
 
         # Max number of epochs if early stopping criteria not satisfied:
-        max_epochs = 900
+        max_epochs = 1
         # Early stopping (patience) value:
         max_increase_epochs = 100
         # Number of training examples to train per optimization step (i.e. per batch):
@@ -61,17 +62,31 @@ class RunModel:
 
         ################################################################################################################
         # Create setup for model training based on given config parameters
-        train_setup = TrainSetup(
-            cropped=cropped,
-            train_set=train_set,
-            model_name=model_name,
-            cuda=cuda,
-            batch_size=batch_size,
-            n_classes=n_classes,
-            input_time_length=input_time_length,
-            final_conv_length_shallow=final_conv_length_shallow,
-            final_conv_length_deep=final_conv_length_deep
-        )
+        if sda_freeze:
+            train_setup = TrainSetup(
+                cropped=cropped,
+                train_set=train_set,
+                model_name=model_name,
+                cuda=cuda,
+                batch_size=batch_size,
+                n_classes=n_classes,
+                input_time_length=input_time_length,
+                final_conv_length_shallow=final_conv_length_shallow,
+                final_conv_length_deep=final_conv_length_deep,
+                sda_freeze=True
+            )
+        else:
+            train_setup = TrainSetup(
+                cropped=cropped,
+                train_set=train_set,
+                model_name=model_name,
+                cuda=cuda,
+                batch_size=batch_size,
+                n_classes=n_classes,
+                input_time_length=input_time_length,
+                final_conv_length_shallow=final_conv_length_shallow,
+                final_conv_length_deep=final_conv_length_deep
+            )
 
         # Assign created setup
         model = train_setup.model
@@ -82,6 +97,7 @@ class RunModel:
         # Log model config/design/architecture
         print(model)
 
+        ################################################################################################################
         # Transfer learning:
         # todo: clean up and make (at least some) generic
         if tl_model_state is not None:
@@ -101,10 +117,17 @@ class RunModel:
                 for idx, child in enumerate(model.named_children()):
                     # print(idx, child[0], [x.shape for x in child[1].parameters()])
                     if idx > 13:
-                        continue
+                        break
                     for param in child[1].parameters():
                         param.requires_grad = False
+            if sda_freeze:
+                for idx, child in enumerate(model.named_children()):
+                    if child[0] == 'embed':
+                        for param in child[1].parameters():
+                            param.requires_grad = False
+        ################################################################################################################
 
+        ################################################################################################################
         # Set up additional model training variables:
         stop_criterion = pytorchtools.EarlyStopping(patience=max_increase_epochs, verbose=False, max_epochs=max_epochs)
         model_constraint = MaxNormDefaultConstraint()
@@ -115,7 +138,7 @@ class RunModel:
 
         ################################################################################################################
         # Initialize trainable model
-        if model_name == 'siamese_eegnet':
+        if model_name == 'siamese_eegnet' and sda_freeze:
             train_model = SiameseTrainModel(
                 train_set=train_set,
                 valid_set=valid_set,
@@ -123,11 +146,12 @@ class RunModel:
                 model=model,
                 optimizer=optimizer,
                 iterator=iterator,
-                loss_function=loss_function,
+                loss_function=F.nll_loss,
                 stop_criterion=stop_criterion,
                 model_constraint=model_constraint,
                 cuda=cuda,
-                func_compute_pred_labels=func_compute_pred_labels
+                func_compute_pred_labels=func_compute_pred_labels,
+                target_finetune_cls=sda_freeze
             )
         else:
             train_model = TrainModel(
@@ -170,7 +194,6 @@ class RunModel:
         file_name_state_dict = f'model_sate_subject_{subject_id}_{unique_id}.pt'
         th.save(model.state_dict(), file_name_state_dict)
         return file_name_state_dict
-        ################################################################################################################
 
 
 if __name__ == '__main__':

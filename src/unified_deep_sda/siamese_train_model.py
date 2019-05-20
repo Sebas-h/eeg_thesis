@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 class SiameseTrainModel:
     def __init__(self, train_set, valid_set, test_set, model, optimizer, iterator, loss_function, stop_criterion,
-                 model_constraint, cuda, func_compute_pred_labels):
+                 model_constraint, cuda, func_compute_pred_labels, target_finetune_cls):
         # Config
         self.train_set = train_set
         self.valid_set = valid_set
@@ -21,6 +21,7 @@ class SiameseTrainModel:
         self.model_constraint = model_constraint
         self.func_compute_pred_labels = func_compute_pred_labels
         self.cuda = cuda
+        self.target_finetune_cls = target_finetune_cls
         # Results
         self.epochs_df = pd.DataFrame()
         self.test_result = OrderedDict()
@@ -68,7 +69,10 @@ class SiameseTrainModel:
             input_vars = input_vars.cuda()
             target_vars = target_vars.cuda()
         self.optimizer.zero_grad()
-        outputs = self.model(input_vars, 'train')
+        if self.target_finetune_cls:
+            outputs = self.model(input_vars, 'train', target_finetune_cls=True)
+        else:
+            outputs = self.model(input_vars, 'train')
         loss = self.loss_function(outputs, target_vars)
         loss.backward()
         self.optimizer.step()
@@ -120,7 +124,12 @@ class SiameseTrainModel:
             net_in = net_in.cuda()
         if self.cuda:
             net_target = net_target.cuda()
-        outputs = self.model(net_in, setname)
+
+        if self.target_finetune_cls:
+            outputs = self.model(net_in, setname, target_finetune_cls=True)
+        else:
+            outputs = self.model(net_in, setname)
+
         loss = self.loss_function(outputs, net_target)
         loss = float(th_ext_util.var_to_np(loss))
         if type(outputs) == dict:  # for Siamase network (paired data) todo clean up
