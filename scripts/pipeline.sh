@@ -9,6 +9,9 @@
 # set the number of nodes
 #SBATCH --nodes=1
 
+# request one gpu per node
+#SBATCH --gres=gpu:<type>:1
+
 # set the number of nodes
 #SBATCH --partition=c18g
 
