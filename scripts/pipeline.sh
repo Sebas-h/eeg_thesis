@@ -7,13 +7,13 @@
 #SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.%j
 
 # set the number of nodes
-#SBATCH --nodes=1
+###SBATCH --nodes=1
 
 # request one gpu per node
-#SBATCH --gres=gpu:<type>:1
+#SBATCH --gres=gpu:volta:1
 
 # set the number of nodes
-#SBATCH --partition=c18g
+###SBATCH --partition=c18g
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
 #SBATCH --time=99:15:30
