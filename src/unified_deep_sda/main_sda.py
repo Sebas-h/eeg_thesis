@@ -96,8 +96,6 @@ def fine_tune_model(target_idx, index_test_fold):
                  tl_model_state=path_to_model_state)
 
 
-
-
 if __name__ == '__main__':
     import argparse
 

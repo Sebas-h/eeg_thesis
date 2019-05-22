@@ -40,8 +40,8 @@ class CCSALoss(th.nn.Module):
 
         diff_same = diff[indices_same_label_pairs]
         diff_diff = diff[indices_different_label_pairs]
-        diff_same = diff_same.squeeze()
-        diff_diff = diff_diff.squeeze()
+        # diff_same = diff_same.squeeze()
+        # diff_diff = diff_diff.squeeze()
 
         sa_loss = 0
         cs_loss = 0
@@ -81,7 +81,7 @@ class CCSALoss(th.nn.Module):
         loss = ((1 - self.alpha) * cls_loss) + (self.alpha * contrastive_loss)
 
         # Log/print individual loss values
-        print(f"contrastive_loss={contrastive_loss}\tcls_loss={cls_loss}")
+        # print(f"contrastive_loss={contrastive_loss}\tcls_loss={cls_loss}")
         return loss
 
 

@@ -139,7 +139,9 @@ class RunModel:
 
         ################################################################################################################
         # Initialize trainable model
-        if model_name == 'siamese_eegnet' and tl_model_state is not None:
+        if model_name == 'siamese_eegnet':
+            if tl_model_state is not None:
+                loss_function = F.nll_loss
             train_model = SiameseTrainModel(
                 train_set=train_set,
                 valid_set=valid_set,
@@ -147,12 +149,12 @@ class RunModel:
                 model=model,
                 optimizer=optimizer,
                 iterator=iterator,
-                loss_function=F.nll_loss,
+                loss_function=loss_function,
                 stop_criterion=stop_criterion,
                 model_constraint=model_constraint,
                 cuda=cuda,
                 func_compute_pred_labels=func_compute_pred_labels,
-                target_finetune_cls=True
+                target_finetune_cls=(tl_model_state is not None)
             )
         else:
             train_model = TrainModel(
