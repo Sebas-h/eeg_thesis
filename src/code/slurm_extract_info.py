@@ -81,11 +81,11 @@ def eegnet_no_tl():
     learn model from subject (target) data only, no source data involved
     :return:
     """
-    path = "/Users/sebas/Downloads/slurm-results/eegnet_SDA_first"
+    path = "/Users/sebas/Downloads/slurm-results/eegnet_sda_finetune_all"
     # path = "/Users/sebas/Downloads/slurm-results/shallow_no_tl_defaultlr"
     files = glob.glob(path + "/*")
 
-    uuids = []
+    # uuids = []
     results = []
     for file in files:
         with open(file, "r+") as f:
@@ -97,15 +97,15 @@ def eegnet_no_tl():
                 if 'test_' in l:
                     test_acc = float(l.split()[-1][:-3])
 
-                if "UUID" in l:
-                    uuid = l.split()[-1]
+                # if "UUID" in l:
+                #     uuid = l.split()[-1]
 
             results.append([subject_index, test_fold_index, test_acc])
-            uuids.append([subject_index, test_fold_index, uuid])
+            # uuids.append([subject_index, test_fold_index, uuid])
 
     # IMPORTANT: if sort incorrect, rest of code fucked
     results.sort()
-    uuids.sort()
+    # uuids.sort()
 
     final = []
     inter = []
@@ -134,7 +134,7 @@ def eegnet_no_tl():
         print(f"avg_test_acc_subject_{subject[0][0]}: {avg_test_acc}")
 
     print(f"\noverall average test accuracy: {sum(avg_test_accs) / len(avg_test_accs)}")
-    print(uuids)
+    # print(uuids)
 
 
 if __name__ == '__main__':

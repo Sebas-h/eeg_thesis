@@ -121,7 +121,7 @@ class TrainSetup:
 
     def _set_loss_function(self):
         if self.model_name == 'siamese_eegnet':
-            return CCSALoss()
+            return CCSALoss(alpha=0.75)
         if self.model_name == 'eegnet_cae':
             return th.nn.MSELoss()
         if self.cropped:

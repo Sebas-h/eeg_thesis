@@ -43,6 +43,23 @@ def main(args):
 
 
 def unified_deep_sda(target_idx, index_test_fold):
+    # Data loading
+    target_idx = target_idx
+    bcic = BCICIV2a()
+    target = bcic.get_subject(target_idx)
+    source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
+
+    # Make pairs of target and sources suitable for siamese (two-stream) network:
+    siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
+    siamsese_bcic.create_paired_dataset()
+
+    # Split data and train
+    train_set, valid_set, test_set = siamsese_bcic.split_into_train_valid_test(n_folds, index_test_fold)
+    run_model = RunModel()
+    run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
+
+
+def fine_tune_model(target_idx, index_test_fold):
     server_model_state_path = '/home/no316758/projects/eeg_thesis/model_sate_subject_'
     uuids = [[0, 0, '0ed87556ffbf45ad90cb02b0871ebfd7'], [0, 1, '7779e366b69c4300b5d2cc6196a8aced'],
              [0, 2, 'ac88860fccf64dd1b5d227ddf17fa01d'], [0, 3, '81a44514beb84a749aade3d3d8bc9edc'],
@@ -63,38 +80,22 @@ def unified_deep_sda(target_idx, index_test_fold):
              [8, 0, 'fe81b6cf809f47eeb3806da67a2e50b2'], [8, 1, '747c7d6d3a154f71a51aa13542e8ce82'],
              [8, 2, 'f42be8b6667049eab0d7100aa81f2082'], [8, 3, '603b675fbbb2443dad6351ee6b342066']]
 
-    path_to_model_state = f"{server_model_state_path}{target_idx}_{uuids[(target_idx * 4) + index_test_fold][-1]}.pt"
-
-    # sfrom_pickle = True
-    target_finetune_cls = True
+    # path_to_model_state = f"{server_model_state_path}{target_idx}_{uuids[(target_idx * 4) + index_test_fold][-1]}.pt"
+    path_to_model_state = '/Users/sebas/code/thesis/src/unified_deep_sda/model_sate_subject_0_29e3ea143d6f4ccab7983d0630d30fac.pt'
 
     # Data loading
     target_idx = target_idx
-    # if sfrom_pickle:
-    #     # from pickle
-    #     siamsese_bcic = SiameseBCICIV2A(None, None, 4, 9)
-    #     with open('siamese.pickle', 'rb') as f:
-    #         a = pickle.load(f)
-    #     siamsese_bcic.paired_dataset = a
-    # else:
     bcic = BCICIV2a()
     target = bcic.get_subject(target_idx)
-    # source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
-    #
-    # # Make pairs of target and sources suitable for siamese (two-stream) network:
-    # siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
-    # siamsese_bcic.create_paired_dataset()
-    #
-    # train_set, valid_set, test_set = siamsese_bcic.split_into_train_valid_test(n_folds, index_test_fold)
-    # run_model = RunModel()
-    # path_to_saved_model_dict = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
 
-    if target_finetune_cls:
-        train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
-        run_model = RunModel()
-        run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
-                     sda_freeze=True,
-                     tl_model_state=path_to_model_state)
+    # Split data and train
+    train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
+    run_model = RunModel()
+    run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
+                 sda_freeze=True,
+                 tl_model_state=path_to_model_state)
+
+
 
 
 if __name__ == '__main__':

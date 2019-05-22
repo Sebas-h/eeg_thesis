@@ -35,6 +35,9 @@ class CCSALoss(th.nn.Module):
 
         # Compute differences and split same/different samples
         diff = source_embedding - target_embedding
+        ddist = diff.pow(2).sum(dim=[x for x in range(diff.dim()) if x != 0]).sqrt()
+        diff = (ddist - ddist.min()) / (ddist.max() - ddist.min())
+
         diff_same = diff[indices_same_label_pairs]
         diff_diff = diff[indices_different_label_pairs]
         diff_same = diff_same.squeeze()
@@ -44,25 +47,28 @@ class CCSALoss(th.nn.Module):
         cs_loss = 0
 
         # todo: create batch generator that is balanced!
-        #  These 'ifs' are a hacky solution for batches with just one kind of pair
+        #  These 'ifs' are a hacky solution for batches with just one kind of pair,
+        #  which ideally should not happen.
         if diff_same.shape[0] > 0:
+            sa_loss = diff_same
             # Euclidean distances (L2 norm)
-            dist_same = diff_same.pow(2).sum(dim=[x for x in range(diff_same.dim()) if x != 0]).sqrt()
+            # dist_same = diff_same.pow(2).sum(dim=[x for x in range(diff_same.dim()) if x != 0]).sqrt()
             # Normalize distances (minmax), to balance with classification loss
-            dist_same = (dist_same - dist_same.min()) / (dist_same.max() - dist_same.min())
+            # dist_same = (dist_same - dist_same.min()) / (dist_same.max() - dist_same.min())
             # Compute semantic alignment loss
-            sa_loss = th.pow(dist_same, 2)
+            # sa_loss = th.pow(dist_same, 2)
             sa_loss = sa_loss.mean()
 
         if diff_diff.shape[0] > 0:
+            dist_diff = diff_diff
             # Euclidean distances (L2 norm)
-            dist_diff = diff_diff.pow(2).sum(dim=[x for x in range(diff_diff.dim()) if x != 0]).sqrt()
+            # dist_diff = diff_diff.pow(2).sum(dim=[x for x in range(diff_diff.dim()) if x != 0]).sqrt()
             # Normalize distances (minmax), to balance with classification loss
-            dist_diff = (dist_diff - dist_diff.min()) / (dist_diff.max() - dist_diff.min())
+            # dist_diff = (dist_diff - dist_diff.min()) / (dist_diff.max() - dist_diff.min())
             # Compute class seperation loss
             cs_loss = self.margin - dist_diff
             cs_loss = th.clamp(cs_loss, min=0.0)
-            cs_loss = th.pow(cs_loss, 2)
+            # cs_loss = th.pow(cs_loss, 2)
             cs_loss = cs_loss.mean()
 
         # Contrastive loss:
@@ -74,6 +80,8 @@ class CCSALoss(th.nn.Module):
         # Final weighted loss (weights in order to balance cls vs contrastive losses)
         loss = ((1 - self.alpha) * cls_loss) + (self.alpha * contrastive_loss)
 
+        # Log/print individual loss values
+        print(f"contrastive_loss={contrastive_loss}\tcls_loss={cls_loss}")
         return loss
 
 
@@ -82,7 +90,7 @@ if __name__ == '__main__':
     with open('losscalc.pickle', 'rb') as f:
         oo, tt = pickle.load(f)
     ccs = CCSALoss()
-    ccs.forward(oo, tt)
+    print(ccs.forward(oo, tt))
 
 
 ##################################################

@@ -130,10 +130,14 @@ class SiameseEEGNet(nn.Module):
             target_embedding = self.embed(target)
             source_embedding = self.embed(source)
 
-            if setname == 'test':
-                cls = self.cls(target_embedding)
-            else:
-                cls = self.cls(source_embedding)
+            # only cls on target when on test (i.e. done with training)
+            # if setname == 'test':
+            #     cls = self.cls(target_embedding)
+            # else:
+            #     cls = self.cls(source_embedding)
+
+            # always cls on target set
+            cls = self.cls(target_embedding)
 
             return {'target_embedding': target_embedding, 'source_embedding': source_embedding, 'source_cls': cls}
 
