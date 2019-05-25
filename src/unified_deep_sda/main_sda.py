@@ -48,7 +48,7 @@ def unified_deep_sda(target_idx, index_test_fold):
     bcic = BCICIV2a()
     target = bcic.get_subject(target_idx)
     # source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
-    source = [bcic.get_subject(3)]
+    source = [bcic.get_subject(4)]
 
     # Make pairs of target and sources suitable for siamese (two-stream) network:
     siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
