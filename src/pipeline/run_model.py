@@ -20,7 +20,7 @@ class RunModel:
            tl_model_state=None,
            tl_freeze=False,
            tl_eegnetautoencoder=False,
-           sda_freeze=False):
+           siamese_eegnet_freeze_conv_layers=False):
 
         ############################################
         # config
@@ -122,7 +122,7 @@ class RunModel:
                         break
                     for param in child[1].parameters():
                         param.requires_grad = False
-            if sda_freeze:
+            if siamese_eegnet_freeze_conv_layers:
                 for idx, child in enumerate(model.named_children()):
                     if child[0] == 'embed':
                         for param in child[1].parameters():

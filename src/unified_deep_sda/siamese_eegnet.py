@@ -76,9 +76,7 @@ class SiameseEEGNet(nn.Module):
                       stride=1,
                       bias=False,
                       padding=(0, self.kernel_length // 2)),
-            nn.BatchNorm2d(self.F1, momentum=0.01, affine=True, eps=1e-3)
-        )
-        self.embed_two = nn.Sequential(
+            nn.BatchNorm2d(self.F1, momentum=0.01, affine=True, eps=1e-3),
             # Spatial conv layer:
             Conv2dWithConstraint(self.F1, self.F1 * self.D, (self.in_chans, 1), max_norm=1, stride=1, bias=False,
                                  groups=self.F1, padding=(0, 0)),
@@ -122,7 +120,6 @@ class SiameseEEGNet(nn.Module):
     def forward(self, x, setname, target_finetune_cls=False):
         if target_finetune_cls:
             x = self.embed(x)
-            x = self.embed_two(x)
             x = self.cls(x)
             return x
         else:
@@ -135,13 +132,13 @@ class SiameseEEGNet(nn.Module):
             source_embedding = self.embed(source)
 
             # only cls on target when on test (i.e. done with training)
-            # if setname == 'test':
-            #     cls = self.cls(target_embedding)
-            # else:
-            #     cls = self.cls(source_embedding)
+            if setname == 'test':
+                cls = self.cls(target_embedding)
+            else:
+                cls = self.cls(source_embedding)
 
             # always cls on target set
-            cls = self.cls(self.embed_two(target_embedding))
+            # cls = self.cls(source_embedding)
 
             return {'target_embedding': target_embedding, 'source_embedding': source_embedding, 'source_cls': cls}
 

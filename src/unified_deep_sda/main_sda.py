@@ -39,10 +39,10 @@ def main(args):
     index_test_fold = args.test_fold_index
     print("Subject and test fold indices", index_subject, index_test_fold)
     # Run experiment
-    unified_deep_sda(index_subject, index_test_fold)
+    unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=True)
 
 
-def unified_deep_sda(target_idx, index_test_fold):
+def unified_deep_sda(target_idx, index_test_fold, fine_tune_cls=False):
     # Data loading
     target_idx = target_idx
     bcic = BCICIV2a()
@@ -57,7 +57,14 @@ def unified_deep_sda(target_idx, index_test_fold):
     # Split data and train
     train_set, valid_set, test_set = siamsese_bcic.split_into_train_valid_test(n_folds, index_test_fold)
     run_model = RunModel()
-    run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
+    model_state_file = run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx)
+
+    if fine_tune_cls:
+        train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
+        run_model = RunModel()
+        run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
+                     siamese_eegnet_freeze_conv_layers=True,
+                     tl_model_state=model_state_file)
 
 
 def fine_tune_model(target_idx, index_test_fold):
@@ -93,7 +100,7 @@ def fine_tune_model(target_idx, index_test_fold):
     train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
     run_model = RunModel()
     run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
-                 sda_freeze=True,
+                 siamese_eegnet_freeze_conv_layers=True,
                  tl_model_state=path_to_model_state)
 
 
@@ -103,7 +110,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='My args parse experiment')
     parser.add_argument('-s', '--subject-index', type=int, default=0, metavar='N',
                         help='subject index, possible values [0, ..., 8] (default: 0)')
-    parser.add_argument('-t', '--test-fold-index', type=int, default=0, metavar='N',
+    parser.add_argument('-t', '--test-fold-index', type=int, default=3, metavar='N',
                         help='test fold index, possible values [0, ..., 3] (default: 0)')
     args = parser.parse_args()
     main(args)
