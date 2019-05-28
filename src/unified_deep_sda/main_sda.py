@@ -39,7 +39,7 @@ def main(args):
     index_test_fold = args.test_fold_index
     print("Subject and test fold indices", index_subject, index_test_fold)
     # Run experiment
-    unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=True)
+    unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=False)
 
 
 def unified_deep_sda(target_idx, index_test_fold, fine_tune_cls=False):
