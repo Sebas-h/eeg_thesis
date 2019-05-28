@@ -96,8 +96,7 @@ class SiameseEEGNet(nn.Module):
             nn.Dropout(p=self.drop_prob)
         )
 
-        out = self.embed_two(
-            self.embed(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32))))
+        out = self.embed(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32)))
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
         if self.final_conv_length == 'auto':
