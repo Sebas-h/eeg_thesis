@@ -20,7 +20,8 @@ class RunModel:
            tl_model_state=None,
            tl_freeze=False,
            tl_eegnetautoencoder=False,
-           siamese_eegnet_freeze_conv_layers=False):
+           siamese_eegnet_freeze_conv_layers=False,
+           siamese_deep_freeze_conv_layers=False):
 
         ############################################
         # config
@@ -64,7 +65,7 @@ class RunModel:
 
         ################################################################################################################
         # Create setup for model training based on given config parameters
-        if model_name == 'siamese_eegnet' and tl_model_state is not None:
+        if model_name in ('siamese_eegnet', 'siamese_deep') and tl_model_state is not None:
             train_setup = TrainSetup(
                 cropped=cropped,
                 train_set=train_set,
@@ -125,6 +126,11 @@ class RunModel:
             if siamese_eegnet_freeze_conv_layers:
                 for idx, child in enumerate(model.named_children()):
                     if child[0] == 'embed':
+                        for param in child[1].parameters():
+                            param.requires_grad = False
+            if siamese_deep_freeze_conv_layers:
+                for idx, child in enumerate(model.named_children()):
+                    if child[0] != 'cls':
                         for param in child[1].parameters():
                             param.requires_grad = False
         ################################################################################################################

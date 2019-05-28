@@ -131,7 +131,7 @@ class TrainSetup:
         return BalancedBatchSizeIterator(batch_size=self.batch_size)
 
     def _set_loss_function(self):
-        if self.model_name == 'siamese_eegnet':
+        if self.model_name in ('siamese_eegnet', 'siamese_deep'):
             return CCSALoss(alpha=0.5)
         if self.model_name == 'eegnet_cae':
             return th.nn.MSELoss()

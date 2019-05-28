@@ -82,20 +82,18 @@ class SiameseEEGNet(nn.Module):
                                  groups=self.F1, padding=(0, 0)),
             nn.BatchNorm2d(self.F1 * self.D, momentum=0.01, affine=True, eps=1e-3),
             nn.ELU(),
-            pool_class(kernel_size=(1, 4), stride=(1, 4)),
-            nn.Dropout(p=self.drop_prob)
-
+            pool_class(kernel_size=(1, 4), stride=(1, 4))
         )
 
         self.sep_conv = nn.Sequential(
+            nn.Dropout(p=self.drop_prob),
             # Seperable conv layer:
             nn.Conv2d(self.F1 * self.D, self.F1 * self.D, (1, 16), stride=1, bias=False, groups=self.F1 * self.D,
                       padding=(0, 16 // 2)),
             nn.Conv2d(self.F1 * self.D, self.F2, (1, 1), stride=1, bias=False, padding=(0, 0)),
             nn.BatchNorm2d(self.F2, momentum=0.01, affine=True, eps=1e-3),
             nn.ELU(),
-            pool_class(kernel_size=(1, 8), stride=(1, 8)),
-            nn.Dropout(p=self.drop_prob)
+            pool_class(kernel_size=(1, 8), stride=(1, 8))
         )
 
         out = self.sep_conv(
@@ -108,6 +106,7 @@ class SiameseEEGNet(nn.Module):
 
         # Classifier part:
         self.cls = nn.Sequential(
+            nn.Dropout(p=self.drop_prob),
             nn.Conv2d(self.F2, self.n_classes, (n_out_virtual_chans, self.final_conv_length,), bias=True),
             nn.LogSoftmax(dim=1),
             # Transpose back to the the logic of braindecode, so time in third dimension (axis=2)
