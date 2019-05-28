@@ -140,7 +140,7 @@ class RunModel:
 
         ################################################################################################################
         # Initialize trainable model
-        if model_name == 'siamese_eegnet':
+        if model_name == 'siamese_eegnet' or model_name == "siamese_deep":
             if tl_model_state is not None:
                 loss_function = F.nll_loss
             train_model = SiameseTrainModel(
@@ -171,6 +171,11 @@ class RunModel:
                 cuda=cuda,
                 func_compute_pred_labels=func_compute_pred_labels
             )
+
+        # Number of trainable parameters:
+        # print(f'#trainable parameters = {sum(p.numel() for p in model.parameters() if p.requires_grad)}')
+        # print([p.numel() for p in model.parameters() if p.requires_grad])
+        # exit()
 
         # Train model:
         train_model.run()

@@ -80,12 +80,14 @@ class SiameseEEGNet(nn.Module):
             # Spatial conv layer:
             Conv2dWithConstraint(self.F1, self.F1 * self.D, (self.in_chans, 1), max_norm=1, stride=1, bias=False,
                                  groups=self.F1, padding=(0, 0)),
-            # nn.Conv2d(self.F1, self.F1 * self.D, (self.in_chans, 1), stride=1, bias=False,
-            #           groups=self.F1, padding=(0, 0)),
             nn.BatchNorm2d(self.F1 * self.D, momentum=0.01, affine=True, eps=1e-3),
             nn.ELU(),
             pool_class(kernel_size=(1, 4), stride=(1, 4)),
-            nn.Dropout(p=self.drop_prob),
+            nn.Dropout(p=self.drop_prob)
+
+        )
+
+        self.sep_conv = nn.Sequential(
             # Seperable conv layer:
             nn.Conv2d(self.F1 * self.D, self.F1 * self.D, (1, 16), stride=1, bias=False, groups=self.F1 * self.D,
                       padding=(0, 16 // 2)),
@@ -96,7 +98,8 @@ class SiameseEEGNet(nn.Module):
             nn.Dropout(p=self.drop_prob)
         )
 
-        out = self.embed(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32)))
+        out = self.sep_conv(
+            self.embed(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32))))
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
         if self.final_conv_length == 'auto':
@@ -118,7 +121,7 @@ class SiameseEEGNet(nn.Module):
 
     def forward(self, x, setname, target_finetune_cls=False):
         if target_finetune_cls:
-            x = self.embed(x)
+            x = self.sep_conv(self.embed(x))
             x = self.cls(x)
             return x
         else:
@@ -132,9 +135,9 @@ class SiameseEEGNet(nn.Module):
 
             # only cls on target when on test (i.e. done with training)
             if setname == 'test':
-                cls = self.cls(target_embedding)
+                cls = self.cls(self.sep_conv(target_embedding))
             else:
-                cls = self.cls(source_embedding)
+                cls = self.cls(self.sep_conv(source_embedding))
 
             # always cls on target set
             # cls = self.cls(source_embedding)
