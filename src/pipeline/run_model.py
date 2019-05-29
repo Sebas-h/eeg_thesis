@@ -26,7 +26,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'siamese_deep'
+        model_name = 'siamese_shallow'
         # model_name = 'eegnet'
         # cropped or trialwise training
         cropped = False
@@ -64,7 +64,7 @@ class RunModel:
 
         ################################################################################################################
         # Create setup for model training based on given config parameters
-        if model_name in ('siamese_eegnet', 'siamese_deep') and tl_model_state is not None:
+        if model_name in ('siamese_eegnet', 'siamese_deep', 'siamese_shallow') and tl_model_state is not None:
             train_setup = TrainSetup(
                 cropped=cropped,
                 train_set=train_set,
@@ -117,7 +117,6 @@ class RunModel:
                 model.load_state_dict(th.load(tl_model_state))
             if tl_freeze:
                 for idx, child in enumerate(model.named_children()):
-                    # print(idx, child[0], [x.shape for x in child[1].parameters()])
                     if idx > 13:
                         break
                     for param in child[1].parameters():
@@ -130,6 +129,11 @@ class RunModel:
             if siamese_freeze_layers and model_name == 'siamese_deep':
                 for idx, child in enumerate(model.named_children()):
                     if child[0] == 'conv_block1':
+                        for param in child[1].parameters():
+                            param.requires_grad = False
+            if siamese_freeze_layers and model_name == 'siamese_shallow':
+                for idx, child in enumerate(model.named_children()):
+                    if child[0] == 'conv_temp_spat':
                         for param in child[1].parameters():
                             param.requires_grad = False
         ################################################################################################################
@@ -145,7 +149,7 @@ class RunModel:
 
         ################################################################################################################
         # Initialize trainable model
-        if model_name == 'siamese_eegnet' or model_name == "siamese_deep":
+        if model_name in ('siamese_eegnet', "siamese_deep", "siamese_shallow"):
             if tl_model_state is not None:
                 loss_function = F.nll_loss
             train_model = SiameseTrainModel(

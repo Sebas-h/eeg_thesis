@@ -17,6 +17,7 @@ from src.unified_deep_sda.siamese_eegnet import SiameseEEGNet
 from src.unified_deep_sda.losses import CCSALoss
 from braindecode.torch_ext.init import glorot_weight_zero_bias
 from src.unified_deep_sda.siamese_deep import SiameseDeep
+from src.unified_deep_sda.siamese_shallow import SiameseShallow
 
 
 class TrainSetup:
@@ -29,7 +30,7 @@ class TrainSetup:
             assert self.model_name in ['shallow', 'deep'], "Model not available with cropped training"
         else:
             assert self.model_name in ['shallow', 'deep', 'eegnet', 'myresnet', 'resnet18', 'densenet121', 'tcn',
-                                       'eegnet_cae', 'siamese_eegnet', 'siamese_deep'], \
+                                       'eegnet_cae', 'siamese_eegnet', 'siamese_deep', 'siamese_shallow'], \
                 "Model not available with trialwise training"
 
         self.train_set = train_set
@@ -114,6 +115,16 @@ class TrainSetup:
                 model = SiameseDeep(n_chans, self.n_classes, input_time_length=self.input_time_length,
                                     final_conv_length='auto')
 
+        elif self.model_name == 'siamese_shallow':
+            if not self.sda_finetune:
+                n_chans = int(self.train_set.X.shape[2])
+                input_time_length = int(self.train_set.X.shape[3])
+                model = SiameseShallow(n_chans, self.n_classes, input_time_length=input_time_length,
+                                       final_conv_length='auto')
+            else:
+                model = SiameseShallow(n_chans, self.n_classes, input_time_length=self.input_time_length,
+                                       final_conv_length='auto')
+
         return model
 
     def _set_iterator(self):
@@ -131,7 +142,7 @@ class TrainSetup:
         return BalancedBatchSizeIterator(batch_size=self.batch_size)
 
     def _set_loss_function(self):
-        if self.model_name in ('siamese_eegnet', 'siamese_deep'):
+        if self.model_name in ('siamese_eegnet', 'siamese_deep', 'siamese_shallow'):
             return CCSALoss(alpha=0.5)
         if self.model_name == 'eegnet_cae':
             return th.nn.MSELoss()
