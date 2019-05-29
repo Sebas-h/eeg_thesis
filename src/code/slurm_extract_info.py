@@ -7,7 +7,7 @@ def main():
 
 
 def siamese_multi_source():
-    file = "/Users/sebas/Downloads/slurm-results/MYJOB_OUTPUT.2355421"
+    file = "/Users/sebas/Downloads/slurm-results/eegnet_siamese_tgt_cls/MYJOB_OUTPUT.2367379"
     with open(file, "r+") as f:
         for l in f.readlines():
             if "Ordered" in l:

@@ -37,7 +37,7 @@ def main(args):
     # Expand arguments
     index_subject = args.subject_index
     # index_test_fold = args.test_fold_index
-    for index_test_fold in range(1):
+    for index_test_fold in range(8):
         # print("Subject and test fold indices", index_subject, index_test_fold)
         # Run experiment
         unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=False)
@@ -46,16 +46,16 @@ def main(args):
 
 def unified_deep_sda(target_idx, index_test_fold, fine_tune_cls=False):
     # todo: hacky stuff here:
-    # src_subject_idx = index_test_fold + 1
-    # index_test_fold = 3
-    # print(f"target_subject:{target_idx},source_subject:{src_subject_idx}")
+    src_subject_idx = index_test_fold + 1
+    index_test_fold = 3
+    print(f"target_subject:{target_idx},source_subject:{src_subject_idx}")
 
     # Data loading
     target_idx = target_idx
     bcic = BCICIV2a()
     target = bcic.get_subject(target_idx)
-    source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
-    # source = [bcic.get_subject(src_subject_idx)]
+    # source = bcic.get_subjects([x for x in range(bcic.n_subjects) if x != target_idx])
+    source = [bcic.get_subject(src_subject_idx)]
 
     # Make pairs of target and sources suitable for siamese (two-stream) network:
     siamsese_bcic = SiameseBCICIV2A(target, source, bcic.n_classes, bcic.n_subjects)
