@@ -36,10 +36,12 @@ data_preprocessing = {
 def main(args):
     # Expand arguments
     index_subject = args.subject_index
-    index_test_fold = args.test_fold_index
-    print("Subject and test fold indices", index_subject, index_test_fold)
-    # Run experiment
-    unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=True)
+    # index_test_fold = args.test_fold_index
+    for index_test_fold in range(4):
+        print("Subject and test fold indices", index_subject, index_test_fold)
+        # Run experiment
+        unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=True)
+        print("End of Subject and test fold indices", index_subject, index_test_fold, "\n")
 
 
 def unified_deep_sda(target_idx, index_test_fold, fine_tune_cls=False):
