@@ -26,6 +26,8 @@ class CCSALoss(th.nn.Module):
         target_embedding = outputs['target_embedding']
         source_embedding = outputs['source_embedding']
         source_cls_pred_y = outputs['source_cls']
+
+        # todo: hacky stuff here; 1 for true y from soure, 0 for true y from target:
         # source_true_y = target_vars[:, 1]
         source_true_y = target_vars[:, 0]
 
