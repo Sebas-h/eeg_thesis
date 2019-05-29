@@ -26,7 +26,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'siamese_deep'
+        model_name = 'siamese_eegnet'
         # model_name = 'eegnet'
         # cropped or trialwise training
         cropped = False
@@ -38,7 +38,7 @@ class RunModel:
         # Max number of epochs if early stopping criteria not satisfied:
         max_epochs = 900
         # Early stopping (patience) value:
-        max_increase_epochs = 100
+        max_increase_epochs = 50
         # Number of training examples to train per optimization step (i.e. per batch):
         batch_size = 60
         # Cuda check
