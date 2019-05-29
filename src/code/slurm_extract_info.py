@@ -2,8 +2,17 @@ import glob
 
 
 def main():
-    siamese_cv_subject_finetune()
-    # eegnet_tl_finetune()
+    # siamese_cv_subject_finetune()
+    siamese_multi_source()
+
+
+def siamese_multi_source():
+    file = "/Users/sebas/Downloads/slurm-results/MYJOB_OUTPUT.2355421"
+    with open(file, "r+") as f:
+        for l in f.readlines():
+            if "Ordered" in l:
+                test_acc = float(l.split()[-1][:-3])
+                print(test_acc)
 
 
 def siamese_cv_subject_finetune():

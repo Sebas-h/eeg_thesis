@@ -26,7 +26,8 @@ class CCSALoss(th.nn.Module):
         target_embedding = outputs['target_embedding']
         source_embedding = outputs['source_embedding']
         source_cls_pred_y = outputs['source_cls']
-        source_true_y = target_vars[:, 1]
+        # source_true_y = target_vars[:, 1]
+        source_true_y = target_vars[:, 0]
 
         # Compare pairs by labels: 1 where pair labels are the same, 0 otherwise
         gamma = th.eq(target_vars[:, 0], target_vars[:, 1])
