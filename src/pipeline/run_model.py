@@ -26,7 +26,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'siamese_eegnet'
+        model_name = 'siamese_deep'
         # model_name = 'eegnet'
         # cropped or trialwise training
         cropped = False
@@ -42,8 +42,8 @@ class RunModel:
         # Number of training examples to train per optimization step (i.e. per batch):
         batch_size = 60
         # Cuda check
-        # cuda = th.cuda.is_available()
-        cuda = False
+        cuda = th.cuda.is_available()
+        # cuda = False
 
         # Optimizer parameters
         lr = 1e-3

@@ -27,6 +27,10 @@ class SiameseTrainModel:
         self.test_result = OrderedDict()
 
     def run(self):
+        # Set cuda:
+        if self.cuda:
+            assert th.cuda.is_available(), "Cuda not available"
+            self.model.cuda()
         # Train and monitor/evaluate model until stop
         while not self.stop_criterion.should_stop:
             self._run_one_epoch()
@@ -122,7 +126,6 @@ class SiameseTrainModel:
         net_target = th_ext_util.np_to_var(targets)
         if self.cuda:
             net_in = net_in.cuda()
-        if self.cuda:
             net_target = net_target.cuda()
 
         if self.target_finetune_cls:
