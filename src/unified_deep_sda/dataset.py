@@ -62,13 +62,14 @@ class SiameseBCICIV2A:
     Makes pairs of target and sources suitable for siamese (two-stream) network
     """
 
-    def __init__(self, target_data, source_data, n_classes, n_subjects):
+    def __init__(self, target_data, source_data, n_classes, n_subjects, seed=123456789):
         """
         :param target_data: single target subject
         :param source_data: multiple source subjects
         :param n_classes:
         :param n_subjects:
         """
+        np.random.seed(seed)
         self.target_data = target_data
         self.source_data = source_data
         self.n_classes = n_classes
@@ -127,7 +128,6 @@ class SiameseBCICIV2A:
                 subject.X[indices_source]
             ))),
             # y:
-            # subject.y[indices_sort_by_label_src_sub]
             np.array(list(zip(
                 self.target_data.y[indices_target],
                 subject.y[indices_source]
@@ -143,7 +143,6 @@ class SiameseBCICIV2A:
                 subject.X[indices_source]
             ))),
             # y:
-            # subject.y[indices_sort_by_label_src_sub]
             np.array(list(zip(
                 self.target_data.y[indices_target],
                 subject.y[indices_source]
@@ -161,7 +160,7 @@ class SiameseBCICIV2A:
         n_samples_per_permutation = self.n_samples_per_subject // len(list(permutations(range(self.n_classes), 2)))
         new_indices_sort_by_label_src_sub = []
         for i in range(self.n_classes):
-            for idx, j in enumerate([x for x in range(self.n_classes) if x != i]):
+            for j in [x for x in range(self.n_classes) if x != i]:
                 mul = [x for x in range(self.n_classes) if x != j].index(i)
                 s = (j * self.n_samples_per_label_per_subject) + (mul * n_samples_per_permutation)
                 e = s + n_samples_per_permutation

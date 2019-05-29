@@ -2,8 +2,68 @@ import glob
 
 
 def main():
-    eegnet_no_tl()
+    siamese_cv_subject_finetune()
     # eegnet_tl_finetune()
+
+
+def siamese_cv_subject_finetune():
+    path = "/Users/sebas/Downloads/slurm-results/shallow_siamese_freeze_conv1"
+
+    files = glob.glob(path + "/*")
+
+    results = []
+
+    for file in files:
+        subject_idx = int(file.split('.')[-2])
+        subject_accs = []
+        with open(file, "r+") as f:
+            for l in f.readlines():
+                if "Ordered" in l:
+                    test_acc = float(l.split()[-1][:-3])
+                    subject_accs.append(test_acc)
+
+        for idx, (test_acc_no_ft, test_acc_after_finetune) in enumerate(zip(subject_accs[0::2], subject_accs[1::2])):
+            results.append([subject_idx, idx, test_acc_no_ft, test_acc_after_finetune])
+
+    # IMPORTANT: if sort incorrect, rest of code fucked
+    results.sort()
+
+    final = []
+    inter = []
+    subject_index = -1
+    for idx, result in enumerate(results):
+        if subject_index < 0:
+            subject_index = result[0]
+            inter.append(result)
+        elif subject_index == result[0]:
+            inter.append(result)
+        elif subject_index != result[0]:
+            final.append(inter)
+            inter = [result]
+            subject_index = result[0]
+        if idx == len(results) - 1:
+            final.append(inter)
+
+    avg_source_test_accs = []
+    avg_target_test_accs = []
+    for subject in final:
+        accs_src = 0
+        accs_tgt = 0
+        for i in subject:
+            accs_src += i[2]
+            accs_tgt += i[3]
+            print(f"subject: {i[0]}\ttest_fold: {i[1]}\ttest_acc_no_ft: {i[2]}\ttest_acc_after_finetune: {i[3]}")
+        avg_src_test_acc = accs_src / len(subject)
+        avg_tgt_test_acc = accs_tgt / len(subject)
+        avg_source_test_accs.append(avg_src_test_acc)
+        avg_target_test_accs.append(avg_tgt_test_acc)
+        print(f"avg_source_test_acc_subject_{subject[0][0]}: {avg_src_test_acc}"
+              f"\tavg_target_test_acc_subject_{subject[0][0]}: {avg_tgt_test_acc}")
+
+    print(f"\noverall average test accuracy without finetuning: {sum(avg_source_test_accs) / len(avg_target_test_accs)} \
+    N.B. this doesnt have a lot of meaning")
+    print(f"\noverall average test accuracy: {sum(avg_target_test_accs) / len(avg_target_test_accs)} "
+          f"\n{sum(avg_target_test_accs) / len(avg_target_test_accs):.4f}")
 
 
 def eegnet_tl_finetune():

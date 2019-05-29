@@ -26,7 +26,7 @@ class RunModel:
         # config
         ############################################
         # 'shallow' or 'deep' or 'eegnet'
-        model_name = 'siamese_shallow'
+        model_name = 'siamese_eegnet'
         # model_name = 'eegnet'
         # cropped or trialwise training
         cropped = False
