@@ -20,8 +20,7 @@ class RunModel:
            tl_model_state=None,
            tl_freeze=False,
            tl_eegnetautoencoder=False,
-           siamese_eegnet_freeze_conv_layers=False,
-           siamese_deep_freeze_conv_layers=False):
+           siamese_freeze_layers=False):
 
         ############################################
         # config
@@ -123,14 +122,14 @@ class RunModel:
                         break
                     for param in child[1].parameters():
                         param.requires_grad = False
-            if siamese_eegnet_freeze_conv_layers:
+            if siamese_freeze_layers and model_name == 'siamese_eegnet':
                 for idx, child in enumerate(model.named_children()):
                     if child[0] == 'embed':
                         for param in child[1].parameters():
                             param.requires_grad = False
-            if siamese_deep_freeze_conv_layers:
+            if siamese_freeze_layers and model_name == 'siamese_deep':
                 for idx, child in enumerate(model.named_children()):
-                    if child[0] != 'cls':
+                    if child[0] == 'conv_block1':
                         for param in child[1].parameters():
                             param.requires_grad = False
         ################################################################################################################

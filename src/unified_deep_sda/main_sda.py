@@ -39,7 +39,7 @@ def main(args):
     index_test_fold = args.test_fold_index
     print("Subject and test fold indices", index_subject, index_test_fold)
     # Run experiment
-    unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=False)
+    unified_deep_sda(index_subject, index_test_fold, fine_tune_cls=True)
 
 
 def unified_deep_sda(target_idx, index_test_fold, fine_tune_cls=False):
@@ -63,7 +63,7 @@ def unified_deep_sda(target_idx, index_test_fold, fine_tune_cls=False):
         train_set, valid_set, test_set = data_splitters.split_into_train_valid_test(target, n_folds, index_test_fold)
         run_model = RunModel()
         run_model.go(train_set, valid_set, test_set, n_classes=n_classes, subject_id=target_idx,
-                     siamese_eegnet_freeze_conv_layers=True,
+                     siamese_freeze_layers=True,
                      tl_model_state=model_state_file)
 
 
