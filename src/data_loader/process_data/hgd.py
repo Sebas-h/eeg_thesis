@@ -63,7 +63,7 @@ def save_processed_high_gamma_datatset(train_filenames, test_filenames,
 
 def process_bbci_data(filename, low_cut_hz, debug=False):
     """
-    As taken from schirrmeister braindecode package
+    As taken from: https://github.com/robintibor/high-gamma-dataset
     :param filename: data from subject (train or test)
     :param low_cut_hz: 0 or 4
     :param debug:
