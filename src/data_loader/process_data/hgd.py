@@ -49,7 +49,7 @@ def save_processed_high_gamma_datatset(train_filenames, test_filenames,
         with h5py.File(f'{output_dir}/{subject_id}_test.h5', 'w') as h5file:
             h5file.create_dataset(f'{subject_id}_test_X', data=test_set.X)
             h5file.create_dataset(f'{subject_id}_test_y', data=test_set.y)
-        log.info(f"Done processing data subject {subject_id}")
+        log.info(f"Done processing data subject {subject_id}\n")
 
 
 def process_bbci_data(filename, low_cut_hz, debug=False):
