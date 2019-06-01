@@ -33,14 +33,14 @@ def main():
 def save_processed_high_gamma_datatset(train_filenames, test_filenames,
                                        output_dir, low_cut_hz, debug=False):
     for train_filename, test_filename in zip(train_filenames, test_filenames):
-        # Process data
+        log.info("Processing data...")
         full_train_set = process_bbci_data(train_filename,
                                            low_cut_hz=low_cut_hz,
                                            debug=debug)
         test_set = process_bbci_data(test_filename, low_cut_hz=low_cut_hz,
                                      debug=debug)
         subject_id = train_filename.split('/')[-1].split('.')[0]
-        # Save data
+        log.info("Saving processed data...")
         with h5py.File(f'{output_dir}/{subject_id}_train.h5', 'w') as h5file:
             h5file.create_dataset(f'{subject_id}_train_X',
                                   data=full_train_set.X)
@@ -49,6 +49,7 @@ def save_processed_high_gamma_datatset(train_filenames, test_filenames,
         with h5py.File(f'{output_dir}/{subject_id}_test.h5', 'w') as h5file:
             h5file.create_dataset(f'{subject_id}_test_X', data=test_set.X)
             h5file.create_dataset(f'{subject_id}_test_y', data=test_set.y)
+        log.info(f"Done processing data subject {subject_id}")
 
 
 def process_bbci_data(filename, low_cut_hz, debug=False):
@@ -70,7 +71,7 @@ def process_bbci_data(filename, low_cut_hz, debug=False):
     #   works for datasets in our paper
     loader = BBCIDataset(filename, load_sensor_names=load_sensor_names)
 
-    log.info("Loading data...")
+    log.info("Loading raw data...")
     cnt = loader.load()
 
     # Cleaning: First find all trials that have absolute microvolt values
