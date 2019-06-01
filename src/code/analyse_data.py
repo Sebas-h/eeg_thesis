@@ -6,7 +6,6 @@ import matplotlib
 
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def main():
@@ -14,7 +13,7 @@ def main():
 
 
 def show_eeg_data_subject():
-    from src.pipeline.data_loading import load_bcic_iv_2a_data
+    from src.data_loader.data_loading import load_bcic_iv_2a_data
     data = load_bcic_iv_2a_data(True, 'all')
     data = data[0].X[0]
 
@@ -71,7 +70,7 @@ def analyse_subject_eeg_signals():
             if val == target:
                 return i
 
-    from src.pipeline.data_loading import load_bcic_iv_2a_data
+    from src.data_loader.data_loading import load_bcic_iv_2a_data
     data = load_bcic_iv_2a_data(True, 'all')
     # task 0 (= left hand)
     # task_num = 0

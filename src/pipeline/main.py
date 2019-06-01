@@ -1,6 +1,6 @@
 import os
 import braindecode.datautil.splitters as data_splitters
-from src.pipeline import data_loading
+from src.data_loader import data_loading
 from src.pipeline.run_model import RunModel
 
 #######################

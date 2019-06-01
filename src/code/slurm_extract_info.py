@@ -7,12 +7,15 @@ def main():
 
 
 def siamese_multi_source():
-    file = "/Users/sebas/Downloads/slurm-results/eegnet_siamese_tgt_cls/MYJOB_OUTPUT.2367379"
+    file = "/Users/sebas/Downloads/slurm-results/eegnet_siamese_tgt_cls/MYJOB_OUTPUT.2368766"
+    accs = []
     with open(file, "r+") as f:
         for l in f.readlines():
             if "Ordered" in l:
                 test_acc = float(l.split()[-1][:-3])
+                accs.append(test_acc)
                 print(test_acc)
+    print("avg test acc =", sum(accs) / len(accs))
 
 
 def siamese_cv_subject_finetune():

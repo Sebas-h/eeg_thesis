@@ -1,10 +1,7 @@
 import os
 import braindecode.datautil.splitters as data_splitters
-from src.pipeline import data_loading
 from src.pipeline.run_model import RunModel
-import numpy as np
-from src.unified_deep_sda.dataset import BCICIV2a, SiameseBCICIV2A
-import pickle
+from src.data_loader.dataset import BCICIV2a, SiameseBCICIV2A
 
 #######################
 # CONFIG AND PARAMETERS

@@ -6,12 +6,16 @@
 *.pyo
 **/.ipynb_checkpoints/*
 braindecode/*
-results/*
 /*.sh
 
+results/*
 !results/readme.txt
+
+data/*
+!data/readme.txt
 
 my_runs/
 
 *.pt
 *.h5
+

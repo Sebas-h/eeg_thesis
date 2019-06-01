@@ -1,4 +1,5 @@
 import pickle
+import time
 import os
 from collections import OrderedDict
 import glob
@@ -10,6 +11,7 @@ from braindecode.datautil.signalproc import (bandpass_cnt,
                                              exponential_running_standardize)
 from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 from braindecode.datautil.splitters import split_into_two_sets
+from braindecode.datautil.signal_target import SignalAndTarget
 
 import logging
 import numpy as np
@@ -28,7 +30,21 @@ log.setLevel('INFO')
 
 
 def main():
-    load_high_gamma_dataset()
+    # load_high_gamma_dataset([x for x in range(1, 15)])
+    # load_high_gamma_dataset([1])
+    p = "/Users/sebas/code/thesis/data/hgd_processed/*"
+    files = glob.glob(p)
+    times = []
+    for file in files:
+        s = time.time()
+        with h5py.File(file, 'r') as h5file:
+            keys = sorted(list(h5file.keys()))
+            st = SignalAndTarget(h5file[keys[0]], h5file[keys[1]])
+        tottime = time.time() - s
+        times.append(tottime)
+        print(f'total time loading '
+              f'{file.split("/")[-1]}: \t{tottime} secs')
+    print(f"\nTotal time = {sum(times)} secs")
 
 
 def pickle_to_mat():
@@ -49,7 +65,8 @@ def pickle_to_mat():
 def cfg():
     dataset_name = "bcic_iv_2a"
     raw_data_path = "/Users/../../..gdf&mat"  # path to original raw gdf and mat files from BCIC IV 2a
-    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data'))
+    pickle_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'data'))
     pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"  # path to pickle dir
 
     n_classes = 4  # number of classes in dataset
@@ -83,14 +100,16 @@ def get_data_tl(n_folds, cv=False):
     data_all = load_bcic_iv_2a_data()
     for i in range(len(data_all)):
         subject_id = i + 1
-        subject_ids = list(filter(lambda x: x != subject_id, [1, 2, 3, 4, 5, 6, 7, 8, 9]))
+        subject_ids = list(
+            filter(lambda x: x != subject_id, [1, 2, 3, 4, 5, 6, 7, 8, 9]))
         data_one = data_all[i]
         data_rest = []
         for si in subject_ids:
             data_rest.append(data_all[si - 1])
         train_abo = splitters.concatenate_sets(data_rest[:-2])
         valid_abo = splitters.concatenate_sets(data_rest[-2:])
-        train, valid, test = splitters.split_into_train_valid_test(data_one, n_folds, 0)
+        train, valid, test = splitters.split_into_train_valid_test(data_one,
+                                                                   n_folds, 0)
         result_datasets.append(
             [
                 [train_abo, valid_abo],
@@ -110,11 +129,14 @@ def get_data(n_folds, cv=False):
     subjects_data = load_bcic_iv_2a_data()
     res_datasets = []
     for data in subjects_data:
-        train_valid_set, test_set = splitters.split_into_train_test(data, n_folds, 0)
+        train_valid_set, test_set = splitters.split_into_train_test(data,
+                                                                    n_folds, 0)
         # Cross validation folds (train and valid folds)
         cv_fold_sets = []
         for i in range(cv_folds):
-            cv_fold_sets.append(splitters.split_into_train_test(train_valid_set, n_folds - 1, i))
+            cv_fold_sets.append(
+                splitters.split_into_train_test(train_valid_set, n_folds - 1,
+                                                i))
         res_datasets.append([cv_fold_sets, test_set])
     return res_datasets
 
@@ -128,7 +150,8 @@ def load_bcic_iv_2a_data(from_pickle, subject_ids):
     # path to original raw gdf and mat files from BCIC IV 2a:
     raw_data_path = "/Users/sebas/code/_eeg_data/BCICIV_2a_gdf"
     # path to pickle dir:
-    pickle_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data'))
+    pickle_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../..', 'data'))
     # full path:
     pickle_path = pickle_dir + "/bcic_iv_2a_all_9_subjects.pickle"
 
@@ -185,11 +208,13 @@ def load_bcic_iv_2a_data(from_pickle, subject_ids):
             # lets convert to millvolt for numerical stability of next operations
             train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
             train_cnt = mne_apply(
-                lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz, train_cnt.info['sfreq'],
+                lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz,
+                                       train_cnt.info['sfreq'],
                                        filt_order=3,
                                        axis=1), train_cnt)
             train_cnt = mne_apply(
-                lambda a: exponential_running_standardize(a.T, factor_new=factor_new,
+                lambda a: exponential_running_standardize(a.T,
+                                                          factor_new=factor_new,
                                                           init_block_size=init_block_size,
                                                           eps=1e-4).T,
                 train_cnt)
@@ -199,19 +224,23 @@ def load_bcic_iv_2a_data(from_pickle, subject_ids):
             assert len(test_cnt.ch_names) == 22
             test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
             test_cnt = mne_apply(
-                lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz, test_cnt.info['sfreq'],
+                lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz,
+                                       test_cnt.info['sfreq'],
                                        filt_order=3,
                                        axis=1), test_cnt)
             test_cnt = mne_apply(
-                lambda a: exponential_running_standardize(a.T, factor_new=factor_new,
+                lambda a: exponential_running_standardize(a.T,
+                                                          factor_new=factor_new,
                                                           init_block_size=init_block_size,
                                                           eps=1e-4).T, test_cnt)
 
             marker_def = OrderedDict([('Left Hand', [1]), ('Right Hand', [2],),
                                       ('Foot', [3]), ('Tongue', [4])])
 
-            train_set = create_signal_target_from_raw_mne(train_cnt, marker_def, ival)
-            test_set = create_signal_target_from_raw_mne(test_cnt, marker_def, ival)
+            train_set = create_signal_target_from_raw_mne(train_cnt, marker_def,
+                                                          ival)
+            test_set = create_signal_target_from_raw_mne(test_cnt, marker_def,
+                                                         ival)
             data_subject = splitters.concatenate_two_sets(train_set, test_set)
             data.append(data_subject)
 
@@ -288,22 +317,116 @@ def load_bbci_data(filename, low_cut_hz, debug=False):
     return dataset
 
 
-def load_high_gamma_dataset():
-    low_cut_hz = 0  # 0 or 4 Hz
-    debug = True
-    test_set_path = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data/test'
-    train_set_path = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data/train'
-
-    test_set_mat_files = glob.glob(test_set_path + '/*.mat')
-    train_set_mat_files = glob.glob(train_set_path + '/*.mat')
-    test_filename = test_set_mat_files[0]
-    train_filename = train_set_mat_files[0]
-
+def load_train_valid_test_single_subject(train_filename, test_filename,
+                                         low_cut_hz, debug=False):
     log.info("Loading train...")
-    full_train_set = load_bbci_data(train_filename, low_cut_hz=low_cut_hz, debug=debug)
+    full_train_set = load_bbci_data(train_filename, low_cut_hz=low_cut_hz,
+                                    debug=debug)
     log.info("Loading test...")
     test_set = load_bbci_data(test_filename, low_cut_hz=low_cut_hz, debug=debug)
-    print('done')
+    valid_set_fraction = 0.8
+    train_set, valid_set = split_into_two_sets(full_train_set,
+                                               valid_set_fraction)
+    log.info("Train set with {:4d} trials".format(len(train_set.X)))
+    if valid_set is not None:
+        log.info("Valid set with {:4d} trials".format(len(valid_set.X)))
+    log.info("Test set with  {:4d} trials".format(len(test_set.X)))
+    return train_set, valid_set, test_set
+
+
+def load_merged_train_valid_test_from_subjects(train_filenames, test_filenames,
+                                               low_cut_hz, debug=False):
+    import sys, os
+    all_train_sets = []
+    all_valid_sets = []
+    all_test_sets = []
+
+    for train_filename, test_filename in zip(train_filenames, test_filenames):
+        sys.stdout = open(os.devnull, 'w')
+
+        log.info("Loading train...")
+        full_train_set = load_bbci_data(train_filename, low_cut_hz=low_cut_hz,
+                                        debug=debug)
+        log.info("Loading test...")
+        test_set = load_bbci_data(test_filename, low_cut_hz=low_cut_hz,
+                                  debug=debug)
+
+        sys.stdout = sys.__stdout__
+
+        subject_id = train_filename.split('/')[-1].split('.')[0]
+
+        # save files
+        # with open(f'/Users/sebas/code/thesis/data/hgd_processed/{subject_id}_train.pickle', 'wb') as handle:
+        #     pickle.dump([full_train_set.X, full_train_set.y],
+        #                 handle, protocol=pickle.HIGHEST_PROTOCOL)
+        #
+        # with open(f'/Users/sebas/code/thesis/data/hgd_processed/{subject_id}_test.pickle', 'wb') as handle:
+        #     pickle.dump([test_set.X, test_set.y],
+        #                 handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        s = time.time()
+
+        with h5py.File(
+                f'/Users/sebas/code/thesis/data/hgd_processed/'
+                f'{subject_id}_train.h5',
+                'w') as h5file:
+            h5file.create_dataset(f'{subject_id}_train_X',
+                                  data=full_train_set.X)
+            h5file.create_dataset(f'{subject_id}_train_y',
+                                  data=full_train_set.y)
+
+        with h5py.File(
+                f'/Users/sebas/code/thesis/data/hgd_processed/{subject_id}_test.h5',
+                'w') as h5file:
+            h5file.create_dataset(f'{subject_id}_test_X', data=test_set.X)
+            h5file.create_dataset(f'{subject_id}_test_y', data=test_set.y)
+
+        # sio.savemat(f'/Users/sebas/code/thesis/data/hgd_processed/{subject_id}_train.mat',
+        #             {'X': full_train_set.X, 'y': full_train_set.y})
+        #
+        # sio.savemat(f'/Users/sebas/code/thesis/data/hgd_processed/{subject_id}_test.mat',
+        #             {'X': test_set.X, 'y': test_set.y})
+
+        print(f"Subject {subject_id} has "
+              f"{full_train_set.y.shape[0] + test_set.y.shape[0]} "
+              f"training examples")
+        print(f"Took {time.time() - s}%.5f secs\n")
+
+        # valid_set_fraction = 0.8
+        # train_set, valid_set = split_into_two_sets(full_train_set, valid_set_fraction)
+        # log.info("Train set with {:4d} trials".format(len(train_set.X)))
+        # if valid_set is not None:
+        #     log.info("Valid set with {:4d} trials".format(len(valid_set.X)))
+        # log.info("Test set with  {:4d} trials".format(len(test_set.X)))
+        # all_train_sets.append(train_set)
+        # all_valid_sets.append(valid_set)
+        # all_test_sets.append(test_set)
+
+    # merged_train_set = splitters.concatenate_sets(all_train_sets)
+    # merged_valid_set = splitters.concatenate_sets(all_valid_sets)
+    # merged_test_set = splitters.concatenate_sets(all_test_sets)
+    # return merged_train_set, merged_valid_set, merged_test_set
+
+
+def load_high_gamma_dataset(subject_ids):
+    """
+    Loads train valid test sets for
+    :param subject_ids: list of indices in [1, 14]
+    :return:
+    """
+    data_dir = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data/'
+    train_data_paths = [data_dir + f"train/{subject_id}.mat" for subject_id in
+                        subject_ids]
+    test_data_paths = [data_dir + f"test/{subject_id}.mat" for subject_id in
+                       subject_ids]
+    low_cut_hz = 4  # 0 or 4 Hz
+    debug = False
+    # train, valid, test = load_merged_train_valid_test_from_subjects(train_data_paths, test_data_paths,
+    #                                                                 low_cut_hz, debug)
+    load_merged_train_valid_test_from_subjects(train_data_paths,
+                                               test_data_paths, low_cut_hz,
+                                               debug)
+    # return train, valid, test
 
 
 def load_high_gamma_parameters():
@@ -319,13 +442,15 @@ def load_high_gamma_parameters():
 
     model_params = torch.load(file_name, map_location='cpu')
     # model_iv = torch.load('/Users/sebas/code/thesis/pipeline/model_sate_s2_deep.pt', map_location='cpu')
-    dataset_bcic_iv_2a = load_bcic_iv_2a_data(from_pickle=True, subject_ids='all')
+    dataset_bcic_iv_2a = load_bcic_iv_2a_data(from_pickle=True,
+                                              subject_ids='all')
     # data_subject_1 = dataset_bcic_iv_2a[0]
     data_subject_2 = dataset_bcic_iv_2a[1]
     inputs = data_subject_2.X
     targets = data_subject_2.y
 
-    model = Deep4Net(22, 4, input_time_length=1125, final_conv_length='auto').create_network()
+    model = Deep4Net(22, 4, input_time_length=1125,
+                     final_conv_length='auto').create_network()
     model.load_state_dict(model_params)
     model.eval()
     outputs = model(inputs)
