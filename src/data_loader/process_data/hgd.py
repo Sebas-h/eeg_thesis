@@ -7,15 +7,24 @@ from braindecode.datasets.bbci import BBCIDataset
 from braindecode.datautil.signalproc import highpass_cnt
 from braindecode.mne_ext.signalproc import mne_apply, resample_cnt
 import h5py
+import os
 
 log = logging.getLogger(__name__)
 log.setLevel('INFO')
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
     data_dir = '/home/no316758/data/high-gamma-dataset/data'
     output_dir = '/home/no316758/projects/eeg_thesis/data/' \
                  'hgd_processed_low_cut_4hz'
+
+    # Check ouput dir exists and possibly create it
+    parent_output_dir = os.path.abspath(os.path.join(output_dir, os.pardir))
+    assert os.path.exists(parent_output_dir), \
+        "Parent directory of given output directory does not exist"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     # subject_ids: list of indices in range [1, 14]
     subject_ids = [x for x in range(1, 15)]
