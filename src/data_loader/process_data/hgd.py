@@ -13,7 +13,7 @@ log.setLevel('INFO')
 
 
 def main():
-    data_dir = '/home/no316758/data/high-gamma-dataset'
+    data_dir = '/home/no316758/data/high-gamma-dataset/data'
     output_dir = '/home/no316758/projects/eeg_thesis/data/' \
                  'hgd_processed_low_cut_4hz'
 
