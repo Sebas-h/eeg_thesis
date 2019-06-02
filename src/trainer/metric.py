@@ -1,0 +1,49 @@
+import numpy as np
+import braindecode.experiments.monitors as exp_monitor
+
+
+def get_prediction_func(config):
+    cropped = config['cropped']['use']
+    cropped_input_time_length = config['cropped']['input_time_length']
+    if cropped:
+        return ComputePredictions(
+            cropped_training=cropped,
+            input_time_length=cropped_input_time_length).compute_pred_labels
+    return ComputePredictions(cropped_training=cropped).compute_pred_labels
+
+
+class ComputePredictions:
+    def __init__(self, cropped_training, input_time_length=None):
+        self.cropped = cropped_training
+        self.input_time_length = input_time_length
+        if self.cropped:
+            assert input_time_length is not None, \
+                "Input time length cannot be None if cropped"
+
+    def compute_pred_labels(self, all_preds, dataset):
+        if self.cropped:
+            return self._compute_preds_cropped(all_preds,
+                                               self.input_time_length, dataset)
+        else:
+            return self._compute_preds_trialwise(all_preds)
+
+    @staticmethod
+    def _compute_preds_trialwise(all_preds):
+        all_pred_labels = []
+        for batch_preds in all_preds:
+            pred_labels = np.argmax(batch_preds, axis=1).squeeze()
+            all_pred_labels.extend(pred_labels)
+        all_pred_labels = np.array(all_pred_labels)
+        return all_pred_labels
+
+    @staticmethod
+    def _compute_preds_cropped(all_preds, input_time_length, dataset):
+        # Assign the predictions to the trials
+        preds_per_trial = exp_monitor.compute_preds_per_trial_from_crops(
+            all_preds, input_time_length, dataset.X)
+        # preds per trial are now trials x classes x timesteps/predictions
+        # Now mean across timesteps for each trial to get per-trial predictions
+        meaned_preds_per_trial = np.array(
+            [np.mean(p, axis=1) for p in preds_per_trial])
+        predicted_labels = np.argmax(meaned_preds_per_trial, axis=1)
+        return predicted_labels

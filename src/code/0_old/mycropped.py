@@ -35,29 +35,29 @@ def run_exp(subject_id, model_type, cuda, path_to_data):
     # Split data into train, validation and test sets:
     train_set, valid_set, test_set = splitters.split_into_train_valid_test(data, 4, 0)
 
-    # Set model training parameters
+    # Set models training parameters
     input_time_length = 1000
     max_epochs = 3  # default = 800
     max_increase_epochs = 80
     batch_size = 60
 
-    # Build model:
+    # Build models:
     set_random_seeds(seed=20190706, cuda=cuda)  # Set seeds for python random module numpy.random and torch.
     n_classes = 4
     n_chans = int(train_set.X.shape[1])  # number of channels
 
-    # model = sequential pytorch model (conv2D)
+    # models = sequential pytorch models (conv2D)
     if model_type == 'shallow':
         model = ShallowFBCSPNet(n_chans, n_classes, input_time_length=input_time_length,
                                 final_conv_length=30).create_network()
     elif model_type == 'deep':
         model = Deep4Net(n_chans, n_classes, input_time_length=input_time_length, final_conv_length=2).create_network()
 
-    # Transform a sequential model with strides to a model that outputs dense predictions
+    # Transform a sequential models with strides to a models that outputs dense predictions
     # by removing the strides and instead inserting dilations.
     to_dense_prediction_model(model)
 
-    # Log how the model looks thusfar
+    # Log how the models looks thusfar
     log.info("Model: \n{:s}".format(str(model)))
 
     # Activate cuda if possible
@@ -81,7 +81,7 @@ def run_exp(subject_id, model_type, cuda, path_to_data):
     # When to stop training
     stop_criterion = Or([MaxEpochs(max_epochs), NoDecrease('valid_misclass', max_increase_epochs)])
 
-    # Keep track of how the model is performing during training:
+    # Keep track of how the models is performing during training:
     monitors = [LossMonitor(), MisclassMonitor(col_suffix='sample_misclass'),
                 CroppedTrialMisclassMonitor(input_time_length=input_time_length), RuntimeMonitor()]
 

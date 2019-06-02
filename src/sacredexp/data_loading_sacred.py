@@ -39,7 +39,7 @@ def cfg():
 
 @data_ingredient.capture
 def get_data_tl(n_folds, cv=False):
-    # train:[1,2,..,6] valid:[7,8] => model, warmstart with model on [9] (train, valid, test)
+    # train:[1,2,..,6] valid:[7,8] => models, warmstart with models on [9] (train, valid, test)
     # [ [train_abo, valid_abo], [train, valid, test] ] , [ [...], [...] ], ..., [       ]
     # return :=
     #  [

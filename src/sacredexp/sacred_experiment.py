@@ -78,7 +78,7 @@ def update_cfg():
 @ex.automain
 def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, tl_abo):
     if cropped:
-        assert model_name in ['shallow', 'deep'], "Cropped training only possible with model type 'shallow' or 'deep'"
+        assert model_name in ['shallow', 'deep'], "Cropped training only possible with models type 'shallow' or 'deep'"
     cuda = training['cuda']
     set_random_seeds(seed=20190706, cuda=cuda)
 
@@ -152,10 +152,10 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
     # # schedule_weight_decay must be True for AdamW
     # optimizer = ScheduledOptimizer(scheduler, optimizer, schedule_weight_decay=True)
 
-    # Log model
+    # Log models
     log.info("Model: \n{:s}".format(str(model)))
     log.info("Optimizer: \n{:s}".format(str(optimizer)))
-    ex.info['model'] = str(model)
+    ex.info['models'] = str(model)
     ex.info['optimizer'] = str(optimizer)
 
     if cuda:
@@ -186,7 +186,7 @@ def run_exp(model_name, cropped, training, adamw_optimizer, cropped_params, cv, 
                              remember_best_column='valid_misclass',
                              run_after_early_stop=run_after_early_stop, cuda=cuda, ex=ex)
             exp.run()
-            # model_state = exp.model.state_dict()
+            # model_state = exp.models.state_dict()
             ex.info['{}_subjects_{}'.format(i, subjects)] = {'epochs_loss_misclass': exp.epochs_df}
 
             # Reset exp for training on subject

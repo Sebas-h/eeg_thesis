@@ -22,6 +22,7 @@ class SiameseTrainModel:
         self.func_compute_pred_labels = func_compute_pred_labels
         self.cuda = cuda
         self.target_finetune_cls = target_finetune_cls
+
         # Results
         self.epochs_df = pd.DataFrame()
         self.test_result = OrderedDict()
@@ -31,12 +32,12 @@ class SiameseTrainModel:
         if self.cuda:
             assert th.cuda.is_available(), "Cuda not available"
             self.model.cuda()
-        # Train and monitor/evaluate model until stop
+        # Train and monitor/evaluate models until stop
         while not self.stop_criterion.should_stop:
             self._run_one_epoch()
 
-        # Load the last checkpoint with the best model, b/c of potential early stop
-        # self.model.load_state_dict(th.load('checkpoint.pt'))
+        # Load the last checkpoint with the best models, b/c of potential early stop
+        # self.models.load_state_dict(th.load('checkpoint.pt'))
         self.model.load_state_dict(self.stop_criterion.checkpoint)
 
         # Final evalulation
@@ -110,7 +111,7 @@ class SiameseTrainModel:
                 accuracy = np.mean(predicted_labels == dataset.y)
 
             # early_stopping needs the validation loss to check if it has decresed,
-            # and if it has, it will make a checkpoint of the current model
+            # and if it has, it will make a checkpoint of the current models
             if setname == 'valid':
                 self.stop_criterion(mean_loss, self.model)
 

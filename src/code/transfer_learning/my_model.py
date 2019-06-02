@@ -101,9 +101,9 @@ def shallow_convnet(data, num_epochs, model_in=None, all_subjects=False):
     ####################################################################################
     # SET UP OPTIMIZER
     ####################################################################################
-    # optimizer = optim.Adam(model.parameters())
+    # optimizer = optim.Adam(models.parameters())
     # rng = RandomState((2018, 8, 7))
-    # optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep model
+    # optimizer = AdamW(models.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep models
     optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 
     # Need to determine number of batch passes per epoch for cosine annealing
@@ -122,7 +122,7 @@ def shallow_convnet(data, num_epochs, model_in=None, all_subjects=False):
 
     for i_epoch in range(n_epochs):
 
-        # Set model to training mode
+        # Set models to training mode
         model.train()
         # running_loss = 0.0
         for batch_X, batch_y in iterator.get_batches(train_set, shuffle=True):
@@ -150,10 +150,10 @@ def shallow_convnet(data, num_epochs, model_in=None, all_subjects=False):
             loss.backward()                         # calculate gradients (i.e. perform backprop)
             optimizer.step()                        # update parameters based on computed gradients
 
-            # model_constraint.apply(model)  # model constraints like done in example 
+            # model_constraint.apply(models)  # models constraints like done in example
 
         # Print some statistics each epoch
-        # Set model to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
+        # Set models to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
         model.eval()
         print("Epoch {:d}".format(i_epoch))
 

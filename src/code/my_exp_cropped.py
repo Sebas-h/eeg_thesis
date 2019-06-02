@@ -69,9 +69,9 @@ n_chans = int(train_set.X.shape[1])  # number of channels
 # final_conv_length determines the size of the receptive field of the ConvNet
 # final_conv_length = auto ensures we only get a single output in the time dimension
 # 
-# model = ShallowFBCSPNet(n_chans, n_classes, input_time_length=input_time_length, final_conv_length=30).create_network()
+# models = ShallowFBCSPNet(n_chans, n_classes, input_time_length=input_time_length, final_conv_length=30).create_network()
 
-# model = Deep4Net(n_chans, n_classes, input_time_length=input_time_length, final_conv_length=2).create_network()
+# models = Deep4Net(n_chans, n_classes, input_time_length=input_time_length, final_conv_length=2).create_network()
 
 model = EEGNetv4(n_chans, n_classes, input_time_length=input_time_length, final_conv_length=16).create_network()
 
@@ -105,11 +105,11 @@ iterator = CropsFromTrialsIterator(batch_size=batch_size, input_time_length=inpu
 # rng = RandomState((2018, 8, 7))
 
 # Deep ConvNet:
-optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001)  # these are good values for the deep model
+optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001)  # these are good values for the deep models
 # Shallow ConvNet:
-# optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
+# optimizer = AdamW(models.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 # EEGNetv4:
-# optimizer = optim.Adam(model.parameters())
+# optimizer = optim.Adam(models.parameters())
 
 # Need to determine number of batch passes per epoch for cosine annealing
 n_epochs = 100
@@ -130,7 +130,7 @@ results_epochs_list = []
 
 for i_epoch in range(n_epochs):
 
-    # Set model to training mode
+    # Set models to training mode
     model.train()
     running_loss = 0.0
     for batch_X, batch_y in iterator.get_batches(train_set, shuffle=True):
@@ -159,10 +159,10 @@ for i_epoch in range(n_epochs):
         # update parameters based on computed gradients
         optimizer.step()
 
-        # model_constraint.apply(model)  # model constraints like done in example
+        # model_constraint.apply(models)  # models constraints like done in example
 
     # Print some statistics each epoch
-    # Set model to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
+    # Set models to evaluation mode (so that batch-norm and dropout behave differently than in train mode)
     model.eval()
     print("Epoch {:d}".format(i_epoch))
     res = []

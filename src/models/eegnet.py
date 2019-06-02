@@ -3,11 +3,12 @@ import torch as th
 from torch import nn
 from torch.nn import init
 from torch.nn.functional import elu
-
 from braindecode.models.base import BaseModel
 from braindecode.torch_ext.init import glorot_weight_zero_bias
 from braindecode.torch_ext.modules import Expression
 from braindecode.torch_ext.util import np_to_var, var_to_np
+
+from src.base.base_model import BaseModel
 
 
 class Conv2dWithConstraint(nn.Conv2d):
@@ -16,11 +17,12 @@ class Conv2dWithConstraint(nn.Conv2d):
         super(Conv2dWithConstraint, self).__init__(*args, **kwargs)
 
     def forward(self, x):
-        self.weight.data = th.renorm(self.weight.data, p=2, dim=0, maxnorm=self.max_norm)
+        self.weight.data = th.renorm(self.weight.data, p=2, dim=0,
+                                     maxnorm=self.max_norm)
         return super(Conv2dWithConstraint, self).forward(x)
 
 
-class SiameseEEGNet(nn.Module):
+class EEGNet(BaseModel):
     """
     EEGNet v4 models from [EEGNet4]_.
 
@@ -31,7 +33,6 @@ class SiameseEEGNet(nn.Module):
 
     References
     ----------
-
     .. [EEGNet4] Lawhern, V. J., Solon, A. J., Waytowich, N. R., Gordon,
        S. M., Hung, C. P., & Lance, B. J. (2018).
        EEGNet: A Compact Convolutional Network for EEG-based
@@ -44,31 +45,29 @@ class SiameseEEGNet(nn.Module):
                  final_conv_length='auto',
                  input_time_length=None,
                  pool_mode='mean',
-                 F1=8,
-                 D=2,
-                 F2=16,  # usually set to F1*D (?)
+                 f1=8,
+                 d=2,
+                 f2=16,  # usually set to F1*D (?)
                  kernel_length=64,
                  third_kernel_size=(8, 4),
                  drop_prob=0.25
                  ):
-        super(SiameseEEGNet, self).__init__()
+        super(EEGNet, self).__init__()
 
         if final_conv_length == 'auto':
             assert input_time_length is not None
 
         # Assigns all parameters in init to self.param_name
-        # if any(k in vars(self) for k in vars()):
-        #     raise Exception("Var is already present in class. Prevent accidental override")
-        # vars(self).update((k, v) for k, v in vars().items() if k != 'self')
         self.__dict__.update(locals())
         del self.self
 
         # Define kind of pooling used:
         pool_class = dict(max=nn.MaxPool2d, mean=nn.AvgPool2d)[self.pool_mode]
 
-        # Embedding (feature space extraction) part:
-        self.embed = nn.Sequential(
-            # Rearrange dimensions, dimshuffle, tranform to shape required by pytorch:
+        # Convolution accros temporal axis
+        self.temporal_conv = nn.Sequential(
+            # Rearrange dimensions, dimshuffle,
+            #   tranform to shape required by pytorch:
             Expression(_transpose_to_b_1_c_0),
             # Temporal conv layer:
             nn.Conv2d(in_channels=1, out_channels=self.F1,
@@ -76,28 +75,37 @@ class SiameseEEGNet(nn.Module):
                       stride=1,
                       bias=False,
                       padding=(0, self.kernel_length // 2)),
-            nn.BatchNorm2d(self.F1, momentum=0.01, affine=True, eps=1e-3),
+            nn.BatchNorm2d(self.F1, momentum=0.01, affine=True, eps=1e-3)
+        )
+
+        self.spatial_conv = nn.Sequential(
             # Spatial conv layer:
-            Conv2dWithConstraint(self.F1, self.F1 * self.D, (self.in_chans, 1), max_norm=1, stride=1, bias=False,
+            Conv2dWithConstraint(self.F1, self.F1 * self.D, (self.in_chans, 1),
+                                 max_norm=1, stride=1, bias=False,
                                  groups=self.F1, padding=(0, 0)),
-            nn.BatchNorm2d(self.F1 * self.D, momentum=0.01, affine=True, eps=1e-3),
+            nn.BatchNorm2d(self.F1 * self.D, momentum=0.01, affine=True,
+                           eps=1e-3),
             nn.ELU(),
             pool_class(kernel_size=(1, 4), stride=(1, 4))
         )
 
-        self.sep_conv = nn.Sequential(
+        self.separable_conv = nn.Sequential(
             nn.Dropout(p=self.drop_prob),
-            # Seperable conv layer:
-            nn.Conv2d(self.F1 * self.D, self.F1 * self.D, (1, 16), stride=1, bias=False, groups=self.F1 * self.D,
+            # Separable conv layer:
+            nn.Conv2d(self.F1 * self.D, self.F1 * self.D, (1, 16), stride=1,
+                      bias=False, groups=self.F1 * self.D,
                       padding=(0, 16 // 2)),
-            nn.Conv2d(self.F1 * self.D, self.F2, (1, 1), stride=1, bias=False, padding=(0, 0)),
+            nn.Conv2d(self.F1 * self.D, self.F2, (1, 1), stride=1, bias=False,
+                      padding=(0, 0)),
             nn.BatchNorm2d(self.F2, momentum=0.01, affine=True, eps=1e-3),
             nn.ELU(),
             pool_class(kernel_size=(1, 8), stride=(1, 8))
         )
 
         out = self.sep_conv(
-            self.embed(np_to_var(np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32))))
+            self.temp_spat_conv(np_to_var(
+                np.ones((1, self.in_chans, self.input_time_length, 1),
+                        dtype=np.float32))))
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
         if self.final_conv_length == 'auto':
@@ -107,7 +115,9 @@ class SiameseEEGNet(nn.Module):
         # Classifier part:
         self.cls = nn.Sequential(
             nn.Dropout(p=self.drop_prob),
-            nn.Conv2d(self.F2, self.n_classes, (n_out_virtual_chans, self.final_conv_length,), bias=True),
+            nn.Conv2d(self.F2, self.n_classes,
+                      (n_out_virtual_chans, self.final_conv_length),
+                      bias=True),
             nn.LogSoftmax(dim=1),
             # Transpose back to the the logic of braindecode,
             #   so time in third dimension (axis=2)
@@ -120,9 +130,14 @@ class SiameseEEGNet(nn.Module):
         # Initialize weights of the network
         self.apply(glorot_weight_zero_bias)
 
-    def forward(self, x, setname, target_finetune_cls=False):
+    def forward(self, x, setname, feature_alignment_layer=1,
+                target_finetune_cls=False):
+        assert feature_alignment_layer in self.__modules, \
+            "Given feature alignment layer does not exist for current models"
         if target_finetune_cls:
-            x = self.sep_conv(self.embed(x))
+            x = self.temporal_conv(x)
+            x = self.spatial_conv(x)
+            x = self.separable_conv(x)
             x = self.cls(x)
             return x
         else:
@@ -130,22 +145,25 @@ class SiameseEEGNet(nn.Module):
             target = x[:, 0, :, :, None]
             source = x[:, 1, :, :, None]
 
-            # Forward pass
-            for module in self._modules.values():
-                target = module(target)
-            target_embedding = self.embed(target)
-            source_embedding = self.embed(source)
+            for module in self._modules:
+                target = module.value(target)
+                source = module.value(source)
+                if module == feature_alignment_layer:
+                    break
 
-            # only cls on target when on test (i.e. done with training)
-            # if setname == 'test':
-            #     cls = self.cls(self.sep_conv(target_embedding))
-            # else:
-            #     cls = self.cls(self.sep_conv(source_embedding))
+            target_embedding = target
+            source_embedding = source
 
-            # always cls on target set
-            cls = self.cls(self.sep_conv(target_embedding))
+            for module in self._modules:
+                if module == feature_alignment_layer:
+                    cont_cls = True
+                if cont_cls:
+                    source = module.value(source)
 
-            return {'target_embedding': target_embedding, 'source_embedding': source_embedding, 'source_cls': cls}
+            cls = source
+
+            return {'target_embedding': target_embedding,
+                    'source_embedding': source_embedding, 'source_cls': cls}
 
 
 def _transpose_to_b_1_c_0(x):

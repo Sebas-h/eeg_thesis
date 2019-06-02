@@ -15,7 +15,7 @@ do cv with a set of hyperparameters and
 
 # Experiment setup variables
 # experiment name:
-# [model name]_[cropped or trialwise]_[date]_[time].[csv or smt]
+# [models name]_[cropped or trialwise]_[date]_[time].[csv or smt]
 
 # DATASET
 name_dataset = "bcic-iv-2a"
@@ -32,7 +32,7 @@ low_cut_hz = 4 # 0 or 4
 
 # MODEL TYPE
 model = 'deep' #'shallow' or 'deep' or 'eegnet' or 'resnet' or 'tcn'
-# + model details: layers, activations, batch norm, dropout, sense layers, etc.
+# + models details: layers, activations, batch norm, dropout, sense layers, etc.
 # Model: 
 # Sequential(
 #   (dimshuffle): Expression(expression=_transpose_time_to_spat)

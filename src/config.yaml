@@ -1,0 +1,24 @@
+experiment:
+  dataset: hgd  # [hgd, bciciv2a]
+  subject_id: 1
+  i_valid_fold: 0
+  finetune: False
+
+model:
+  name: eegnet
+  siamese: False
+
+cropped:
+  use: False
+  input_time_length: 1000
+  final_conv_length_shallow: 30
+  final_conv_length_deep: 2
+
+train:
+  batch_size: 60
+  max_epochs: 900
+  early_stop_patience: 50
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0

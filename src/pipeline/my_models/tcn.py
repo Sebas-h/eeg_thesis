@@ -114,7 +114,7 @@ if __name__ == '__main__':
     # Model:
     # inputs = inputs.permute(0, 3, 2, 1)
     channel_sizes = [25] * 8
-    # model = TemporalConvNet(22, [25, 25, 25, 25])
+    # models = TemporalConvNet(22, [25, 25, 25, 25])
     model = TCN(
         input_size=22,
         output_size=4,

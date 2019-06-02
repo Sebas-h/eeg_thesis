@@ -80,8 +80,8 @@ def siamese_cv_subject_finetune():
 
 def eegnet_tl_finetune():
     """
-    train model using all but the target-subject as source dataset
-    finetune/retrain model using targe-subject as target dataset
+    train models using all but the target-subject as source dataset
+    finetune/retrain models using targe-subject as target dataset
     (all layers finetuned, none frozen, seemed best from preliminary results)
     :return:
     """
@@ -150,7 +150,7 @@ def eegnet_tl_finetune():
 def eegnet_no_tl():
     """
     eegnet results, no tl
-    learn model from subject (target) data only, no source data involved
+    learn models from subject (target) data only, no source data involved
     :return:
     """
     path = "/Users/sebas/Downloads/slurm-results/eegnet_sda_finetune_all"

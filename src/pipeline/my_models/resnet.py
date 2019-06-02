@@ -163,7 +163,7 @@ class MyResNet(nn.Module):
 
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # This improves the models by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         # if zero_init_residual:
         #     for m in self.modules():
         #         if isinstance(m, Bottleneck):
@@ -357,7 +357,7 @@ class ResNet(nn.Module):
 
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # This improves the models by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck):
@@ -403,10 +403,10 @@ class ResNet(nn.Module):
 
 
 def resnet18(pretrained=False, **kwargs):
-    """Constructs a ResNet-18 model.
+    """Constructs a ResNet-18 models.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     if pretrained:
@@ -415,10 +415,10 @@ def resnet18(pretrained=False, **kwargs):
 
 
 def resnet34(pretrained=False, **kwargs):
-    """Constructs a ResNet-34 model.
+    """Constructs a ResNet-34 models.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     if pretrained:
@@ -427,10 +427,10 @@ def resnet34(pretrained=False, **kwargs):
 
 
 def resnet50(pretrained=False, **kwargs):
-    """Constructs a ResNet-50 model.
+    """Constructs a ResNet-50 models.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
@@ -439,10 +439,10 @@ def resnet50(pretrained=False, **kwargs):
 
 
 def resnet101(pretrained=False, **kwargs):
-    """Constructs a ResNet-101 model.
+    """Constructs a ResNet-101 models.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
@@ -451,10 +451,10 @@ def resnet101(pretrained=False, **kwargs):
 
 
 def resnet152(pretrained=False, **kwargs):
-    """Constructs a ResNet-152 model.
+    """Constructs a ResNet-152 models.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     if pretrained:
@@ -465,14 +465,14 @@ def resnet152(pretrained=False, **kwargs):
 def resnext50_32x4d(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], groups=4, width_per_group=32, **kwargs)
     # if pretrained:
-    #     model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+    #     models.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
     return model
 
 
 def resnext101_32x8d(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 23, 3], groups=8, width_per_group=32, **kwargs)
     # if pretrained:
-    #     model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
+    #     models.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
     return model
 
 
@@ -504,10 +504,10 @@ if __name__ == '__main__':
     # inputs = inputs.permute(0, 3, 2, 1)
 
     # Model:
-    # model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
-    # model = resnet18(num_classes=4)
+    # models = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
+    # models = resnet18(num_classes=4)
     model = MyResNet(MyBasicBlock, num_classes=4)
-    # model = Deep4Net(22, 4, 1125, 'auto').create_network()
+    # models = Deep4Net(22, 4, 1125, 'auto').create_network()
     optimiser = optim.Adam(model.parameters())
 
     # Train on one example

@@ -71,10 +71,10 @@ model = ShallowFBCSPNet(in_chans=in_chans, n_classes=n_classes,
                         input_time_length=train_set.X.shape[2],
                         final_conv_length='auto').create_network()
 
-# model = Deep4Net(in_chans=in_chans, n_classes=n_classes, 
+# models = Deep4Net(in_chans=in_chans, n_classes=n_classes,
 #                 input_time_length=train_set.X.shape[2], final_conv_length='auto').create_network()
 
-# model = EEGNetv4(in_chans=in_chans, n_classes=n_classes, input_time_length=train_set.X.shape[2]).create_network()
+# models = EEGNetv4(in_chans=in_chans, n_classes=n_classes, input_time_length=train_set.X.shape[2]).create_network()
 
 if cuda:
     model.cuda()
@@ -85,7 +85,7 @@ print("Model: \n{:s}".format(str(model)))
 ####################################################################################
 
 rng = RandomState((2018,8,7))
-#optimizer = AdamW(model.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep model
+#optimizer = AdamW(models.parameters(), lr=1*0.01, weight_decay=0.5*0.001) # these are good values for the deep models
 optimizer = AdamW(model.parameters(), lr=0.0625 * 0.01, weight_decay=0)
 
 # Need to determine number of batch passes per epoch for cosine annealing
@@ -107,7 +107,7 @@ results_epochs_list = []
 
 for i_epoch in range(n_epochs):
     # i_trials_in_batch = get_balanced_batches(len(train_set.X), rng, shuffle=True, batch_size=30)
-    # Set model to training mode
+    # Set models to training mode
     model.train()
     # for i_trials in i_trials_in_batch:
     for batch_X, batch_y in iterator.get_batches(train_set, shuffle=True):
@@ -190,7 +190,7 @@ for i_epoch in range(n_epochs):
     #     net_target = np_to_var(dataset.y)
     #     if cuda:
     #         net_target = net_target.cuda()
-    #     outputs = model(net_in)
+    #     outputs = models(net_in)
     #     loss = F.nll_loss(outputs, net_target)
     #     print("{:6s} Loss: {:.5f}".format(
     #         setname, float(var_to_np(loss))))

@@ -23,7 +23,7 @@ class ExpResult:
                     self.df_loss_error_per_subject.append(df_from_serialized_json_dict(value))
                     return
                 self.recurse_nested_dict(value)
-            if key == 'model':
+            if key == 'models':
                 self.model = value
             elif key == 'optimizer':
                 self.optimzer = value

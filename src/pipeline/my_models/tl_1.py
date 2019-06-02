@@ -14,8 +14,8 @@ class TransferLearningOne:
 
     def train_target(self, train_test_ratio=(0.7, 0.3)):
         train_set, test_set = [[], []]
-        # train model
-        # model()
+        # train models
+        # models()
         pass
 
     def train_source(self):

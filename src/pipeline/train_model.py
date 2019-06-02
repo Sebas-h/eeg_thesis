@@ -7,7 +7,8 @@ from collections import OrderedDict
 
 
 class TrainModel:
-    def __init__(self, train_set, valid_set, test_set, model, optimizer, iterator, loss_function, stop_criterion,
+    def __init__(self, train_set, valid_set, test_set, model, optimizer,
+                 iterator, loss_function, stop_criterion,
                  model_constraint, cuda, func_compute_pred_labels):
         # Config
         self.train_set = train_set
@@ -26,12 +27,12 @@ class TrainModel:
         self.test_result = OrderedDict()
 
     def run(self):
-        # Train and monitor/evaluate model until stop
+        # Train and monitor/evaluate models until stop
         while not self.stop_criterion.should_stop:
             self._run_one_epoch()
 
-        # Load the last checkpoint with the best model, b/c of potential early stop
-        # self.model.load_state_dict(th.load('checkpoint.pt'))
+        # Load the last checkpoint with the best models, b/c of potential early stop
+        # self.models.load_state_dict(th.load('checkpoint.pt'))
         self.model.load_state_dict(self.stop_criterion.checkpoint)
 
         # Final evalulation
@@ -43,10 +44,12 @@ class TrainModel:
     def _run_one_epoch(self):
         start = time.time()
         # Train:
-        for batch_X, batch_y in self.iterator.get_batches(self.train_set, shuffle=True):
+        for batch_X, batch_y in self.iterator.get_batches(self.train_set,
+                                                          shuffle=True):
             self._train_batch(batch_X, batch_y)
         # Evaluate:
-        results = self._eval_epoch((('train', self.train_set), ('valid', self.valid_set)))
+        results = self._eval_epoch(
+            (('train', self.train_set), ('valid', self.valid_set)))
         # Save epoch result:
         results.update(dict(runtime=time.time() - start))
         self.epochs_df = self.epochs_df.append(results, ignore_index=True)
@@ -83,7 +86,8 @@ class TrainModel:
             all_preds = []
             all_losses = []
             batch_sizes = []
-            for batch_X, batch_y in self.iterator.get_batches(dataset, shuffle=False):
+            for batch_X, batch_y in self.iterator.get_batches(dataset,
+                                                              shuffle=False):
                 preds, loss = self._eval_batch(batch_X, batch_y)
                 all_preds.append(th_ext_util.var_to_np(preds))
                 all_losses.append(loss)
@@ -99,7 +103,7 @@ class TrainModel:
             accuracy = np.mean(predicted_labels == dataset.y)
 
             # early_stopping needs the validation loss to check if it has decresed,
-            # and if it has, it will make a checkpoint of the current model
+            # and if it has, it will make a checkpoint of the current models
             if setname == 'valid':
                 self.stop_criterion(mean_loss, self.model)
 

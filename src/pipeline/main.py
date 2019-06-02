@@ -2,7 +2,8 @@ import os
 import braindecode.datautil.splitters as data_splitters
 from src.data_loader import data_loading
 from src.pipeline.run_model import RunModel
-from src.data_loader.data_loader import HighGammaProcessed
+from src.data_loader.data_loader import HighGammaProcessed, \
+    MergedHighGammaProcessed
 
 #######################
 # CONFIG AND PARAMETERS
@@ -41,28 +42,73 @@ def main(args):
     print("Subject and test fold indices", index_subject, index_test_fold)
     # Run experiment
     train_single_subject_hgd(index_subject, index_test_fold)
+    # train_subject_tl_loo_hgd(index_subject, index_test_fold)
     # train_subject_transfer_learning_allbutone(index_subject, index_test_fold)
 
 
-def train_single_subject_hgd(index_subject, index_test_fold):
+def train_single_subject_hgd(subject_id, i_valid_fold):
     hgd_processed_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../..',
                      'data/hgd_processed_low_cut_4hz'))
-    hgd_train_h5_path = f"{hgd_processed_dir}/{index_subject + 1}_train.h5"
-    hgd_test_h5_path = f"{hgd_processed_dir}/{index_subject + 1}_test.h5"
+    hgd_train_h5_path = f"{hgd_processed_dir}/{subject_id}_train.h5"
+    hgd_test_h5_path = f"{hgd_processed_dir}/{subject_id}_test.h5"
 
     # Data loading
-    hgd = HighGammaProcessed(hgd_train_h5_path, hgd_test_h5_path, 0, 1, True)
+    hgd = HighGammaProcessed(hgd_train_h5_path, hgd_test_h5_path, i_valid_fold,
+                             1, True)
 
     # Split data into train, valid, test
     train_set, valid_set, test_set = hgd.get_train_valid_test_sets()
 
-    # TRAINING:
-    subject_id = f"{index_subject + 1}_itestfold_{index_test_fold}"
+    # Run experiment:
+
     run_model = RunModel()
-    file_name_state_dict = run_model.go(train_set, valid_set, test_set,
+    run_model.go(train_set, valid_set, test_set, n_classes=n_classes,
+                 subject_id=subject_id)
+
+
+def train_subject_tl_loo_hgd(index_subject, i_valid_fold):
+    hgd_processed_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../..',
+                     'data/hgd_processed_low_cut_4hz'))
+
+    source_ids = [x for x in range(1, 15) if x != index_subject]
+    src_train_h5_paths = [f"{hgd_processed_dir}/{i}_train.h5" for i in
+                          source_ids]
+    src_test_h5_paths = [f"{hgd_processed_dir}/{i}_test.h5" for i in source_ids]
+
+    target_train_h5_path = f"{hgd_processed_dir}/{index_subject}_train.h5"
+    target_test_h5_path = f"{hgd_processed_dir}/{index_subject}_test.h5"
+
+    # Data loading
+    src_merged_hgd = MergedHighGammaProcessed(src_train_h5_paths,
+                                              src_test_h5_paths,
+                                              i_valid_fold, 1, True)
+    target_hgd = HighGammaProcessed(target_train_h5_path, target_test_h5_path,
+                                    0, 1, True)
+
+    # Split data into train, valid, test
+    src_train_set, src_valid_set, src_test_set = \
+        src_merged_hgd.get_train_valid_test_sets()
+    tgt_train_set, tgt_valid_set, tgt_test_set = \
+        target_hgd.get_train_valid_test_sets()
+
+    # Train models on source
+    subject_id = f"{index_subject}-loosrc"
+    run_model = RunModel()
+    file_name_state_dict = run_model.go(src_train_set, src_valid_set,
+                                        src_test_set,
                                         n_classes=n_classes,
                                         subject_id=subject_id)
+
+    # Fine-tune models on target
+    run_model = RunModel()
+    run_model.go(
+        tgt_train_set, tgt_valid_set, tgt_test_set,
+        n_classes=n_classes,
+        subject_id=f"{index_subject}-tgt",
+        tl_model_state=file_name_state_dict
+    )
 
 
 def train_single_subject(index_subject, index_test_fold):
@@ -145,7 +191,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='My args parse experiment')
-    parser.add_argument('-s', '--subject-index', type=int, default=0,
+    parser.add_argument('-s', '--subject-index', type=int, default=1,
                         metavar='N',
                         help='subject index, possible values [0, ..., 8] (default: 0)')
     parser.add_argument('-t', '--test-fold-index', type=int, default=0,

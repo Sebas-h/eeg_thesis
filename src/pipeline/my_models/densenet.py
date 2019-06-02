@@ -55,7 +55,7 @@ class _Transition(nn.Sequential):
 
 
 class DenseNet(nn.Module):
-    r"""Densenet-BC model class, based on
+    r"""Densenet-BC models class, based on
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
 
     Args:
@@ -137,11 +137,11 @@ def _load_state_dict(model, model_url):
 
 
 def densenet121(pretrained=False, **kwargs):
-    r"""Densenet-121 model from
+    r"""Densenet-121 models from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 24, 16),
                      **kwargs)
@@ -151,11 +151,11 @@ def densenet121(pretrained=False, **kwargs):
 
 
 def densenet169(pretrained=False, **kwargs):
-    r"""Densenet-169 model from
+    r"""Densenet-169 models from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 32, 32),
                      **kwargs)
@@ -165,11 +165,11 @@ def densenet169(pretrained=False, **kwargs):
 
 
 def densenet201(pretrained=False, **kwargs):
-    r"""Densenet-201 model from
+    r"""Densenet-201 models from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = DenseNet(num_init_features=64, growth_rate=32, block_config=(6, 12, 48, 32),
                      **kwargs)
@@ -179,11 +179,11 @@ def densenet201(pretrained=False, **kwargs):
 
 
 def densenet161(pretrained=False, **kwargs):
-    r"""Densenet-161 model from
+    r"""Densenet-161 models from
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        pretrained (bool): If True, returns a models pre-trained on ImageNet
     """
     model = DenseNet(num_init_features=96, growth_rate=48, block_config=(6, 12, 36, 24),
                      **kwargs)
@@ -214,12 +214,12 @@ if __name__ == '__main__':
     inputs = np_to_var(inputs)
     # inputs = inputs.permute(0, 3, 2, 1)
     # Model:
-    # model = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
-    # model = MyResNet(MyBasicBlock, num_classes=4)
-    # model = Deep4Net(22, 4, 1125, 'auto').create_network()
-    # model = DenseNet(growth_rate=12, num_classes=4)
+    # models = ResNet(BasicBlock, [3, 4, 6, 3], num_classes=4)
+    # models = MyResNet(MyBasicBlock, num_classes=4)
+    # models = Deep4Net(22, 4, 1125, 'auto').create_network()
+    # models = DenseNet(growth_rate=12, num_classes=4)
     model = densenet121(num_classes=4)
-    # print(model)
+    # print(models)
     optimiser = optim.Adam(model.parameters())
 
     # Train on one example

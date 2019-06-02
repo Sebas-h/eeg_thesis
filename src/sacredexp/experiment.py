@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 class RememberBest(object):
     """
     Class to remember and restore
-    the parameters of the model and the parameters of the
+    the parameters of the models and the parameters of the
     optimizer at the epoch with the best performance.
 
     Parameters
@@ -74,7 +74,7 @@ class RememberBest(object):
         Reset parameters to parameters at best epoch and remove rows
         after best epoch from epochs dataframe.
 
-        Modifies parameters of model and optimizer, changes epochs_df in-place.
+        Modifies parameters of models and optimizer, changes epochs_df in-place.
 
         Parameters
         ----------
@@ -96,7 +96,7 @@ class Experiment(object):
     It trains as follows:
 
     1. Train on training set until a given stop criterion is fulfilled
-    2. Reset to the best epoch, i.e. reset parameters of the model and the
+    2. Reset to the best epoch, i.e. reset parameters of the models and the
        optimizer to the state at the best epoch ("best" according to a given
        criterion)
     3. Continue training on the combined training + validation set until the
@@ -118,7 +118,7 @@ class Experiment(object):
         -> loss: `torch.autograd.Variable`
     optimizer: `torch.optim.Optimizer`
     model_constraint: object
-        Object with apply function that takes model and constraints its
+        Object with apply function that takes models and constraints its
         parameters. `None` for no constraint.
     monitors: list of objects
         List of objects with monitor_epoch and monitor_set method, should
@@ -127,12 +127,12 @@ class Experiment(object):
         Object with `should_stop` method, that takes in monitoring dataframe
         and returns if training should stop:
     remember_best_column: str
-        Name of column to use for storing parameters of best model. Lowest value
+        Name of column to use for storing parameters of best models. Lowest value
         should indicate best performance in this column.
     run_after_early_stop: bool
         Whether to continue running after early stop
     model_loss_function: function, optional
-        Function (model -> loss) to add a model loss like L2 regularization.
+        Function (models -> loss) to add a models loss like L2 regularization.
         Note that this loss is not accounted for in monitoring at the moment.
     batch_modifier: object, optional
         Object with modify method, that can change the batch, e.g. for data
@@ -142,10 +142,10 @@ class Experiment(object):
     pin_memory: bool, optional
         Whether to pin memory of inputs and targets of batch.
     do_early_stop: bool
-        Whether to do an early stop at all. If true, reset to best model
+        Whether to do an early stop at all. If true, reset to best models
         even in case experiment does not run after early stop.
     reset_after_second_run: bool
-        If true, reset to best model when second run did not find a valid loss
+        If true, reset to best models when second run did not find a valid loss
         below or equal to the best train loss of first run.
     log_0_epoch: bool
         Whether to compute monitor values and log them before the
@@ -218,7 +218,7 @@ class Experiment(object):
         log.info("Run until first stop...")
         self.run_until_first_stop()
         if self.do_early_stop:
-            # always setup for second stop, in order to get best model
+            # always setup for second stop, in order to get best models
             # even if not running after early stop...
             log.info("Setup for second stop...")
             self.setup_after_stop_training()
@@ -228,7 +228,7 @@ class Experiment(object):
             self.run_until_second_stop()
             if self.reset_after_second_run:
                 # if no valid loss was found below the best train loss on 1st
-                # run, reset model to the epoch with lowest valid_misclass
+                # run, reset models to the epoch with lowest valid_misclass
                 if float(self.epochs_df['valid_loss'].iloc[-1]) > loss_to_reach:
                     log.info("Resetting to best epoch {:d}".format(
                         self.rememberer.best_epoch))
@@ -240,7 +240,7 @@ class Experiment(object):
 
     def setup_training(self):
         """
-        Setup training, i.e. transform model to cuda,
+        Setup training, i.e. transform models to cuda,
         initialize monitoring.
         """
         # reset remember best extension in case you rerun some experiment

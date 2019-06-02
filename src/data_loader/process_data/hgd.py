@@ -16,8 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     data_dir = '/home/no316758/data/high-gamma-dataset/data'
-    output_dir = '/home/no316758/projects/eeg_thesis/data/' \
-                 'hgd_processed_low_cut_4hz'
+    output_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '../../..',
+                     'data/hgd_processed_low_cut_4hz'))
 
     # Check ouput dir exists and possibly create it
     parent_output_dir = os.path.abspath(os.path.join(output_dir, os.pardir))
@@ -26,13 +27,16 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    # subject_ids: list of indices in range [1, 14]
+    # Get file paths:
+    #   subject_ids: list of indices in range [1, ..., 14]
     subject_ids = [x for x in range(1, 15)]
 
     train_data_paths = [data_dir + f"/train/{subject_id}.mat" for subject_id in
                         subject_ids]
     test_data_paths = [data_dir + f"/test/{subject_id}.mat" for subject_id in
                        subject_ids]
+
+    # Process and save data
     low_cut_hz = 4
     debug = False
     save_processed_high_gamma_datatset(train_data_paths, test_data_paths,

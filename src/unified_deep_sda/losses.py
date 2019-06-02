@@ -19,7 +19,7 @@ class CCSALoss(th.nn.Module):
     def forward(self, outputs, target_vars):
         """
         Computes classification and contrastive semantic alignment loss
-        :param outputs: outputs of forward pass model
+        :param outputs: outputs of forward pass models
         :param target_vars: true label value for given training data
         :return:
         """
