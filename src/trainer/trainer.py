@@ -3,12 +3,16 @@ import time
 import braindecode.torch_ext.util as th_ext_util
 import pandas as pd
 from collections import OrderedDict
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Trainer:
     def __init__(self, train_set, valid_set, test_set, model, optimizer,
                  iterator, loss_function, stop_criterion,
-                 model_constraint, cuda, func_compute_pred_labels):
+                 model_constraint, cuda, func_compute_pred_labels,
+                 siamese):
         # Config
         self.train_set = train_set
         self.valid_set = valid_set
@@ -21,18 +25,18 @@ class Trainer:
         self.model_constraint = model_constraint
         self.func_compute_pred_labels = func_compute_pred_labels
         self.cuda = cuda
+        self.siamese = siamese
         # Results
         self.epochs_df = pd.DataFrame()
         self.test_result = OrderedDict()
 
     def train(self):
-        # Train and monitor/evaluate models until stop
+        # Train and evaluate models until stop
         while not self.stop_criterion.should_stop:
             self._train_one_epoch()
 
         # Load the last checkpoint with the best models,
         #   b/c of potential early stop
-        # self.models.load_state_dict(th.load('checkpoint.pt'))
         self.model.load_state_dict(self.stop_criterion.checkpoint)
 
         # Final evalulation
@@ -47,12 +51,15 @@ class Trainer:
         for batch_X, batch_y in self.iterator.get_batches(self.train_set,
                                                           shuffle=True):
             self._train_batch(batch_X, batch_y)
+
         # Evaluate:
         results = self._eval_epoch(
             (('train', self.train_set), ('valid', self.valid_set)))
+
         # Save epoch result:
         results.update(dict(runtime=time.time() - start))
         self.epochs_df = self.epochs_df.append(results, ignore_index=True)
+
         # Log:
         print(f'done epoch {self.epochs_df.shape[0]}')
         print(self.epochs_df.iloc[-1], '\n')
@@ -65,11 +72,8 @@ class Trainer:
         :return:
         """
         self.model.train()
-        input_vars = th_ext_util.np_to_var(inputs)
-        target_vars = th_ext_util.np_to_var(targets)
-        if self.cuda:
-            input_vars = input_vars.cuda()
-            target_vars = target_vars.cuda()
+        input_vars = self.np_to_tensor(inputs)
+        target_vars = self.np_to_tensor(targets)
         self.optimizer.zero_grad()
         outputs = self.model(input_vars)
         loss = self.loss_function(outputs, target_vars)
@@ -88,10 +92,14 @@ class Trainer:
             batch_sizes = []
             for batch_X, batch_y in self.iterator.get_batches(dataset,
                                                               shuffle=False):
+                batch_size = len(batch_X)
                 preds, loss = self._eval_batch(batch_X, batch_y)
+                if self.siamese:
+                    preds = preds['cls']
+                    batch_size = len(batch_X['source'])
                 all_preds.append(th_ext_util.var_to_np(preds))
                 all_losses.append(loss)
-                batch_sizes.append(len(batch_X))
+                batch_sizes.append(batch_size)
 
             # Compute mean per-input loss
             batch_weights = np.array(batch_sizes) / float(np.sum(batch_sizes))
@@ -101,9 +109,12 @@ class Trainer:
             # Compute predictions and accuracy/inverse_of_error
             predicted_labels = self.func_compute_pred_labels(all_preds, dataset)
             accuracy = np.mean(predicted_labels == dataset.y)
+            if self.siamese:
+                accuracy = np.mean(predicted_labels == dataset.y['source'])
 
-            # early_stopping needs the validation loss to check if it has decresed,
-            # and if it has, it will make a checkpoint of the current models
+            # early_stopping needs the validation loss
+            #   to check if it has decresed, and if it has,
+            #   it will make a checkpoint of the current models
             if setname == 'valid':
                 self.stop_criterion(mean_loss, self.model)
 
@@ -115,14 +126,22 @@ class Trainer:
         return epoch_results
 
     def _eval_batch(self, inputs, targets):
-        net_in = th_ext_util.np_to_var(inputs)
-        net_target = th_ext_util.np_to_var(targets)
-        if self.cuda:
-            net_in = net_in.cuda()
-        if self.cuda:
-            net_target = net_target.cuda()
+        net_in = self.np_to_tensor(inputs)
+        net_target = self.np_to_tensor(targets)
         outputs = self.model(net_in)
         loss = self.loss_function(outputs, net_target)
         loss = float(th_ext_util.var_to_np(loss))
         return outputs, loss
 
+    def np_to_tensor(self, batch):
+        if self.siamese:
+            batch['source'] = th_ext_util.np_to_var(batch['source'])
+            batch['target'] = th_ext_util.np_to_var(batch['target'])
+            if self.cuda:
+                batch['source'] = batch['source'].cuda()
+                batch['target'] = batch['target'].cuda()
+        else:
+            batch = th_ext_util.np_to_var(batch)
+            if self.cuda:
+                batch = batch.cuda()
+        return batch

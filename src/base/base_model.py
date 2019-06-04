@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import numpy as np
 from abc import abstractmethod
@@ -14,6 +15,9 @@ class BaseModel(nn.Module):
         Forward pass logic
         :return: Model output
         """
+        raise NotImplementedError
+
+    def freeze_layers(self):
         raise NotImplementedError
 
     def __str__(self):

@@ -1,12 +1,9 @@
 import numpy as np
 import torch as th
 from torch import nn
-from torch.nn import init
-from torch.nn.functional import elu
-from braindecode.models.base import BaseModel
 from braindecode.torch_ext.init import glorot_weight_zero_bias
 from braindecode.torch_ext.modules import Expression
-from braindecode.torch_ext.util import np_to_var, var_to_np
+from braindecode.torch_ext.util import np_to_var
 
 from src.base.base_model import BaseModel
 
@@ -50,10 +47,14 @@ class EEGNet(BaseModel):
                  f2=16,  # usually set to F1*D (?)
                  kernel_length=64,
                  third_kernel_size=(8, 4),
-                 drop_prob=0.25
+                 drop_prob=0.25,
+                 siamese=False,
+                 i_feature_alignment_layer=None  # 0-based index modules
                  ):
         super(EEGNet, self).__init__()
 
+        if i_feature_alignment_layer is None:
+            i_feature_alignment_layer = 2  # default alignment layer
         if final_conv_length == 'auto':
             assert input_time_length is not None
 
@@ -70,20 +71,20 @@ class EEGNet(BaseModel):
             #   tranform to shape required by pytorch:
             Expression(_transpose_to_b_1_c_0),
             # Temporal conv layer:
-            nn.Conv2d(in_channels=1, out_channels=self.F1,
+            nn.Conv2d(in_channels=1, out_channels=self.f1,
                       kernel_size=(1, self.kernel_length),
                       stride=1,
                       bias=False,
                       padding=(0, self.kernel_length // 2)),
-            nn.BatchNorm2d(self.F1, momentum=0.01, affine=True, eps=1e-3)
+            nn.BatchNorm2d(self.f1, momentum=0.01, affine=True, eps=1e-3)
         )
 
         self.spatial_conv = nn.Sequential(
             # Spatial conv layer:
-            Conv2dWithConstraint(self.F1, self.F1 * self.D, (self.in_chans, 1),
+            Conv2dWithConstraint(self.f1, self.f1 * self.d, (self.in_chans, 1),
                                  max_norm=1, stride=1, bias=False,
-                                 groups=self.F1, padding=(0, 0)),
-            nn.BatchNorm2d(self.F1 * self.D, momentum=0.01, affine=True,
+                                 groups=self.f1, padding=(0, 0)),
+            nn.BatchNorm2d(self.f1 * self.d, momentum=0.01, affine=True,
                            eps=1e-3),
             nn.ELU(),
             pool_class(kernel_size=(1, 4), stride=(1, 4))
@@ -92,20 +93,20 @@ class EEGNet(BaseModel):
         self.separable_conv = nn.Sequential(
             nn.Dropout(p=self.drop_prob),
             # Separable conv layer:
-            nn.Conv2d(self.F1 * self.D, self.F1 * self.D, (1, 16), stride=1,
-                      bias=False, groups=self.F1 * self.D,
+            nn.Conv2d(self.f1 * self.d, self.f1 * self.d, (1, 16), stride=1,
+                      bias=False, groups=self.f1 * self.d,
                       padding=(0, 16 // 2)),
-            nn.Conv2d(self.F1 * self.D, self.F2, (1, 1), stride=1, bias=False,
+            nn.Conv2d(self.f1 * self.d, self.f2, (1, 1), stride=1, bias=False,
                       padding=(0, 0)),
-            nn.BatchNorm2d(self.F2, momentum=0.01, affine=True, eps=1e-3),
+            nn.BatchNorm2d(self.f2, momentum=0.01, affine=True, eps=1e-3),
             nn.ELU(),
             pool_class(kernel_size=(1, 8), stride=(1, 8))
         )
 
-        out = self.sep_conv(
-            self.temp_spat_conv(np_to_var(
-                np.ones((1, self.in_chans, self.input_time_length, 1),
-                        dtype=np.float32))))
+        out = np_to_var(
+            np.ones((1, self.in_chans, self.input_time_length, 1),
+                    dtype=np.float32))
+        out = self.forward_once(out)
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
         if self.final_conv_length == 'auto':
@@ -115,11 +116,11 @@ class EEGNet(BaseModel):
         # Classifier part:
         self.cls = nn.Sequential(
             nn.Dropout(p=self.drop_prob),
-            nn.Conv2d(self.F2, self.n_classes,
+            nn.Conv2d(self.f2, self.n_classes,
                       (n_out_virtual_chans, self.final_conv_length),
                       bias=True),
             nn.LogSoftmax(dim=1),
-            # Transpose back to the the logic of braindecode,
+            # Transpose back to the the logic of _braindecode,
             #   so time in third dimension (axis=2)
             # Transform back to original shape and
             #   squeeze to (batch_size, n_classes) size
@@ -130,40 +131,55 @@ class EEGNet(BaseModel):
         # Initialize weights of the network
         self.apply(glorot_weight_zero_bias)
 
-    def forward(self, x, setname, feature_alignment_layer=1,
-                target_finetune_cls=False):
-        assert feature_alignment_layer in self.__modules, \
-            "Given feature alignment layer does not exist for current models"
-        if target_finetune_cls:
-            x = self.temporal_conv(x)
-            x = self.spatial_conv(x)
-            x = self.separable_conv(x)
-            x = self.cls(x)
-            return x
-        else:
-            # Separate streams '0/1' and add empty dimension at end 'None':
-            target = x[:, 0, :, :, None]
-            source = x[:, 1, :, :, None]
+        # Set feature space alignment layer, used in siamese training/testing
+        assert 0 <= self.i_feature_alignment_layer < len(self._modules), \
+            "Given feature space alignment layer does not " \
+            "exist for current model"
+        self.feature_alignment_layer = \
+            list(self._modules.items())[self.i_feature_alignment_layer][0]
 
-            for module in self._modules:
-                target = module.value(target)
-                source = module.value(source)
-                if module == feature_alignment_layer:
-                    break
+    def forward(self, *inputs):
+        if self.siamese:
+            return self.forward_siamese(*inputs)
+        return self.forward_once(*inputs)
 
-            target_embedding = target
-            source_embedding = source
+    def forward_once(self, x):
+        for module in self._modules:
+            x = self._modules[module](x)
+        return x
 
-            for module in self._modules:
-                if module == feature_alignment_layer:
-                    cont_cls = True
-                if cont_cls:
-                    source = module.value(source)
+    def forward_siamese(self, x):
+        target = x['target']
+        source = x['source']
 
-            cls = source
+        # Compute embeddings:
+        for module in self._modules:
+            target = self._modules[module](target)
+            source = self._modules[module](source)
+            if module == self.feature_alignment_layer:
+                break
+        target_embedding = target
+        source_embedding = source
 
-            return {'target_embedding': target_embedding,
-                    'source_embedding': source_embedding, 'source_cls': cls}
+        # Compute cls for modules past the ones used for the embedding:
+        start_cls = False
+        for module in self._modules:
+            if start_cls:
+                source = self._modules[module](source)
+            if module == self.feature_alignment_layer:
+                start_cls = True
+        cls = source
+
+        return {'target_embedding': target_embedding,
+                'source_embedding': source_embedding,
+                'cls': cls}
+
+    def freeze_layers(self):
+        for module in self._modules:
+            for param in self._modules[module].parameters():
+                param.requires_grad = False
+            if module == self.feature_alignment_layer:
+                break
 
 
 def _transpose_to_b_1_c_0(x):

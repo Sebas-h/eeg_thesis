@@ -5,16 +5,12 @@
 *.pyc
 *.pyo
 **/.ipynb_checkpoints/*
-braindecode/*
+_braindecode/*
 /*.sh
 
 results/*
-!results/readme.txt
-
 data/*
-!data/readme.txt
-
-my_runs/
+src/_scrap/*
 
 *.pt
 *.h5
