@@ -4,8 +4,8 @@ from braindecode.datautil.splitters import concatenate_sets, \
     split_into_train_test
 import numpy as np
 import os
-from src.base.base_data_loader import BaseDataLoader
-from src.data_loader.util.pair_data import create_paired_dataset, \
+from base.base_data_loader import BaseDataLoader
+from data_loader.util.pair_data import create_paired_dataset, \
     split_paired_into_train_test
 
 
@@ -57,7 +57,7 @@ class BCICIV2aProcessedPaired(BaseDataLoader):
     def __init__(self, list_target_subject_id, list_source_subject_id,
                  i_valid_fold):
         self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../..',
+            os.path.join(os.path.dirname(__file__), '..',
                          'data/bciciv2a_processed_low_cut_4hz'))
 
         tgt_full_train_set, tgt_test_set = load_h5_data(self.data_dir,
@@ -80,7 +80,7 @@ class HighGammaProcessedPaired(BaseDataLoader):
     def __init__(self, list_target_subject_id, list_source_subject_id,
                  i_valid_fold):
         self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../..',
+            os.path.join(os.path.dirname(__file__), '..',
                          'data/hgd_processed_low_cut_4hz'))
 
         tgt_full_train_set, tgt_test_set = load_h5_data(self.data_dir,
@@ -102,7 +102,7 @@ class HighGammaProcessedPaired(BaseDataLoader):
 class BCICIV2aProcessed(BaseDataLoader):
     def __init__(self, list_subject_ids, i_valid_fold):
         self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../..',
+            os.path.join(os.path.dirname(__file__), '..',
                          'data/bciciv2a_processed_low_cut_4hz'))
         train_set, valid_set, test_set = load_h5_data_and_split(self.data_dir,
                                                                 list_subject_ids,
@@ -113,7 +113,7 @@ class BCICIV2aProcessed(BaseDataLoader):
 class HighGammaProcessed(BaseDataLoader):
     def __init__(self, list_subject_ids, i_valid_fold):
         self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../..',
+            os.path.join(os.path.dirname(__file__), '..',
                          'data/hgd_processed_low_cut_4hz'))
         train_set, valid_set, test_set = load_h5_data_and_split(self.data_dir,
                                                                 list_subject_ids,

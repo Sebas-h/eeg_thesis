@@ -10,7 +10,7 @@ _braindecode/*
 
 results/*
 data/*
-src/_scrap/*
+_scrap/*
 
 *.pt
 *.h5

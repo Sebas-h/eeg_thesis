@@ -1,12 +1,12 @@
 experiment:
-  dataset: hgd  # [hgd, bciciv2a]
+  dataset: bciciv2a  # [hgd, bciciv2a]
   subject_id: 1
   i_valid_fold: 0  # [0, 1, 2, 3]
   loo_tl: False
 
 model:
   name: eegnet
-  siamese: True
+  siamese: False
   i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 cropped:

@@ -1,8 +1,10 @@
-# EEG Classification using Deep Learning
-###### Master Thesis
+# EEG Classification using Deep and Transfer Learning
 
-install pytorch
-pip install braindecode
-pip install numpy
+###### Requirements 
 
-pickled data in data directory in root
+* install pytorch
+* pip install braindecode
+* pip install numpy
+* preprocess raw data
+
+\#MasterThesis :bowtie: :tophat:

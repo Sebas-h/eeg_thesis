@@ -7,14 +7,14 @@ import datetime
 import uuid
 from braindecode.torch_ext.constraints import MaxNormDefaultConstraint
 
-from src.data_loader.data_loader import get_dataset
-from src.data_loader.iterator import get_iterator
-from src.models.model import get_model
-from src.trainer.setup.losses import get_loss
-from src.trainer.setup.monitors import get_prediction_func
-from src.trainer.setup.earlystop import get_stop_criterion
-from src.trainer.setup.optimizer import get_optmizer
-from src.trainer.trainer import Trainer
+from data_loader.data_loader import get_dataset
+from data_loader.iterator import get_iterator
+from models.model import get_model
+from trainer.setup.losses import get_loss
+from trainer.setup.monitors import get_prediction_func
+from trainer.setup.earlystop import get_stop_criterion
+from trainer.setup.optimizer import get_optmizer
+from trainer.trainer import Trainer
 
 log = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s',
@@ -117,7 +117,7 @@ def save_result_and_model(trainer, model, config):
 
     # Make result directory
     result_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../..',
+        os.path.join(os.path.dirname(__file__), '..',
                      f"results/{timestamp}_{config['model']['name']}"
                      f"_{unique_id}"))
 
@@ -148,7 +148,7 @@ def save_result_and_model(trainer, model, config):
 def load_cfg(args):
     """Load a YAML configuration file."""
     yaml_filepath = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../..', 'src/config.yaml'))
+        os.path.join(os.path.dirname(__file__), '..', 'config.yaml'))
     with open(yaml_filepath, 'r') as file:
         cfg = yaml.load(file, Loader=yaml.FullLoader)
     cfg = make_paths_absolute(os.path.dirname(yaml_filepath), cfg)

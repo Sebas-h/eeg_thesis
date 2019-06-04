@@ -6,7 +6,7 @@ from braindecode.torch_ext.modules import Expression
 from braindecode.torch_ext.util import np_to_var
 from braindecode.torch_ext.functions import identity
 
-from src.base.base_model import BaseModel
+from base.base_model import BaseModel
 
 
 class DeepConvNet(BaseModel):

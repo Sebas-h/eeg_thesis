@@ -5,7 +5,7 @@ from braindecode.torch_ext.init import glorot_weight_zero_bias
 from braindecode.torch_ext.modules import Expression
 from braindecode.torch_ext.util import np_to_var
 
-from src.base.base_model import BaseModel
+from base.base_model import BaseModel
 
 
 class Conv2dWithConstraint(nn.Conv2d):

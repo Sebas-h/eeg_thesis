@@ -2,9 +2,9 @@ from braindecode.models.deep4 import Deep4Net
 from braindecode.models.shallow_fbcsp import ShallowFBCSPNet
 from braindecode.models.util import to_dense_prediction_model
 import torch
-from src.models.eegnet import EEGNet
-from src.models.deep_convnet import DeepConvNet
-from src.models.shallow_convnet import ShallowConvNet
+from models.eegnet import EEGNet
+from models.deep_convnet import DeepConvNet
+from models.shallow_convnet import ShallowConvNet
 
 
 def get_model(dataset, model_state_dict, config):

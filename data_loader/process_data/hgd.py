@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 def main():
     data_dir = '/home/no316758/data/high-gamma-dataset/data'
     output_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../../..',
+        os.path.join(os.path.dirname(__file__), '....',
                      'data/hgd_processed_low_cut_4hz'))
 
     # Check ouput dir exists and possibly create it
