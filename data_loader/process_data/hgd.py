@@ -16,8 +16,9 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     data_dir = '/home/no316758/data/high-gamma-dataset/data'
+    data_dir = '/Users/sebas/code/_eeg_data/high-gamma-dataset/data'
     output_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '....',
+        os.path.join(os.path.dirname(__file__), '../..',
                      'data/hgd_processed_low_cut_4hz'))
 
     # Check ouput dir exists and possibly create it
@@ -56,12 +57,12 @@ def save_processed_high_gamma_datatset(train_filenames, test_filenames,
         log.info("Saving processed data...")
         with h5py.File(f'{output_dir}/{subject_id}_train.h5', 'w') as h5file:
             h5file.create_dataset(f'{subject_id}_train_X',
-                                  data=full_train_set.X)
+                                  data=list(full_train_set.X))
             h5file.create_dataset(f'{subject_id}_train_y',
-                                  data=full_train_set.y)
+                                  data=list(full_train_set.y))
         with h5py.File(f'{output_dir}/{subject_id}_test.h5', 'w') as h5file:
-            h5file.create_dataset(f'{subject_id}_test_X', data=test_set.X)
-            h5file.create_dataset(f'{subject_id}_test_y', data=test_set.y)
+            h5file.create_dataset(f'{subject_id}_test_X', data=list(test_set.X))
+            h5file.create_dataset(f'{subject_id}_test_y', data=list(test_set.y))
         log.info(f"Done processing data subject {subject_id}\n")
 
 

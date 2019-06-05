@@ -10,7 +10,7 @@ from models.shallow_convnet import ShallowConvNet
 def get_model(dataset, model_state_dict, config):
     # Set up config
     model_name = config['model']['name']
-    is_siamese = config['model']['siamese']
+    is_siamese = (config['experiment']['type'] == 'ccsa_da')
     n_classes = dataset.n_classes
     if is_siamese:
         n_chans = dataset.train_set.X['source'].shape[1]
@@ -29,7 +29,8 @@ def get_model(dataset, model_state_dict, config):
     # Potentially load state dict and freeze layers
     if model_state_dict is not None:
         model.load_state_dict(torch.load(model_state_dict))
-        model.freeze_layers()
+        if config['experiment']['type'] != 'loo_tl':
+            model.freeze_layers()
     return model
 
 

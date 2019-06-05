@@ -3,158 +3,85 @@ from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.datautil.splitters import concatenate_sets, \
     split_into_train_test
 import numpy as np
-import os
 from base.base_data_loader import BaseDataLoader
 from data_loader.util.pair_data import create_paired_dataset, \
     split_paired_into_train_test
+import random
 
 
-def get_dataset(list_subject_ids, i_valid_fold, config):
-    if config['model']['siamese']:
-        if config['experiment']['dataset'] == 'bciciv2a':
-            source_subject_ids = [i for i in range(1, 10) if
-                                  i != list_subject_ids[0]]
-            # source_subject_ids = [2]  # to debug
-            return BCICIV2aProcessedPaired(list_subject_ids, source_subject_ids,
-                                           i_valid_fold)
-        elif config['experiment']['dataset'] == 'hgd':
-            source_subject_ids = [i for i in range(1, 15) if
-                                  i != list_subject_ids[0]]
-            # source_subject_ids = [2]  # to debug
-            return HighGammaProcessedPaired(list_subject_ids,
-                                            source_subject_ids, i_valid_fold)
+def get_dataset(subject_id, i_valid_fold, dataset_name, config):
+    data_dir = config['data'][dataset_name]['proc_path']
+    n_classes = config['data'][dataset_name]['n_classes']
+    n_subjects = config['data'][dataset_name]['n_subjects']
+    n_folds = config['experiment']['n_folds']
 
-    elif config['experiment']['dataset'] == 'bciciv2a':
-        return BCICIV2aProcessed(list_subject_ids, i_valid_fold)
-    elif config['experiment']['dataset'] == 'hgd':
-        return HighGammaProcessed(list_subject_ids, i_valid_fold)
+    if config['experiment']['type'] == 'ccsa_da':
+        source_subject_ids = [i for i in range(1, n_subjects + 1) if
+                              i != subject_id]
+        return PairedProcessedData(subject_id, source_subject_ids, n_folds,
+                                   i_valid_fold,
+                                   data_dir, n_classes)
+    else:
+        return ProcessedDataset(subject_id, n_folds, i_valid_fold, data_dir,
+                                n_classes)
 
 
-class ProcessedPairedData(BaseDataLoader):
-    def __init__(self, list_target_subject_id, list_source_subject_id,
-                 i_valid_fold, data_dir, from_saved_sets=False):
-        if from_saved_sets:
-            # get previously processed data already in train and valid sets
-            pass
+class PairedProcessedData(BaseDataLoader):
+    def __init__(self, target_subject_id, list_source_subject_ids, n_folds,
+                 i_valid_fold, data_dir, n_classes):
+        # Load data from source and target
+        tgt_full_train_set, tgt_test_set = load_data(data_dir,
+                                                     target_subject_id)
 
-        tgt_full_train_set, tgt_test_set = load_h5_data(data_dir,
-                                                        list_target_subject_id)
-        src_full_train_set, src_test_set = load_h5_data(data_dir,
-                                                        list_source_subject_id)
-
+        src_full_train_set, src_test_set = load_data(data_dir,
+                                                     list_source_subject_ids)
+        # Create paired dataset
         paired_full_train_set = create_paired_dataset(tgt_full_train_set,
-                                                      src_full_train_set, 4)
-
+                                                      src_full_train_set,
+                                                      n_classes)
         # Split into train and valid sets
         train_set, valid_set = split_paired_into_train_test(
-            paired_full_train_set, 4,
-            i_valid_fold)
+            paired_full_train_set, n_folds,
+            i_valid_fold, n_classes)
+        super().__init__(train_set, valid_set, None, n_classes)
 
-        super().__init__(train_set, valid_set, None, 4)
 
-
-class BCICIV2aProcessedPaired(BaseDataLoader):
-    def __init__(self, list_target_subject_id, list_source_subject_id,
-                 i_valid_fold):
-        self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..',
-                         'data/bciciv2a_processed_low_cut_4hz'))
-
-        tgt_full_train_set, tgt_test_set = load_h5_data(self.data_dir,
-                                                        list_target_subject_id)
-        src_full_train_set, src_test_set = load_h5_data(self.data_dir,
-                                                        list_source_subject_id)
-
-        paired_full_train_set = create_paired_dataset(tgt_full_train_set,
-                                                      src_full_train_set, 4)
-
+class ProcessedDataset(BaseDataLoader):
+    def __init__(self, subject_ids, n_folds, i_valid_fold, data_dir,
+                 n_classes):
+        # Load data
+        full_train_set, test_set = load_data(data_dir,
+                                             subject_ids)
         # Split into train and valid sets
-        train_set, valid_set = split_paired_into_train_test(
-            paired_full_train_set, 4,
-            i_valid_fold)
-
-        super().__init__(train_set, valid_set, None, 4)
+        train_set, valid_set = split_into_train_test(full_train_set, n_folds,
+                                                     i_valid_fold)
+        super().__init__(train_set, valid_set, test_set, n_classes)
 
 
-class HighGammaProcessedPaired(BaseDataLoader):
-    def __init__(self, list_target_subject_id, list_source_subject_id,
-                 i_valid_fold):
-        self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..',
-                         'data/hgd_processed_low_cut_4hz'))
+def load_data(data_dir, subject_ids):
+    assert type(subject_ids) is list or type(subject_ids) is int, \
+        "Subject ids must be list or int (for single subject)"
+    # Make list if single subject
+    if type(subject_ids) is int:
+        subject_ids = [subject_ids]
 
-        tgt_full_train_set, tgt_test_set = load_h5_data(self.data_dir,
-                                                        list_target_subject_id)
-        src_full_train_set, src_test_set = load_h5_data(self.data_dir,
-                                                        list_source_subject_id)
-
-        paired_full_train_set = create_paired_dataset(tgt_full_train_set,
-                                                      src_full_train_set, 4)
-
-        # Split into train and valid sets
-        train_set, valid_set = split_paired_into_train_test(
-            paired_full_train_set, 4,
-            i_valid_fold)
-
-        super().__init__(train_set, valid_set, None, 4)
-
-
-class BCICIV2aProcessed(BaseDataLoader):
-    def __init__(self, list_subject_ids, i_valid_fold):
-        self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..',
-                         'data/bciciv2a_processed_low_cut_4hz'))
-        train_set, valid_set, test_set = load_h5_data_and_split(self.data_dir,
-                                                                list_subject_ids,
-                                                                i_valid_fold)
-        super().__init__(train_set, valid_set, test_set, 4)
-
-
-class HighGammaProcessed(BaseDataLoader):
-    def __init__(self, list_subject_ids, i_valid_fold):
-        self.data_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..',
-                         'data/hgd_processed_low_cut_4hz'))
-        train_set, valid_set, test_set = load_h5_data_and_split(self.data_dir,
-                                                                list_subject_ids,
-                                                                i_valid_fold)
-        super().__init__(train_set, valid_set, test_set, 4)
-
-
-def load_h5_data(data_dir, list_subject_ids):
     # Load sets from h5 files:
     full_train_set = _load_and_merge_data(
-        [f"{data_dir}/{i}_train.h5" for i in list_subject_ids])
+        [f"{data_dir}/{i}_train.h5" for i in subject_ids])
     test_set = _load_and_merge_data(
-        [f"{data_dir}/{i}_test.h5" for i in list_subject_ids])
+        [f"{data_dir}/{i}_test.h5" for i in subject_ids])
 
     # Shuffle train set if multiple subjects merged
-    if len(list_subject_ids) > 1:
+    if len(subject_ids) > 1:
         full_train_set = _shuffle_signal_and_target(full_train_set)
+
+    # back to numpy:
+    full_train_set.X = np.array(full_train_set.X)
+    full_train_set.y = np.array(full_train_set.y)
+    test_set.X = np.array(test_set.X)
+    test_set.y = np.array(test_set.y)
+
     return full_train_set, test_set
-
-
-def load_h5_data_and_split(data_dir, list_subject_ids, i_valid_fold):
-    """
-    Loads data in format <id>_[train/test].h5
-    and splits train into train, validation sets
-    :return: train, validation and test sets
-    """
-    # Load sets from h5 files:
-    full_train_set = _load_and_merge_data(
-        [f"{data_dir}/{i}_train.h5" for i in list_subject_ids])
-    test_set = _load_and_merge_data(
-        [f"{data_dir}/{i}_test.h5" for i in list_subject_ids])
-
-    # Shuffle train set if multiple subjects merged
-    if len(list_subject_ids) > 1:
-        full_train_set = _shuffle_signal_and_target(full_train_set)
-
-    # Split into train and valid sets
-    train_set, valid_set = split_into_train_test(full_train_set, 4,
-                                                 i_valid_fold)
-
-    return train_set, valid_set, test_set
 
 
 def _load_and_merge_data(file_paths):
@@ -163,11 +90,13 @@ def _load_and_merge_data(file_paths):
     :param file_paths:
     :return:
     """
+    if len(file_paths) == 1:  # if just 1 subject's data
+        return _load_h5_data(file_paths[0])
+
     signal_and_target_data_list = []
     for path in file_paths:
         signal_and_target_data_list.append(_load_h5_data(path))
-    if len(file_paths) == 1:
-        return signal_and_target_data_list[0]
+
     return concatenate_sets(signal_and_target_data_list)
 
 
@@ -179,13 +108,15 @@ def _load_h5_data(file_path):
     """
     with h5py.File(file_path, 'r') as h5file:
         keys = sorted(list(h5file.keys()))  # 0 is X, 1 is y
-        return SignalAndTarget(h5file[keys[0]][()], h5file[keys[1]][()])
+        # convert to list for faster indexing later on
+        return SignalAndTarget(
+            list(h5file[keys[0]][()]),
+            list(h5file[keys[1]][()])
+        )
 
 
 def _shuffle_signal_and_target(full_train_set):
-    np.random.seed(0)
-    indices = np.arange(full_train_set.y.shape[0])
-    np.random.shuffle(indices)
-    full_train_set.X = full_train_set.X[indices]
-    full_train_set.y = full_train_set.y[indices]
+    random.seed(0)
+    random.shuffle(full_train_set.X)
+    random.shuffle(full_train_set.y)
     return full_train_set

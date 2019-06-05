@@ -17,7 +17,7 @@ def main():
     # Input and output directories
     data_dir = "/Users/sebas/code/_eeg_data/BCICIV_2a_gdf"
     output_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '....',
+        os.path.join(os.path.dirname(__file__), '../..',
                      'data/bciciv2a_processed_low_cut_4hz'))
 
     # Check ouput dir exists and possibly create it

@@ -7,6 +7,7 @@ import datetime
 import uuid
 from braindecode.torch_ext.constraints import MaxNormDefaultConstraint
 
+from util.config import load_cfg
 from data_loader.data_loader import get_dataset
 from data_loader.iterator import get_iterator
 from models.model import get_model
@@ -30,48 +31,46 @@ def main(args):
     i_valid_fold = config['experiment']['i_valid_fold']
 
     # Run experiment
-    if config['model']['siamese']:
-        train_siamese_model([subject_id], i_valid_fold, config)
-    elif config['experiment']['loo_tl']:
-        train_model_loo_tl([subject_id], i_valid_fold, config)
+    if config['experiment']['type'] == 'ccsa_da':
+        train_siamese_model(subject_id, i_valid_fold, config)
+    elif config['experiment']['type'] == 'loo_tl':
+        train_model_loo_tl(subject_id, i_valid_fold, config)
     else:
-        train_model_once([subject_id], i_valid_fold, config)
+        train_model_once(subject_id, i_valid_fold, config)
 
 
-def train_siamese_model(subject_id_list, i_valid_fold, config):
+def train_siamese_model(subject_id, i_valid_fold, config):
     # Train Siamese model:
-    siamese_model_state = train_model_once(subject_id_list, i_valid_fold,
+    siamese_model_state = train_model_once(subject_id, i_valid_fold,
                                            config)
 
     # Finetune classifier on target:
-    config['model']['siamese'] = False  # Continue without siamese
-    train_model_once(subject_id_list, i_valid_fold, config,
+    config['experiment']['type'] = 'no_tl'  # Continue without siamese
+    train_model_once(subject_id, i_valid_fold, config,
                      model_state_dict=siamese_model_state)
 
 
-def train_model_loo_tl(subject_id_list, i_valid_fold, config):
-    target_subject_id = subject_id_list
-    if config['experiment']['dataset'] == 'bciciv2a':
-        n_subjects = 9
-    elif config['experiment']['dataset'] == 'hgd':
-        n_subjects = 14
+def train_model_loo_tl(subject_id, i_valid_fold, config):
+    target_subject_id = subject_id
+    dataset_name = config['experiment']['dataset']
+    n_subjects = config['data'][dataset_name]['n_subjects']
 
     source_subject_ids = [i for i in range(1, n_subjects + 1) if
-                          i != target_subject_id[0]]
+                          i != target_subject_id]
 
     # Train source model on all subjects except the one chosen
     source_model_state = train_model_once(source_subject_ids, i_valid_fold,
                                           config)
-
     # Fine tune model on target subject
     train_model_once(target_subject_id, i_valid_fold, config,
                      model_state_dict=source_model_state)
 
 
-def train_model_once(subject_id_list, i_valid_fold, config,
+def train_model_once(subject_id, i_valid_fold, config,
                      model_state_dict=None):
     # Data loading
-    data = get_dataset(subject_id_list, i_valid_fold, config)
+    data = get_dataset(subject_id, i_valid_fold,
+                       config['experiment']['dataset'], config)
 
     # Build model architecture
     model = get_model(data, model_state_dict, config)
@@ -95,7 +94,7 @@ def train_model_once(subject_id_list, i_valid_fold, config,
                       model_constraint=MaxNormDefaultConstraint(),
                       cuda=torch.cuda.is_available(),
                       func_compute_pred_labels=predict_label_func,
-                      siamese=config['model']['siamese'])
+                      siamese=(config['experiment']['type'] == 'ccsa_da'))
     trainer.train()
 
     # Save results
@@ -145,40 +144,6 @@ def save_result_and_model(trainer, model, config):
     return file_name_state_dict
 
 
-def load_cfg(args):
-    """Load a YAML configuration file."""
-    yaml_filepath = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', 'config.yaml'))
-    with open(yaml_filepath, 'r') as file:
-        cfg = yaml.load(file, Loader=yaml.FullLoader)
-    cfg = make_paths_absolute(os.path.dirname(yaml_filepath), cfg)
-    cfg = update_cfg_with_args(cfg, args)
-    return cfg
-
-
-def make_paths_absolute(dir_, cfg):
-    """
-    Make all values for keys ending with `_path` absolute to dir_.
-    """
-    for key in cfg.keys():
-        if key.endswith("_path"):
-            cfg[key] = os.path.join(dir_, cfg[key])
-            cfg[key] = os.path.abspath(cfg[key])
-            if not os.path.isfile(cfg[key]):
-                logging.error("%s does not exist.", cfg[key])
-        if type(cfg[key]) is dict:
-            cfg[key] = make_paths_absolute(dir_, cfg[key])
-    return cfg
-
-
-def update_cfg_with_args(cfg, args):
-    if args.subject_id is not None:
-        cfg['experiment']['subject_id'] = args.subject_id
-    if args.i_fold is not None:
-        cfg['experiment']['i_valid_fold'] = args.i_fold
-    return cfg
-
-
 def parse_given_arguments():
     """Get parser object."""
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -190,6 +155,10 @@ def parse_given_arguments():
     parser.add_argument('-i', '--i-fold', type=int,
                         metavar='N',
                         help='overrides config valid fold index (0-based)')
+    parser.add_argument('-l', '--i-layer', type=int,
+                        metavar='N',
+                        help='overrides config '
+                             'i_feature_alignment_layer (0-based)')
     args = parser.parse_args()
     return args
 

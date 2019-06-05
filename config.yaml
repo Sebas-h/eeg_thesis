@@ -1,13 +1,22 @@
 experiment:
-  dataset: bciciv2a  # [hgd, bciciv2a]
+  dataset: bciciv2a          # [hgd, bciciv2a]
   subject_id: 1
-  i_valid_fold: 0  # [0, 1, 2, 3]
-  loo_tl: False
+  type: ccsa_da         # [no_tl, loo_tl, ccsa_da]
+  n_folds: 4
+  i_valid_fold: 0       # [0, 1, 2, 3]
 
 model:
   name: eegnet
-  siamese: False
   i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
+
+train:
+  batch_size: 60
+  max_epochs: 900
+  early_stop_patience: 50
+
+optimizer:
+  lr: 0.001
+  weight_decay: 0
 
 cropped:
   use: False
@@ -15,11 +24,12 @@ cropped:
   final_conv_length_shallow: 30
   final_conv_length_deep: 2
 
-train:
-  batch_size: 60
-  max_epochs: 1
-  early_stop_patience: 50
-
-optimizer:
-  lr: 0.001
-  weight_decay: 0
+data:
+  hgd:
+    proc_path: data/hgd_processed_low_cut_4hz
+    n_classes: 4
+    n_subjects: 14
+  bciciv2a:
+    proc_path: data/bciciv2a_processed_low_cut_4hz
+    n_classes: 4
+    n_subjects: 9

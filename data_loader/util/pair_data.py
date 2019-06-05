@@ -1,6 +1,7 @@
 import numpy as np
 from braindecode.datautil.signal_target import SignalAndTarget
 from braindecode.datautil.iterators import get_balanced_batches
+import random
 
 
 def create_paired_dataset(target_data, source_data, n_classes, seed=123456789):
@@ -70,22 +71,32 @@ def create_paired_dataset(target_data, source_data, n_classes, seed=123456789):
 
 
 def create_pairs(source_data, target_data, source_indices, target_indices):
-    source_indices = np.array(source_indices)
-    target_indices = np.array(target_indices)
+    # Create list for faster indexing
+    source_data.X = list(source_data.X)
+    source_data.y = list(source_data.y)
+    target_data.X = list(target_data.X)
+    target_data.y = list(target_data.y)
+
     return SignalAndTarget(
         {
-            'source': source_data.X[source_indices],
-            'target': target_data.X[target_indices]
+            'source': [source_data.X[i] for i in source_indices],
+            'target': [target_data.X[i] for i in target_indices]
         },
         {
-            'source': source_data.y[source_indices],
-            'target': target_data.y[target_indices]
+            'source': [source_data.y[i] for i in source_indices],
+            'target': [target_data.y[i] for i in target_indices]
         }
     )
 
 
 def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
+                                 n_classes,
                                  rng=None):
+    # Indexing with lists faster than ndarrays:
+    assert type(paired_dataset.X['source']) == list and \
+           type(paired_dataset.X['source']) == list, \
+        "Expected paired dataset X to be list containing ndarrays."
+
     n_trials = len(paired_dataset.X['source'])
     if n_trials < n_folds:
         raise ValueError("Less Trials: {:d} than folds: {:d}".format(
@@ -98,7 +109,6 @@ def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
     source_y = paired_dataset.y['source']
     target_y = paired_dataset.y['target']
 
-    n_classes = len(np.unique(paired_dataset.y['source']))
     n_possible_label_pairs = n_classes ** 2
 
     lists_of_indices_per_pair = [[] for _ in range(n_possible_label_pairs)]
@@ -108,14 +118,15 @@ def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
         for j in range(n_classes):
             possible_label_pairs.append((i, j))
 
-    for i in range(source_y.shape[0]):
+    # for i in range(source_y.shape[0]):
+    for i in range(len(source_y)):
         src_label = source_y[i]
         tgt_label = target_y[i]
         idx = possible_label_pairs.index((src_label, tgt_label))
         lists_of_indices_per_pair[idx].append(i)
 
     for pair_list in lists_of_indices_per_pair:
-        pair_list = np.array(pair_list)
+        # pair_list = np.array(pair_list)
         n_list_trials = len(pair_list)
         shuffle = rng is not None
         folds = get_balanced_batches(n_list_trials, rng, shuffle,
@@ -127,27 +138,16 @@ def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
         assert np.array_equal(
             np.sort(np.union1d(list_train_inds, list_test_inds)),
             list_all_inds)
-        train_indices += list(pair_list[list_train_inds])
-        test_indices += list(pair_list[list_test_inds])
+        # train_indices += pair_list[list_train_inds]
+        # test_indices += pair_list[list_test_inds]
+        train_indices += [pair_list[i] for i in list_train_inds]
+        test_indices += [pair_list[i] for i in list_test_inds]
 
     # Because indices now sorted by label pairing, shuffle them:
-    np.random.shuffle(train_indices)
-    np.random.shuffle(test_indices)
-
-    size = list(paired_dataset.X['source'].shape)
-    size[0] = len(train_indices)
-    a = np.zeros(size)
-    import time
-    start = time.time()
-    for i, t in enumerate(train_indices):
-        a[i] = paired_dataset.X['source'][t]
-    print(time.time() - start)
-
-    start = time.time()
-    b = paired_dataset.X['source'][train_indices]
-    print(time.time() - start)
-
-    exit()
+    # np.random.shuffle(train_indices)
+    # np.random.shuffle(test_indices)
+    random.shuffle(train_indices)
+    random.shuffle(test_indices)
 
     train_set = select_pairs_from_paired_dataset(paired_dataset, train_indices)
     test_set = select_pairs_from_paired_dataset(paired_dataset, test_indices)
@@ -155,15 +155,16 @@ def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
 
 
 def select_pairs_from_paired_dataset(paired_dataset, indices):
-    indices = np.array(indices)
     return SignalAndTarget(
         {
-            'source': paired_dataset.X['source'][indices],
-            'target': paired_dataset.X['target'][indices]
+            'source': np.array(
+                [paired_dataset.X['source'][i] for i in indices]),
+            'target': np.array([paired_dataset.X['target'][i] for i in indices])
         },
         {
-            'source': paired_dataset.y['source'][indices],
-            'target': paired_dataset.y['target'][indices]
+            'source': np.array(
+                [paired_dataset.y['source'][i] for i in indices]),
+            'target': np.array([paired_dataset.y['target'][i] for i in indices])
         }
     )
 

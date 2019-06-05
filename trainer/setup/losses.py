@@ -3,11 +3,8 @@ import torch.nn.functional as F
 
 
 def get_loss(config):
-    model_name = config['model']['name']
-    if config['model']['siamese']:
+    if config['experiment']['type'] == 'ccsa_da':
         return CCSALoss()
-    if model_name == 'eegnet_cae':
-        return th.nn.MSELoss()
     if config['cropped']['use']:
         return lambda preds, targets: F.nll_loss(
             th.mean(preds, dim=2, keepdim=False), targets)

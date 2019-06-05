@@ -23,7 +23,7 @@ def get_iterator(model, dataset, config):
             batch_size=batch_size,
             input_time_length=cropped_input_time_length,
             n_preds_per_input=n_preds_per_input)
-    if config['model']['siamese']:
+    if config['experiment']['type'] == 'ccsa_da':
         return PairedDataBalancedBatchSizeIterator(batch_size=batch_size)
     return BalancedBatchSizeIterator(batch_size=batch_size)
 
