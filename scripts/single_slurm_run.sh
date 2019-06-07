@@ -4,7 +4,7 @@
 #SBATCH --job-name=JOB
 
 ### File for the output
-#SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.%j.txt
+#SBATCH --output=/home/no316758/slurm_results/YJOB_OUTPUT.%j.txt
 
 ### request one gpu per node
 #SBATCH --gres=gpu:volta:1
@@ -23,4 +23,4 @@ cd /home/no316758/projects/eeg_thesis
 source ~/anaconda3/bin/activate eeg
 
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
-python -um src.experiment.run
+python -um experiment.run

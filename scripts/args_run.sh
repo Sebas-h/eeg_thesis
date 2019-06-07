@@ -4,7 +4,7 @@
 #SBATCH --job-name=JOB
 
 ### File for the output
-#SBATCH --output=/home/no316758/slurm_results/MYJOB_OUTPUT.%j.txt
+#SBATCH --output=/home/no316758/slurm_results/XJOB_OUTPUT.%j.txt
 
 ### request one gpu per node
 #SBATCH --gres=gpu:volta:1
@@ -25,7 +25,7 @@ source ~/anaconda3/bin/activate eeg
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
 if [[ -z "$1" ]]  # $1 is empty if only applying cross-val to one subject
 then
-    python -um src.experiment.run -i $2
+    python -um experiment.run -i $2
 else
-    python -um src.experiment.run -s $1 -i $2
+    python -um experiment.run -s $1 -i $2
 fi
