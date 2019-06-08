@@ -4,10 +4,10 @@
 #SBATCH --job-name=JOB
 
 ### File for the output
-#SBATCH --output=/home/no316758/slurm_results/YJOB_OUTPUT.%j.txt
+#SBATCH --output=/home/no316758/slurm_results/JOB_OUTPUT.%j.txt
 
 ### request one gpu per node
-#SBATCH --gres=gpu:volta:1
+##SBATCH --gres=gpu:volta:1
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
 #SBATCH --time=99:15:30

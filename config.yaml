@@ -7,7 +7,7 @@ experiment:
 
 model:
   name: eegnet
-  i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
+  i_feature_alignment_layer: 1  # index of conv layer to apply feature space alignment (0-based)
 
 train:
   batch_size: 60
