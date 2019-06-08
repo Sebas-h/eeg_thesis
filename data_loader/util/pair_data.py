@@ -95,7 +95,7 @@ def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
     # Indexing with lists faster than ndarrays:
     assert type(paired_dataset.X['source']) == list and \
            type(paired_dataset.X['source']) == list, \
-        "Expected paired dataset X to be list containing ndarrays."
+           "Expected paired dataset X to be list containing ndarrays."
 
     n_trials = len(paired_dataset.X['source'])
     if n_trials < n_folds:
@@ -155,6 +155,7 @@ def split_paired_into_train_test(paired_dataset, n_folds, i_test_fold,
 
 
 def select_pairs_from_paired_dataset(paired_dataset, indices):
+    # back to ndarray
     return SignalAndTarget(
         {
             'source': np.array(

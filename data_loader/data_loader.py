@@ -30,11 +30,11 @@ class PairedProcessedData(BaseDataLoader):
     def __init__(self, target_subject_id, list_source_subject_ids, n_folds,
                  i_valid_fold, data_dir, n_classes):
         # Load data from source and target
-        tgt_full_train_set, tgt_test_set = load_data(data_dir,
-                                                     target_subject_id)
+        tgt_full_train_set, tgt_test_set = _load_data(data_dir,
+                                                      target_subject_id)
 
-        src_full_train_set, src_test_set = load_data(data_dir,
-                                                     list_source_subject_ids)
+        src_full_train_set, src_test_set = _load_data(data_dir,
+                                                      list_source_subject_ids)
         # Create paired dataset
         paired_full_train_set = create_paired_dataset(tgt_full_train_set,
                                                       src_full_train_set,
@@ -50,15 +50,15 @@ class ProcessedDataset(BaseDataLoader):
     def __init__(self, subject_ids, n_folds, i_valid_fold, data_dir,
                  n_classes):
         # Load data
-        full_train_set, test_set = load_data(data_dir,
-                                             subject_ids)
+        full_train_set, test_set = _load_data(data_dir,
+                                              subject_ids)
         # Split into train and valid sets
         train_set, valid_set = split_into_train_test(full_train_set, n_folds,
                                                      i_valid_fold)
         super().__init__(train_set, valid_set, test_set, n_classes)
 
 
-def load_data(data_dir, subject_ids):
+def _load_data(data_dir, subject_ids):
     assert type(subject_ids) is list or type(subject_ids) is int, \
         "Subject ids must be list or int (for single subject)"
     # Make list if single subject
@@ -75,7 +75,7 @@ def load_data(data_dir, subject_ids):
     if len(subject_ids) > 1:
         full_train_set = _shuffle_signal_and_target(full_train_set)
 
-    # back to numpy:
+    # back to numpy array:
     full_train_set.X = np.array(full_train_set.X)
     full_train_set.y = np.array(full_train_set.y)
     test_set.X = np.array(test_set.X)

@@ -6,8 +6,8 @@ experiment:
   i_valid_fold: 0       # [0, 1, 2, 3]
 
 model:
-  name: eegnet
-  i_feature_alignment_layer: 1  # index of conv layer to apply feature space alignment (0-based)
+  name: shallow
+  i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 train:
   batch_size: 60
