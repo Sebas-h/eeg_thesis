@@ -117,6 +117,8 @@ def _load_h5_data(file_path):
 
 def _shuffle_signal_and_target(full_train_set):
     random.seed(0)
-    random.shuffle(full_train_set.X)
-    random.shuffle(full_train_set.y)
+    indices = [x for x in range(len(full_train_set.y))]
+    random.shuffle(indices)
+    full_train_set.X = full_train_set.X[indices]
+    full_train_set.y = full_train_set.y[indices]
     return full_train_set
