@@ -1,17 +1,17 @@
 experiment:
-  dataset: bciciv2a          # [hgd, bciciv2a]
+  dataset: bciciv2a         # [hgd, bciciv2a]
   subject_id: 1
-  type: no_tl         # [no_tl, loo_tl, ccsa_da]
-  n_folds: 3
-  i_valid_fold: 0       # [0, 1, 2, 3]
+  type: no_tl               # [no_tl, loo_tl, ccsa_da]
+  n_folds: 4
+  i_valid_fold: 0           # [0, 1, 2, 3]
 
 model:
   name: eegnet
   i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 train:
-  batch_size: 60
-  max_epochs: 900
+  batch_size: 160
+  max_epochs: 1600
   early_stop_patience: 50
 
 optimizer:

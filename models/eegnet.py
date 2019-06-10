@@ -107,6 +107,7 @@ class EEGNet(BaseModel):
             np.ones((1, self.in_chans, self.input_time_length, 1),
                     dtype=np.float32))
         out = self.forward_once(out)
+        # out = self.separable_conv(self.spatial_conv(self.temporal_conv(out)))
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
         if self.final_conv_length == 'auto':
@@ -144,6 +145,10 @@ class EEGNet(BaseModel):
         return self.forward_once(*inputs)
 
     def forward_once(self, x):
+        # x = self.temporal_conv(x)
+        # x = self.spatial_conv(x)
+        # x = self.separable_conv(x)
+        # x = self.cls(x)
         for module in self._modules:
             x = self._modules[module](x)
         return x
