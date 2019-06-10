@@ -31,6 +31,10 @@ class Trainer:
         self.test_result = OrderedDict()
 
     def train(self):
+        # Set cuda
+        if self.cuda:
+            self.model.cuda()
+
         # Train and evaluate models until stop
         while not self.stop_criterion.should_stop:
             self._train_one_epoch()

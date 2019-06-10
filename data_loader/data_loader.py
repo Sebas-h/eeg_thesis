@@ -109,10 +109,6 @@ def _load_h5_data(file_path):
     with h5py.File(file_path, 'r') as h5file:
         keys = sorted(list(h5file.keys()))  # 0 is X, 1 is y
         # convert to list for faster indexing later on
-        a=h5file[keys[0]][()]
-        b=h5file[keys[1]][()]
-        c=list(h5file[keys[0]][()])
-        d=list(h5file[keys[1]][()])
         return SignalAndTarget(
             list(h5file[keys[0]][()]),
             list(h5file[keys[1]][()])
