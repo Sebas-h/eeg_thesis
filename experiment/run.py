@@ -69,19 +69,19 @@ def train_model_loo_tl(subject_id, i_valid_fold, config):
 def train_model_once(subject_id, i_valid_fold, config,
                      model_state_dict=None):
     # Data loading
-    # data = get_dataset(subject_id, i_valid_fold,
-    #                    config['experiment']['dataset'], config)
-    import pickle
-    from base.base_data_loader import BaseDataLoader
-    from braindecode.datautil.splitters import split_into_train_valid_test
-    pickle_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..',
-                     'data/bcic_iv_2a_all_9_subjects.pickle'))
-    with open(pickle_path, 'rb') as f:
-        data = pickle.load(f)
-    data = data[0]
-    train, valid, test = split_into_train_valid_test(data, 4, 0)
-    data = BaseDataLoader(train, valid, test, 4)
+    data = get_dataset(subject_id, i_valid_fold,
+                       config['experiment']['dataset'], config)
+    # import pickle
+    # from base.base_data_loader import BaseDataLoader
+    # from braindecode.datautil.splitters import split_into_train_valid_test
+    # pickle_path = os.path.abspath(
+    #     os.path.join(os.path.dirname(__file__), '..',
+    #                  'data/bcic_iv_2a_all_9_subjects.pickle'))
+    # with open(pickle_path, 'rb') as f:
+    #     data = pickle.load(f)
+    # data = data[0]
+    # train, valid, test = split_into_train_valid_test(data, 4, 0)
+    # data = BaseDataLoader(train, valid, test, 4)
 
     # Build model architecture
     model = get_model(data, model_state_dict, config)
