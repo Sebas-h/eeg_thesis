@@ -123,6 +123,6 @@ def _shuffle_signal_and_target(full_train_set):
     random.seed(0)
     indices = [x for x in range(len(full_train_set.y))]
     random.shuffle(indices)
-    full_train_set.X = full_train_set.X[indices]
-    full_train_set.y = full_train_set.y[indices]
+    full_train_set.X = [full_train_set.X[i] for i in indices]
+    full_train_set.y = [full_train_set.y[i] for i in indices]
     return full_train_set
