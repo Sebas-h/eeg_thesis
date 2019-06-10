@@ -74,8 +74,9 @@ def train_model_once(subject_id, i_valid_fold, config,
     import pickle
     from base.base_data_loader import BaseDataLoader
     from braindecode.datautil.splitters import split_into_train_valid_test
-    pickle_path = \
-        '/Users/sebas/code/thesis/data/bcic_iv_2a_all_9_subjects.pickle'
+    pickle_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..',
+                     'data/bcic_iv_2a_all_9_subjects.pickle'))
     with open(pickle_path, 'rb') as f:
         data = pickle.load(f)
     data = data[0]
