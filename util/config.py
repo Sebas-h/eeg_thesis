@@ -30,6 +30,8 @@ def make_paths_absolute(dir_, cfg):
 
 
 def update_cfg_with_args(cfg, args):
+    if args is None:
+        return cfg
     if args.subject_id is not None:
         cfg['experiment']['subject_id'] = args.subject_id
     if args.i_fold is not None:

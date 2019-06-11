@@ -30,11 +30,11 @@ class PairedProcessedData(BaseDataLoader):
     def __init__(self, target_subject_id, list_source_subject_ids, n_folds,
                  i_valid_fold, data_dir, n_classes):
         # Load data from source and target
-        tgt_full_train_set, tgt_test_set = _load_data(data_dir,
-                                                      target_subject_id)
+        tgt_full_train_set, _ = _load_data(data_dir,
+                                           target_subject_id)
 
-        src_full_train_set, src_test_set = _load_data(data_dir,
-                                                      list_source_subject_ids)
+        src_full_train_set, _ = _load_data(data_dir,
+                                           list_source_subject_ids)
         # Create paired dataset
         paired_full_train_set = create_paired_dataset(tgt_full_train_set,
                                                       src_full_train_set,
