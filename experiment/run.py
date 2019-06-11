@@ -29,8 +29,6 @@ def main(args):
     # Set subject id and valid fold
     subject_id = config['experiment']['subject_id']
     i_valid_fold = config['experiment']['i_valid_fold']
-    print(subject_id, i_valid_fold)
-    exit()
 
     # Run experiment
     if config['experiment']['type'] == 'ccsa_da':
