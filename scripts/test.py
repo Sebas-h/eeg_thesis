@@ -5,7 +5,7 @@ path = '/home/no316758/projects/eeg_thesis/scripts/args_run.sh'
 args = "/home/no316758/projects/eeg_thesis/scripts/args_run.sh"
 
 # sbatch --job-name=JOB.${i}.${j} /home/no316758/projects/eeg_thesis/scripts/args_run.sh ${i} ${j}
-cmd = subprocess.Popen(['sbatch', '--job-name', 'TESTJOB', f'{path} {1} {0}'])
+cmd = subprocess.Popen(['sbatch', '--job-name', 'TESTJOB', f'{path} {1} {0}'], shell=True)
 # cmd.terminate()
 
 # subprocess.Popen(f'{path} {1} {0}', shell=True,
