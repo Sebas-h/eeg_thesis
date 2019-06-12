@@ -1,7 +1,7 @@
 #!/usr/local_rwth/bin/zsh
 
 ### Job name
-#SBATCH --job-name=JOB
+##SBATCH --job-name=JOB
 
 ### File for the output
 #SBATCH --output=/home/no316758/slurm_results/XJOB_OUTPUT.%j.txt

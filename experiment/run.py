@@ -30,6 +30,14 @@ def main(args):
     subject_id = config['experiment']['subject_id']
     i_valid_fold = config['experiment']['i_valid_fold']
 
+    if config['server']['full_cv']:
+        full_cv_all_subjects(config)
+    else:
+        # Run single subject single fold:
+        single_subject_single_fold(subject_id, i_valid_fold, config)
+
+
+def single_subject_single_fold(subject_id, i_valid_fold, config):
     # Run experiment
     if config['experiment']['type'] == 'ccsa_da':
         train_siamese_model(subject_id, i_valid_fold, config)
@@ -37,6 +45,32 @@ def main(args):
         train_model_loo_tl(subject_id, i_valid_fold, config)
     else:
         train_model_once(subject_id, i_valid_fold, config)
+
+
+def full_cv_all_subjects(config):
+    # Load config file
+    dataset_name = config['experiment']['dataset']
+    n_subjects = [x for x in
+                  range(1, config['data'][dataset_name]['n_subjects'] + 1)]
+    n_folds = [x for x in range(config['experiment']['n_folds'])]
+    for subject_id in n_subjects:
+        for i_fold in n_folds:
+            print(f"---> START: subject_id={subject_id} and "
+                  f"i_valid_fold={i_fold}")
+            single_subject_single_fold(subject_id, i_fold, config)
+            print(f"<--- END: subject_id={subject_id} and "
+                  f"i_valid_fold={i_fold}\n\n")
+
+
+class Experiment:
+    def __init__(self):
+        self.exp_name = ''
+        self.subject_id = 0
+        self.i_valid_fold = 0
+        self.resutl_dir = None
+
+    def run(self):
+        pass
 
 
 def train_siamese_model(subject_id, i_valid_fold, config):
@@ -111,7 +145,8 @@ def train_model_once(subject_id, i_valid_fold, config,
 
     # Save results
     log_training_results(trainer)
-    return save_result_and_model(trainer, model, config)
+    file_state_dict = save_result_and_model(trainer, model, config)
+    return file_state_dict
 
 
 def log_training_results(trainer):
@@ -122,6 +157,24 @@ def log_training_results(trainer):
 
 
 def save_result_and_model(trainer, model, config):
+    # Set result dir
+    result_dir = create_unique_result_dir(config)
+
+    # 1) Save config file:
+    with open(f'{result_dir}/config.yaml', 'w') as outfile:
+        yaml.dump(config, outfile, default_flow_style=False)
+
+    # 2) Save results csv
+    f_name = f"{result_dir}/train_results.csv"
+    trainer.epochs_df.to_csv(f_name)
+
+    # 3) Save model state (parameters)
+    file_name_state_dict = f'{result_dir}/model_sate.pt'
+    torch.save(model.state_dict(), file_name_state_dict)
+    return file_name_state_dict
+
+
+def create_unique_result_dir(config):
     # Generate unique UUID for save files and log it
     unique_id = uuid.uuid4().hex
     timestamp = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
@@ -141,19 +194,7 @@ def save_result_and_model(trainer, model, config):
 
     # Log result dir:
     print("ResultDir:", result_dir)
-
-    # Save config file:
-    with open(f'{result_dir}/config.yaml', 'w') as outfile:
-        yaml.dump(config, outfile, default_flow_style=False)
-
-    # Save results csv
-    f_name = f"{result_dir}/train_results.csv"
-    trainer.epochs_df.to_csv(f_name)
-
-    # Save model state (parameters)
-    file_name_state_dict = f'{result_dir}/model_sate.pt'
-    torch.save(model.state_dict(), file_name_state_dict)
-    return file_name_state_dict
+    return result_dir
 
 
 def parse_given_arguments():

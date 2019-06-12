@@ -58,7 +58,12 @@ class Trainer:
 
         # Evaluate:
         results = self._eval_epoch(
-            (('train', self.train_set), ('valid', self.valid_set)))
+            (
+                ('train', self.train_set),
+                ('valid', self.valid_set),
+                ('test', self.test_set)
+            )
+        )
 
         # Save epoch result:
         results.update(dict(runtime=time.time() - start))
@@ -66,7 +71,12 @@ class Trainer:
 
         # Log:
         print(f'done epoch {self.epochs_df.shape[0]}')
-        print(self.epochs_df.iloc[-1], '\n')
+        cols = ["runtime", "train_accuracy", "valid_accuracy", "train_loss",
+                "valid_loss"]
+        if self.test_set is not None:
+            cols.insert(3, 'test_accuracy')
+            cols.insert(len(cols), 'test_loss')
+        print(self.epochs_df.iloc[-1][cols], '\n')
 
     def _train_batch(self, inputs, targets):
         """
@@ -90,6 +100,8 @@ class Trainer:
         self.model.eval()
         epoch_results = OrderedDict()
         for setname, dataset in setname_dataset_tuple:
+            if dataset is None:
+                continue
             # Collect all predictions and losses
             all_preds = []
             all_losses = []
@@ -127,6 +139,7 @@ class Trainer:
                 f'{setname}_loss': mean_loss,
                 f'{setname}_accuracy': accuracy
             })
+
         return epoch_results
 
     def _eval_batch(self, inputs, targets):
