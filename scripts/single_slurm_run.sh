@@ -11,7 +11,7 @@
 #SBATCH --gres=gpu:volta:1
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
-#SBATCH --time=99:15:30
+#SBATCH --time=99999:15:30
 
 ### Memory your job needs per node, e. g. 1 GB
 #SBATCH --mem=16G
