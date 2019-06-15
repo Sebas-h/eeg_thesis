@@ -35,4 +35,4 @@ data:
     n_subjects: 9
 
 server:
-  full_cv: True  # True = all subjects + all valid folds
+  full_cv: True  # True = train all subjects on all valid folds
