@@ -6,7 +6,7 @@ experiment:
   i_valid_fold: 0           # [0, 1, 2, 3]
 
 model:
-  name: deep           # [eegnet, deep, shallow]
+  name: shallow           # [eegnet, deep, shallow]
   i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 train:
