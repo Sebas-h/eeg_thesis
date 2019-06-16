@@ -1,17 +1,17 @@
 experiment:
-  dataset: hgd         # [hgd, bciciv2a]
+  dataset: bciciv2a         # [hgd, bciciv2a]
   subject_id: 1
   type: no_tl               # [no_tl, loo_tl, ccsa_da]
   n_folds: 4
   i_valid_fold: 0           # [0, 1, 2, 3]
 
 model:
-  name: shallow           # [eegnet, deep, shallow]
+  name: eegnet           # [eegnet, deep, shallow]
   i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 train:
-  early_stop_patience: 80  # 80 hgd, 160 bciciv2a
-  max_epochs: 800  # 800 hgd, 1600 bciciv2a
+  early_stop_patience: 160  # 80 hgd, 160 bciciv2a
+  max_epochs: 1600  # 800 hgd, 1600 bciciv2a
   batch_size: 60
 
 optimizer:
