@@ -43,7 +43,7 @@ def single_subject_single_fold(subject_id, i_valid_fold, config):
         train_siamese_model(subject_id, i_valid_fold, config)
     elif config['experiment']['type'] == 'loo_tl':
         train_model_loo_tl(subject_id, i_valid_fold, config)
-    else:
+    elif config['experiment']['type'] == 'no_tl':
         train_model_once(subject_id, i_valid_fold, config)
 
 
@@ -82,6 +82,7 @@ def train_siamese_model(subject_id, i_valid_fold, config):
     config['experiment']['type'] = 'no_tl'  # Continue without siamese
     train_model_once(subject_id, i_valid_fold, config,
                      model_state_dict=siamese_model_state)
+    config['experiment']['type'] = 'ccsa_da'  # Back to siamese !!
 
 
 def train_model_loo_tl(subject_id, i_valid_fold, config):

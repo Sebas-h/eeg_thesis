@@ -1,5 +1,5 @@
 experiment:
-  dataset: hgd         # [hgd, bciciv2a]
+  dataset: bciciv2a         # [hgd, bciciv2a]
   subject_id: 1
   type: ccsa_da               # [no_tl, loo_tl, ccsa_da]
   n_folds: 4
@@ -7,7 +7,7 @@ experiment:
 
 model:
   name: deep           # [eegnet, deep, shallow]
-  i_feature_alignment_layer: 3  # index of conv layer to apply feature space alignment (0-based)
+  i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 train:
   early_stop_patience: 160  # 80 hgd, 160 bciciv2a
