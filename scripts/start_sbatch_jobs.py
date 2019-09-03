@@ -8,7 +8,6 @@ def main():
 
     print(path_script)
     print(f"sbatch --job-name=CVJOB {path_script} {1} {1}")
-    exit()
 
     subprocess.Popen(
         f'sbatch --job-name=CVJOB {path_script} {1} {1}',
