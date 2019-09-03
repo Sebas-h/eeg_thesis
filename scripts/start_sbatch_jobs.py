@@ -14,7 +14,7 @@ def main():
         shell=True
     )
     p.wait()
-    
+
     return
 
     # if config['server']['full_cv']:

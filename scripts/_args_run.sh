@@ -8,7 +8,7 @@
 #SBATCH --output=/home/no316758/slurm_results/XJOB_OUTPUT.%j.txt
 
 ### request one gpu per node
-##SBATCH --gres=gpu:volta:1
+#SBATCH --gres=gpu:volta:1
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
 #SBATCH --time=119:59:30
