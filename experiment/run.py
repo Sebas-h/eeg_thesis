@@ -23,6 +23,8 @@ logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s',
 
 
 def main(args):
+    print(args)
+    exit()
     # Load config file
     config = load_cfg(args)
 

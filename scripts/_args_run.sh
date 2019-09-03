@@ -1,4 +1,5 @@
-#!/usr/local_rwth/bin/zsh
+#!/usr/local/rwth/bin/zsh
+##!/usr/bin/env bash
 
 ### Job name
 ##SBATCH --job-name=JOB
@@ -18,11 +19,12 @@
 ### The last part consists of regular shell commands:
 ### Change to working directory
 cd /home/no316758/projects/eeg_thesis
+#cd ..
 
 ### Execute your application
 source ~/anaconda3/bin/activate eeg
 
-### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
+### add -u flag so that python print will be unbuffered
 if [[ -z "$1" ]]  # $1 is empty if only applying cross-val to one subject
 then
     python -um experiment.run -i $2
