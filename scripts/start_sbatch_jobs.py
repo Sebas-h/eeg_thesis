@@ -6,11 +6,11 @@ def main():
     path_script = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '_args_run.sh'))
 
-    print(path_script)
-    print(f"sbatch --job-name=CVJOB {path_script} {1} {1}")
+    subject_id = 1
+    i_fold = 0
 
     p = subprocess.Popen(
-        f'sbatch --job-name=CVJOB {path_script} {1} {1}',
+        f'sbatch --job-name=CVJOB {path_script} {subject_id} {i_fold}',
         shell=True
     )
     p.wait()

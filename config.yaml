@@ -1,12 +1,12 @@
 experiment:
   dataset: bciciv2a         # [hgd, bciciv2a]
   subject_id: 1
-  type: ccsa_da               # [no_tl, loo_tl, ccsa_da]
+  type: no_tl               # [no_tl, loo_tl, ccsa_da]
   n_folds: 4
   i_valid_fold: 0           # [0, 1, 2, 3]
 
 model:
-  name: deep           # [eegnet, deep, shallow]
+  name: eegnet           # [eegnet, deep, shallow]
   i_feature_alignment_layer: null  # index of conv layer to apply feature space alignment (0-based)
 
 train:
