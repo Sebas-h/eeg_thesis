@@ -5,14 +5,10 @@ import logging
 
 def load_cfg(args):
     """Load a YAML configuration file."""
-    if args.config:
-        cfg = args.config
-    else:
-        yaml_filepath = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..', 'config.yaml'))
-        with open(yaml_filepath, 'r') as file:
-            cfg = yaml.load(file, Loader=yaml.FullLoader)
-
+    yaml_filepath = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'config.yaml'))
+    with open(yaml_filepath, 'r') as file:
+        cfg = yaml.load(file, Loader=yaml.FullLoader)
     cfg = make_paths_absolute(os.path.dirname(yaml_filepath), cfg)
     cfg = update_cfg_with_args(cfg, args)
     return cfg
