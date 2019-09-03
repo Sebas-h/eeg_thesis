@@ -1,4 +1,4 @@
-#!/usr/local/rwth/bin/zsh
+#!/usr/bin/env zsh
 
 i=""
 for j in 0 1 2 3

@@ -1,4 +1,4 @@
-#!/usr/local/rwth/bin/zsh
+#!/usr/bin/env zsh
 ##!/usr/bin/env bash
 
 ### Job name
