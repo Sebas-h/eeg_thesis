@@ -24,6 +24,7 @@ from braindecode.datautil.signalproc import (bandpass_cnt,
                                              exponential_running_standardize)
 from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 
+from braindecode.models.eegnet import EEGNetv4
 from models.eegnet import EEGNet
 
 log = logging.getLogger(__name__)
@@ -121,9 +122,10 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
                          input_time_length=input_time_length,
                          final_conv_length='auto').create_network()
     elif model == 'eegnet':
-        model = EEGNet(n_chans, n_classes,
-                       input_time_length=input_time_length)
-
+        # model = EEGNet(n_chans, n_classes,
+        #                input_time_length=input_time_length)
+        model = EEGNetv4(n_chans, n_classes,
+                         input_time_length=input_time_length).create_network()
     if cuda:
         model.cuda()
 
