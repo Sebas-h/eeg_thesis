@@ -1,4 +1,4 @@
-#!/usr/local_rwth/bin/zsh
+#!/usr/bin/env zsh
 
 ### Job name
 #SBATCH --job-name=JOB
