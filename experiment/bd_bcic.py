@@ -40,7 +40,6 @@ BCICIV2a without cropped (no TL obviously as well)
 def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     ival = [-500, 4000]
     max_epochs = 1600
-    # max_epochs = 2
     max_increase_epochs = 160
     batch_size = 60
     high_cut_hz = 38
@@ -123,9 +122,12 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
                          final_conv_length='auto').create_network()
     elif model == 'eegnet':
         model = EEGNet(n_chans, n_classes,
-                       input_time_length=input_time_length)
+                       input_time_length=input_time_length,
+                       drop_prob=0)
         # model = EEGNetv4(n_chans, n_classes,
-        #                  input_time_length=input_time_length).create_network()
+        #                  input_time_length=input_time_length,
+        #                  drop_prob=0).create_network()
+
     if cuda:
         model.cuda()
 

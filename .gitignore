@@ -16,3 +16,5 @@ results/*
 *.csv
 *.pyc
 *.pyo
+
+notebooks/test_models.py
