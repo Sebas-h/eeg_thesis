@@ -121,12 +121,12 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
                          input_time_length=input_time_length,
                          final_conv_length='auto').create_network()
     elif model == 'eegnet':
-        model = EEGNet(n_chans, n_classes,
-                       input_time_length=input_time_length,
-                       drop_prob=0)
-        # model = EEGNetv4(n_chans, n_classes,
-        #                  input_time_length=input_time_length,
-        #                  drop_prob=0).create_network()
+        # model = EEGNet(n_chans, n_classes,
+        #                input_time_length=input_time_length,
+        #                drop_prob=0)
+        model = EEGNetv4(n_chans, n_classes,
+                         input_time_length=input_time_length,
+                         drop_prob=0).create_network()
 
     if cuda:
         model.cuda()
