@@ -127,7 +127,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
         # model = EEGNetv4(n_chans, n_classes,
         #                  input_time_length=input_time_length).create_network()
         model = NewEEGNet(n_chans, n_classes,
-                          input_time_length=input_time_length).create_network()
+                          input_time_length=input_time_length) #.create_network()
 
     if cuda:
         model.cuda()

@@ -22,7 +22,7 @@ class Conv2dWithConstraint(nn.Conv2d):
 
 
 # class NewEEGNet(BaseModel):
-class NewEEGNet:
+class NewEEGNet(nn.Sequential):
     """
     EEGNet v4 model from [EEGNet4]_.
 
@@ -41,65 +41,69 @@ class NewEEGNet:
        arXiv preprint arXiv:1611.08024.
     """
 
-    def __init__(self, in_chans,
-                 n_classes,
-                 final_conv_length='auto',
-                 input_time_length=None,
-                 pool_mode='mean',
+    def __init__(self, 
+                 in_chans, 
+                 n_classes, 
+                 final_conv_length='auto', 
+                 input_time_length=None, 
+                 pool_mode='mean', 
                  F1=8,
-                 D=2,
-                 F2=16, # usually set to F1*D (?)
-                 kernel_length=64,
-                 third_kernel_size=(8, 4),
-                 drop_prob=0.25
-                 ):
+                 D=2, 
+                 F2=16, 
+                 kernel_length=64, 
+                 third_kernel_size=(8, 4), 
+                 drop_prob=0.25, 
+                 *args):
 
+        super().__init__(*args)
         if final_conv_length == 'auto':
             assert input_time_length is not None
         self.__dict__.update(locals())
         del self.self
+        self.create_network()
 
     def create_network(self):
         pool_class = dict(max=nn.MaxPool2d, mean=nn.AvgPool2d)[self.pool_mode]
-        model = nn.Sequential()
+        # model = nn.Sequential()
+        
         # b c 0 1
         # now to b 1 0 c
-        model.add_module('dimshuffle', Expression(_transpose_to_b_1_c_0))
+        self.add_module('dimshuffle', Expression(_transpose_to_b_1_c_0))
 
-        model.add_module('conv_temporal', nn.Conv2d(
+        self.add_module('conv_temporal', nn.Conv2d(
             1, self.F1, (1, self.kernel_length), stride=1, bias=False,
             padding=(0, self.kernel_length // 2,)))
-        model.add_module('bnorm_temporal', nn.BatchNorm2d(
+        self.add_module('bnorm_temporal', nn.BatchNorm2d(
             self.F1, momentum=0.01, affine=True, eps=1e-3), )
-        model.add_module('conv_spatial', Conv2dWithConstraint(
+        self.add_module('conv_spatial', Conv2dWithConstraint(
             self.F1, self.F1 * self.D, (self.in_chans, 1), max_norm=1, stride=1, bias=False,
             groups=self.F1,
             padding=(0, 0)))
 
-        model.add_module('bnorm_1', nn.BatchNorm2d(
+        self.add_module('bnorm_1', nn.BatchNorm2d(
             self.F1 * self.D, momentum=0.01, affine=True, eps=1e-3), )
-        model.add_module('elu_1', Expression(elu))
+        self.add_module('elu_1', Expression(elu))
 
-        model.add_module('pool_1', pool_class(
+        self.add_module('pool_1', pool_class(
             kernel_size=(1, 4), stride=(1, 4)))
-        model.add_module('drop_1', nn.Dropout(p=self.drop_prob))
+        self.add_module('drop_1', nn.Dropout(p=self.drop_prob))
 
         # https://discuss.pytorch.org/t/how-to-modify-a-conv2d-to-depthwise-separable-convolution/15843/7
-        model.add_module('conv_separable_depth', nn.Conv2d(
+        self.add_module('conv_separable_depth', nn.Conv2d(
             self.F1 * self.D, self.F1 * self.D, (1, 16), stride=1, bias=False, groups=self.F1 * self.D,
             padding=(0, 16 // 2)))
-        model.add_module('conv_separable_point', nn.Conv2d(
+        self.add_module('conv_separable_point', nn.Conv2d(
             self.F1 * self.D, self.F2, (1, 1), stride=1, bias=False,
             padding=(0, 0)))
 
-        model.add_module('bnorm_2', nn.BatchNorm2d(
+        self.add_module('bnorm_2', nn.BatchNorm2d(
             self.F2, momentum=0.01, affine=True, eps=1e-3), )
-        model.add_module('elu_2', Expression(elu))
-        model.add_module('pool_2', pool_class(
+        self.add_module('elu_2', Expression(elu))
+        self.add_module('pool_2', pool_class(
             kernel_size=(1, 8), stride=(1, 8)))
-        model.add_module('drop_2', nn.Dropout(p=self.drop_prob))
+        self.add_module('drop_2', nn.Dropout(p=self.drop_prob))
 
-        out = model(np_to_var(np.ones(
+        out = self(np_to_var(np.ones(
             (1, self.in_chans, self.input_time_length, 1),
             dtype=np.float32)))
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
@@ -108,23 +112,24 @@ class NewEEGNet:
             n_out_time = out.cpu().data.numpy().shape[3]
             self.final_conv_length = n_out_time
 
-        model.add_module('conv_classifier', nn.Conv2d(
+        self.add_module('conv_classifier', nn.Conv2d(
             self.F2, self.n_classes,
             (n_out_virtual_chans, self.final_conv_length,), bias=True))
-        model.add_module('softmax', nn.LogSoftmax())
+        self.add_module('softmax', nn.LogSoftmax())
         # Transpose back to the the logic of braindecode,
         # so time in third dimension (axis=2)
-        model.add_module('permute_back', Expression(_transpose_1_0))
-        model.add_module('squeeze', Expression(_squeeze_final_output))
+        self.add_module('permute_back', Expression(_transpose_1_0))
+        self.add_module('squeeze', Expression(_squeeze_final_output))
 
-        glorot_weight_zero_bias(model)
-        return model
+        glorot_weight_zero_bias(self)
+        
+        # return model
 
     # result = self.forward(*input, **kwargs)
-    # def forward(self, x_input):
-    #     for module in self._modules.values():
-    #         x_input = module(x_input)
-    #     return x_input
+    def forward(self, x_input):
+        for module in self._modules.values():
+            x_input = module(x_input)
+        return x_input
 
 
 def _transpose_to_b_1_c_0(x):
