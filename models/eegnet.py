@@ -106,7 +106,7 @@ class EEGNet(BaseModel):
         out = np_to_var(
             np.ones((1, self.in_chans, self.input_time_length, 1),
                     dtype=np.float32))
-        out = self.forward_once(out)
+        out = self.forward_init(out)
         # out = self.separable_conv(self.spatial_conv(self.temporal_conv(out)))
         n_out_virtual_chans = out.cpu().data.numpy().shape[2]
 
@@ -139,18 +139,21 @@ class EEGNet(BaseModel):
         self.feature_alignment_layer = \
             list(self._modules.items())[self.i_feature_alignment_layer][0]
 
+    def forward_init(self, x):
+        for module in self._modules:
+            x = self._modules[module](x)
+        return x
+
     def forward(self, *inputs):
         if self.siamese:
             return self.forward_siamese(*inputs)
         return self.forward_once(*inputs)
 
     def forward_once(self, x):
-        # x = self.temporal_conv(x)
-        # x = self.spatial_conv(x)
-        # x = self.separable_conv(x)
-        # x = self.cls(x)
-        for module in self._modules:
-            x = self._modules[module](x)
+        x = self.temporal_conv(x)
+        x = self.spatial_conv(x)
+        x = self.separable_conv(x)
+        x = self.cls(x)
         return x
 
     def forward_siamese(self, x):

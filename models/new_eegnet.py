@@ -116,9 +116,11 @@ class NewEEGNet(BaseModel):
         model.add_module('permute_back', Expression(_transpose_1_0))
         model.add_module('squeeze', Expression(_squeeze_final_output))
 
-        # glorot_weight_zero_bias(model)
+        glorot_weight_zero_bias(model)
         return model
 
+def forward():
+    f
 
 def _transpose_to_b_1_c_0(x):
     return x.permute(0, 3, 1, 2)
