@@ -21,7 +21,8 @@ class Conv2dWithConstraint(nn.Conv2d):
         return super(Conv2dWithConstraint, self).forward(x)
 
 
-class NewEEGNet(BaseModel):
+# class NewEEGNet(BaseModel):
+class NewEEGNet:
     """
     EEGNet v4 model from [EEGNet4]_.
 
@@ -119,8 +120,12 @@ class NewEEGNet(BaseModel):
         glorot_weight_zero_bias(model)
         return model
 
-def forward():
-    f
+    # result = self.forward(*input, **kwargs)
+    # def forward(self, x_input):
+    #     for module in self._modules.values():
+    #         x_input = module(x_input)
+    #     return x_input
+
 
 def _transpose_to_b_1_c_0(x):
     return x.permute(0, 3, 1, 2)
