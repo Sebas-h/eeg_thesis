@@ -136,7 +136,30 @@ class NewEEGNet(nn.Sequential):
         return x_input
 
     def forward_siamese(self, x):
-        raise NotImplementedError
+        target = x['target']
+        source = x['source']
+
+        # Compute embeddings:
+        for name, module in self._modules.items():
+            target = module(target)
+            source = module(source)
+            if name == self.feature_alignment_layer:
+                break
+        target_embedding = target
+        source_embedding = source
+
+        # Compute cls for modules past the ones used for the embedding:
+        start_cls = False
+        for name, module in self._modules.items():
+            if start_cls:
+                source = module(source)
+            elif name == self.feature_alignment_layer:
+                start_cls = True
+        cls = source
+
+        return {'target_embedding': target_embedding,
+                'source_embedding': source_embedding,
+                'cls': cls}
 
 
 def _transpose_to_b_1_c_0(x):

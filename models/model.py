@@ -5,6 +5,7 @@ import torch
 from models.eegnet import EEGNet
 from models.deep_convnet import DeepConvNet
 from models.shallow_convnet import ShallowConvNet
+from models.new_eegnet import NewEEGNet
 
 
 def get_model(dataset, model_state_dict, config):
@@ -39,11 +40,16 @@ def build_trialwise_model(model_name, n_chans, n_classes, input_time_length,
     i_feature_alignment_layer = config['model']['i_feature_alignment_layer']
 
     if model_name == 'eegnet':
-        model = EEGNet(n_chans, n_classes,
-                       input_time_length=input_time_length,
-                       siamese=is_siamese,
-                       i_feature_alignment_layer=
-                       i_feature_alignment_layer)
+        model = NewEEGNet(n_chans, n_classes,
+                          input_time_length=input_time_length,
+                          siamese=is_siamese,
+                          i_feature_alignment_layer=
+                          i_feature_alignment_layer)
+        # model = EEGNet(n_chans, n_classes,
+        #                input_time_length=input_time_length,
+        #                siamese=is_siamese,
+        #                i_feature_alignment_layer=
+        #                i_feature_alignment_layer)
     elif model_name == 'deep':
         model = DeepConvNet(n_chans, n_classes,
                             input_time_length=input_time_length,
