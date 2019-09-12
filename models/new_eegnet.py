@@ -52,7 +52,9 @@ class NewEEGNet(nn.Sequential):
                  F2=16, 
                  kernel_length=64, 
                  third_kernel_size=(8, 4), 
-                 drop_prob=0.25, 
+                 drop_prob=0.25,
+                 siamese=False,
+                 i_feature_alignment_layer=None,  # 0-based index modules
                  *args):
 
         super().__init__(*args)
@@ -122,14 +124,19 @@ class NewEEGNet(nn.Sequential):
         self.add_module('squeeze', Expression(_squeeze_final_output))
 
         glorot_weight_zero_bias(self)
-        
-        # return model
 
-    # result = self.forward(*input, **kwargs)
-    def forward(self, x_input):
-        for module in self._modules.values():
+    def forward(self, *inputs):
+        if self.siamese:
+            return self.forward_siamese(*inputs)
+        return self.forward_once(*inputs)
+
+    def forward_once(self, x_input):
+        for name, module in self._modules.items():
             x_input = module(x_input)
         return x_input
+
+    def forward_siamese(self, x):
+        raise NotImplementedError
 
 
 def _transpose_to_b_1_c_0(x):
