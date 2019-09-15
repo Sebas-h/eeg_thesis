@@ -62,17 +62,6 @@ def full_cv_all_subjects(config):
                   f"i_valid_fold={i_fold}\n\n")
 
 
-class Experiment:
-    def __init__(self):
-        self.exp_name = ''
-        self.subject_id = 0
-        self.i_valid_fold = 0
-        self.resutl_dir = None
-
-    def run(self):
-        pass
-
-
 def train_siamese_model(subject_id, i_valid_fold, config):
     # Train Siamese model:
     siamese_model_state = train_model_once(subject_id, i_valid_fold,

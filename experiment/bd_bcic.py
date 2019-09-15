@@ -46,7 +46,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     high_cut_hz = 38
     factor_new = 1e-3
     init_block_size = 1000
-    valid_set_fraction = 0.2
+    valid_set_fraction = 0.25
 
     log.info("==============================")
     log.info("Processing Data:")
