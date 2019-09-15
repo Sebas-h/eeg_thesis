@@ -27,7 +27,8 @@ from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 from braindecode.models.eegnet import EEGNetv4
 from models.eegnet import EEGNet
 from models.new_eegnet import NewEEGNet
-
+from data_loader.data_loader import get_dataset
+from util.config import load_cfg
 
 log = logging.getLogger(__name__)
 
@@ -48,68 +49,81 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     init_block_size = 1000
     valid_set_fraction = 0.25
 
+    def processing_data():
+        log.info("==============================")
+        log.info("Processing Data:")
+        log.info("==============================")
+
+        train_filename = 'A{:02d}T.gdf'.format(subject_id)
+        test_filename = 'A{:02d}E.gdf'.format(subject_id)
+        train_filepath = os.path.join(data_folder, train_filename)
+        test_filepath = os.path.join(data_folder, test_filename)
+        train_label_filepath = train_filepath.replace('.gdf', '.mat')
+        test_label_filepath = test_filepath.replace('.gdf', '.mat')
+
+        train_loader = BCICompetition4Set2A(
+            train_filepath, labels_filename=train_label_filepath)
+        test_loader = BCICompetition4Set2A(
+            test_filepath, labels_filename=test_label_filepath)
+        train_cnt = train_loader.load()
+        test_cnt = test_loader.load()
+
+        # Preprocessing
+        train_cnt = train_cnt.drop_channels(['STI 014', 'EOG-left',
+                                             'EOG-central', 'EOG-right'])
+        assert len(train_cnt.ch_names) == 22
+        # lets convert to millvolt for numerical stability of next operations
+        train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
+        train_cnt = mne_apply(
+            lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz,
+                                   train_cnt.info['sfreq'],
+                                   filt_order=3,
+                                   axis=1), train_cnt)
+        train_cnt = mne_apply(
+            lambda a: exponential_running_standardize(a.T, factor_new=factor_new,
+                                                      init_block_size=init_block_size,
+                                                      eps=1e-4).T,
+            train_cnt)
+
+        test_cnt = test_cnt.drop_channels(['STI 014', 'EOG-left',
+                                           'EOG-central', 'EOG-right'])
+        assert len(test_cnt.ch_names) == 22
+        test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
+        test_cnt = mne_apply(
+            lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz,
+                                   test_cnt.info['sfreq'],
+                                   filt_order=3,
+                                   axis=1), test_cnt)
+        test_cnt = mne_apply(
+            lambda a: exponential_running_standardize(a.T, factor_new=factor_new,
+                                                      init_block_size=init_block_size,
+                                                      eps=1e-4).T,
+            test_cnt)
+
+        marker_def = OrderedDict([('Left Hand', [1]), ('Right Hand', [2],),
+                                  ('Foot', [3]), ('Tongue', [4])])
+
+        train_set = create_signal_target_from_raw_mne(train_cnt, marker_def, ival)
+        test_set = create_signal_target_from_raw_mne(test_cnt, marker_def, ival)
+
+        train_set, valid_set = split_into_two_sets(
+            train_set, first_set_fraction=1 - valid_set_fraction)
+
+    # processing_data()
+
     log.info("==============================")
-    log.info("Processing Data:")
+    log.info("Loading Data...")
     log.info("==============================")
+    config = load_cfg(None)
+    data = get_dataset(subject_id, 0, config['experiment']['dataset'], config)
+    train_set = data.train_set
+    valid_set = data.validation_set
+    test_set = data.test_set
 
-    train_filename = 'A{:02d}T.gdf'.format(subject_id)
-    test_filename = 'A{:02d}E.gdf'.format(subject_id)
-    train_filepath = os.path.join(data_folder, train_filename)
-    test_filepath = os.path.join(data_folder, test_filename)
-    train_label_filepath = train_filepath.replace('.gdf', '.mat')
-    test_label_filepath = test_filepath.replace('.gdf', '.mat')
-
-    train_loader = BCICompetition4Set2A(
-        train_filepath, labels_filename=train_label_filepath)
-    test_loader = BCICompetition4Set2A(
-        test_filepath, labels_filename=test_label_filepath)
-    train_cnt = train_loader.load()
-    test_cnt = test_loader.load()
-
-    # Preprocessing
-
-    train_cnt = train_cnt.drop_channels(['STI 014', 'EOG-left',
-                                         'EOG-central', 'EOG-right'])
-    assert len(train_cnt.ch_names) == 22
-    # lets convert to millvolt for numerical stability of next operations
-    train_cnt = mne_apply(lambda a: a * 1e6, train_cnt)
-    train_cnt = mne_apply(
-        lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz,
-                               train_cnt.info['sfreq'],
-                               filt_order=3,
-                               axis=1), train_cnt)
-    train_cnt = mne_apply(
-        lambda a: exponential_running_standardize(a.T, factor_new=factor_new,
-                                                  init_block_size=init_block_size,
-                                                  eps=1e-4).T,
-        train_cnt)
-
-    test_cnt = test_cnt.drop_channels(['STI 014', 'EOG-left',
-                                       'EOG-central', 'EOG-right'])
-    assert len(test_cnt.ch_names) == 22
-    test_cnt = mne_apply(lambda a: a * 1e6, test_cnt)
-    test_cnt = mne_apply(
-        lambda a: bandpass_cnt(a, low_cut_hz, high_cut_hz,
-                               test_cnt.info['sfreq'],
-                               filt_order=3,
-                               axis=1), test_cnt)
-    test_cnt = mne_apply(
-        lambda a: exponential_running_standardize(a.T, factor_new=factor_new,
-                                                  init_block_size=init_block_size,
-                                                  eps=1e-4).T,
-        test_cnt)
-
-    marker_def = OrderedDict([('Left Hand', [1]), ('Right Hand', [2],),
-                              ('Foot', [3]), ('Tongue', [4])])
-
-    train_set = create_signal_target_from_raw_mne(train_cnt, marker_def, ival)
-    test_set = create_signal_target_from_raw_mne(test_cnt, marker_def, ival)
-
-    train_set, valid_set = split_into_two_sets(
-        train_set, first_set_fraction=1 - valid_set_fraction)
-
+    log.info("==============================")
+    log.info("Setting Up Model...")
+    log.info("==============================")
     set_random_seeds(seed=20190706, cuda=cuda)
-
     n_classes = 4
     n_chans = int(train_set.X.shape[1])
     input_time_length = train_set.X.shape[2]
@@ -127,7 +141,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
         # model = EEGNetv4(n_chans, n_classes,
         #                  input_time_length=input_time_length).create_network()
         model = NewEEGNet(n_chans, n_classes,
-                          input_time_length=input_time_length) #.create_network()
+                          input_time_length=input_time_length)  # .create_network()
 
     if cuda:
         model.cuda()
@@ -140,7 +154,6 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     log.info("==============================")
     log.info("Running Experiment:")
     log.info("==============================")
-
     optimizer = optim.Adam(model.parameters())
 
     iterator = BalancedBatchSizeIterator(batch_size=batch_size)
