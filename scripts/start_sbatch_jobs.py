@@ -30,7 +30,7 @@ def main():
     script_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), script_name))
     p = subprocess.Popen(
-        f'sbatch -o {results_path}sbatch_stdout.txt {script_path} {results_path}', shell=True)
+        f'sbatch -o {results_path}sbatch_stdout_%j.txt {script_path} {results_path}', shell=True)
     p.wait()
 
 
