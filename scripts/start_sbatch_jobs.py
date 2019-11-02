@@ -18,7 +18,9 @@ def main():
     now = str(datetime.datetime.now()).replace(
         '-', '_').replace(' ', '_').replace('.', '_').replace(':', '_')
     results_path = f'$HOME/results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
+    print(results_path)
     if not os.path.exists(results_path):
+        print('path did not exist')
         os.makedirs(results_path)
 
     # copy config
@@ -27,7 +29,7 @@ def main():
         yaml.dump(config, outfile, default_flow_style=False)
 
     exit()
-    
+
     script_name = "_single_slurm_run.sh"
     script_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), script_name))
