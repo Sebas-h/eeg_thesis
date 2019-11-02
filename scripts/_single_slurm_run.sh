@@ -5,7 +5,7 @@
 ##SBATCH --account=um_dke
 
 ### File for the output
-#SBATCH --output=/home/no316758/slurm_results/JOB_OUTPUT.%j.txt
+#SBATCH --output=/home/no316758/slurm_results/NOV19_JOB_OUTPUT.%j.txt
 
 ### request one gpu per node
 #SBATCH --gres=gpu:volta:1

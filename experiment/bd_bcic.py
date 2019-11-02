@@ -1,8 +1,10 @@
 import logging
+import os
 import os.path
 import time
 from collections import OrderedDict
 import sys
+import datetime
 
 import numpy as np
 import torch.nn.functional as F
@@ -103,8 +105,10 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
         marker_def = OrderedDict([('Left Hand', [1]), ('Right Hand', [2],),
                                   ('Foot', [3]), ('Tongue', [4])])
 
-        train_set = create_signal_target_from_raw_mne(train_cnt, marker_def, ival)
-        test_set = create_signal_target_from_raw_mne(test_cnt, marker_def, ival)
+        train_set = create_signal_target_from_raw_mne(
+            train_cnt, marker_def, ival)
+        test_set = create_signal_target_from_raw_mne(
+            test_cnt, marker_def, ival)
 
         train_set, valid_set = split_into_two_sets(
             train_set, first_set_fraction=1 - valid_set_fraction)
@@ -183,11 +187,28 @@ if __name__ == '__main__':
     data_folder = '/home/no316758/data/BCICIV_2a_gdf/'
     # data_folder = '/Users/sebas/code/_eeg_data/BCICIV_2a_gdf/'
     low_cut_hz = 4  # 0 or 4
-
+  
     model = 'eegnet'  # 'shallow' or 'deep'
     cuda = True
 
-    subjects = [x for x in range(1, 10)]
+    # get config
+    config = load_cfg(None)
+
+    # get vars from config
+    dataset_name = config['experiment']['dataset']
+    dataset_subject_count = config['data'][dataset_name]['n_subjects']
+    experiment_type = config['experiment']['type']
+    experiment_n_folds = config['experiment']['n_folds']
+    model_name = config['model']['name']
+
+    # path to save csv
+    now = datetime.datetime.now()
+    csv_path = f'results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
+    if not os.path.exists(csv_path):
+        os.makedirs(csv_path)
+
+    subjects = [x for x in range(1, dataset_subject_count + 1)]
+
     for subject_id in subjects:
         # subject_id = 1  # 1-9
         exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda)
@@ -196,3 +217,6 @@ if __name__ == '__main__':
         log.info("==============================")
         log.info("\n" + str(exp.epochs_df.iloc[-10:]))
         log.info(f"END Subject {subject_id}\n")
+        exp.epochs_df.to_csv(
+            (csv_path + f'{subject_id}_{dataset_subject_count}.csv')
+        )

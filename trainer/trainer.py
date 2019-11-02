@@ -123,7 +123,8 @@ class Trainer:
             mean_loss = np.sum(batch_weights * loss_per_batch)
 
             # Compute predictions and accuracy/inverse_of_error
-            predicted_labels = self.func_compute_pred_labels(all_preds, dataset)
+            predicted_labels = self.func_compute_pred_labels(
+                all_preds, dataset)
             accuracy = np.mean(predicted_labels == dataset.y)
             if self.siamese:
                 accuracy = np.mean(predicted_labels == dataset.y['source'])
