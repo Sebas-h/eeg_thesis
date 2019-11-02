@@ -17,7 +17,7 @@ def main():
     # path to save csv
     now = str(datetime.datetime.now()).replace(
         '-', '_').replace(' ', '_').replace('.', '_').replace(':', '_')
-    results_path = f'$HOME/results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
+    results_path = f'/home/no316758/results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
     print(results_path)
     if not os.path.exists(results_path):
         print('path did not exist')
