@@ -28,8 +28,6 @@ def main():
     with open(exp_cfg_path, 'w') as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
 
-    exit()
-
     script_name = "_single_slurm_run.sh"
     script_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), script_name))
