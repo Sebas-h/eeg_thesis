@@ -1,5 +1,5 @@
 experiment:
-  dataset: bciciv2a         # [hgd, bciciv2a]
+  dataset: hgd         # [hgd, bciciv2a]
   subject_id: 1
   type: no_tl               # [no_tl, loo_tl, ccsa_da]
   n_folds: 5
