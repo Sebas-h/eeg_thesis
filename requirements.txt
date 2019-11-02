@@ -67,5 +67,5 @@ torch==1.0.1.post2
 torchvision==0.2.2
 tslearn==0.1.29
 typed-ast==1.4.0
-Werkzeug==0.15.2
+Werkzeug==0.15.3
 wrapt==1.11.1
