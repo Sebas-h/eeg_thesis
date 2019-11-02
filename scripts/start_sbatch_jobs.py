@@ -18,9 +18,7 @@ def main():
     now = str(datetime.datetime.now()).replace(
         '-', '_').replace(' ', '_').replace('.', '_').replace(':', '_')
     results_path = f'/home/no316758/results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
-    print(results_path)
     if not os.path.exists(results_path):
-        print('path did not exist')
         os.makedirs(results_path)
 
     # copy config
@@ -32,7 +30,7 @@ def main():
     script_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), script_name))
     p = subprocess.Popen(
-        f'sbatch -o {results_path}sbatch_stdout.txt {script_path} {exp_cfg_path}', shell=True)
+        f'sbatch -o {results_path}sbatch_stdout.txt {script_path} {results_path}', shell=True)
     p.wait()
 
 

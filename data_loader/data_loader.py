@@ -25,6 +25,17 @@ def get_dataset(subject_id, i_valid_fold, dataset_name, config):
         return ProcessedDataset(subject_id, n_folds, i_valid_fold, data_dir,
                                 n_classes)
 
+def get_dataset(subject_id, i_valid_fold, dataset_name, data_dir, n_classes, n_subjects, n_folds, experiment_type):
+    if experiment_type == 'ccsa_da':
+        source_subject_ids = [i for i in range(1, n_subjects + 1) if
+                              i != subject_id]
+        return PairedProcessedData(subject_id, source_subject_ids, n_folds,
+                                   i_valid_fold,
+                                   data_dir, n_classes)
+    else:
+        return ProcessedDataset(subject_id, n_folds, i_valid_fold, data_dir,
+                                n_classes)
+
 
 class PairedProcessedData(BaseDataLoader):
     def __init__(self, target_subject_id, list_source_subject_ids, n_folds,

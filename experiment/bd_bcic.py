@@ -41,7 +41,7 @@ BCICIV2a without cropped (no TL obviously as well)
 """
 
 
-def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
+def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
     ival = [-500, 4000]
     max_epochs = 1600
     max_increase_epochs = 160
@@ -56,8 +56,6 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
     log.info("==============================")
     log.info("Loading Data...")
     log.info("==============================")
-    config = load_cfg(None)
-    data = get_dataset(subject_id, 0, config['experiment']['dataset'], config)
     train_set = data.train_set
     valid_set = data.validation_set
     test_set = data.test_set
@@ -119,9 +117,9 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda):
 
 
 if __name__ == '__main__':
-    cfg_path = None
+    results_dir_path = None
     if (len(sys.argv) > 1):
-        cfg_path = sys.argv[1]
+        results_dir_path = sys.argv[1]
 
     logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s',
                         level=logging.DEBUG, stream=sys.stdout)
@@ -129,37 +127,59 @@ if __name__ == '__main__':
     data_folder = '/home/no316758/data/BCICIV_2a_gdf/'
     # data_folder = '/Users/sebas/code/_eeg_data/BCICIV_2a_gdf/'
     low_cut_hz = 4  # 0 or 4
-  
-    model = 'eegnet'  # 'shallow' or 'deep'
+
+    # model = 'eegnet'  # 'shallow' or 'deep'
     cuda = True
 
     # get config
-    config = load_cfg(None)
+    config = load_cfg(cfg_path=f"{results_dir_path}config.yaml")
 
     # get vars from config
     dataset_name = config['experiment']['dataset']
     dataset_subject_count = config['data'][dataset_name]['n_subjects']
+    dataset_path = config['data'][dataset_name]['proc_path']
+    dataset_n_classes = config['data'][dataset_name]['n_classes']
     experiment_type = config['experiment']['type']
     experiment_n_folds = config['experiment']['n_folds']
-    model_name = config['model']['name']
+    experiment_i_valid_fold = config['experiment']['i_valid_fold']
+    model_name = config['model']['name']  # 'eegnet' or 'shallow' or 'deep'
 
     # path to save csv
-    now = str(datetime.datetime.now()).replace('-', '_').replace(' ', '_').replace('.','_').replace(':', '_')
-    csv_path = f'results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
-    if not os.path.exists(csv_path):
-        os.makedirs(csv_path)
+    # now = str(datetime.datetime.now()).replace('-', '_').replace(' ', '_').replace('.','_').replace(':', '_')
+    # csv_path = f'results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
+    # if not os.path.exists(csv_path):
+    #     os.makedirs(csv_path)
 
     # set subject ids to iterate
     subjects = [x for x in range(1, dataset_subject_count + 1)]
 
     for subject_id in subjects:
+        # get data sets
+        data = get_dataset(
+            subject_id,
+            experiment_i_valid_fold,
+            dataset_name,
+            dataset_path,
+            dataset_n_classes,
+            dataset_subject_count,
+            experiment_n_folds,
+            experiment_type
+        )
+
         # subject_id = 1  # 1-9
-        exp = run_exp(data_folder, subject_id, low_cut_hz, model, cuda)
+        exp = run_exp(
+            data_folder,
+            subject_id,
+            low_cut_hz,
+            model_name,
+            cuda,
+            data
+        )
         log.info("==============================")
         log.info(f"End Experiment - Last 10 epochs - Subject {subject_id}:")
         log.info("==============================")
         log.info("\n" + str(exp.epochs_df.iloc[-10:]))
         log.info(f"END Subject {subject_id}\n")
         exp.epochs_df.to_csv(
-            (csv_path + f'{subject_id}_{dataset_subject_count}.csv')
+            results_dir_path + f'{subject_id}_{dataset_subject_count}.csv'
         )
