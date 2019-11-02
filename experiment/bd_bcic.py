@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     # get config
     config = load_cfg(None, cfg_path=f"{results_dir_path}config.yaml")
-    exit()
+    
     # get vars from config
     dataset_name = config['experiment']['dataset']
     dataset_subject_count = config['data'][dataset_name]['n_subjects']
