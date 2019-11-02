@@ -60,19 +60,19 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
     log.info("Loading Data...")
     log.info("==============================")
     # processing_data()
-    train_set, valid_set, test_set = processing_data(
-        data_folder,
-        subject_id,
-        low_cut_hz,
-        high_cut_hz,
-        factor_new,
-        init_block_size,
-        ival,
-        valid_set_fraction,
-    )
-    # train_set = data.train_set
-    # valid_set = data.validation_set
-    # test_set = data.test_set
+    # train_set, valid_set, test_set = processing_data(
+    #     data_folder,
+    #     subject_id,
+    #     low_cut_hz,
+    #     high_cut_hz,
+    #     factor_new,
+    #     init_block_size,
+    #     ival,
+    #     valid_set_fraction,
+    # )
+    train_set = data.train_set
+    valid_set = data.validation_set
+    test_set = data.test_set
 
     log.info("==============================")
     log.info("Setting Up Model...")
@@ -181,7 +181,6 @@ if __name__ == "__main__":
         data = get_dataset(
             subject_id,
             experiment_i_valid_fold,
-            dataset_name,
             dataset_path,
             dataset_n_classes,
             dataset_subject_count,

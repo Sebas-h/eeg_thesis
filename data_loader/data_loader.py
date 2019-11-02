@@ -28,7 +28,6 @@ def get_dataset(subject_id, i_valid_fold, dataset_name, config):
 def get_dataset(
     subject_id,
     i_valid_fold,
-    dataset_name,
     data_dir,
     n_classes,
     n_subjects,
