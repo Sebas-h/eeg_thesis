@@ -36,6 +36,7 @@ from models.eegnet import EEGNet
 from models.new_eegnet import NewEEGNet
 from data_loader.data_loader import get_dataset
 from util.config import load_cfg
+from data_loader.process_data.braindecodes_processing import processing_data
 
 log = logging.getLogger(__name__)
 
@@ -55,14 +56,23 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
     init_block_size = 1000
     valid_set_fraction = 0.25
 
-    # processing_data()
-
     log.info("==============================")
     log.info("Loading Data...")
     log.info("==============================")
-    train_set = data.train_set
-    valid_set = data.validation_set
-    test_set = data.test_set
+    # processing_data()
+    train_set, valid_set, test_set = processing_data(
+        data_folder,
+        subject_id,
+        low_cut_hz,
+        high_cut_hz,
+        factor_new,
+        init_block_size,
+        ival,
+        valid_set_fraction,
+    )
+    # train_set = data.train_set
+    # valid_set = data.validation_set
+    # test_set = data.test_set
 
     log.info("==============================")
     log.info("Setting Up Model...")
