@@ -4,37 +4,43 @@ import datetime
 from util.config import load_cfg
 import yaml
 
+
 def main():
-    # CONFIG
     # get config
     config = load_cfg(None)
     # get vars from config
-    dataset_name = config['experiment']['dataset']
-    dataset_subject_count = config['data'][dataset_name]['n_subjects']
-    experiment_type = config['experiment']['type']
-    experiment_n_folds = config['experiment']['n_folds']
-    model_name = config['model']['name']
+    dataset_name = config["experiment"]["dataset"]
+    dataset_subject_count = config["data"][dataset_name]["n_subjects"]
+    experiment_type = config["experiment"]["type"]
+    experiment_n_folds = config["experiment"]["n_folds"]
+    model_name = config["model"]["name"]
     # path to save csv
-    now = str(datetime.datetime.now()).replace(
-        '-', '_').replace(' ', '_').replace('.', '_').replace(':', '_')
-    results_path = f'/home/no316758/results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/'
+    now = (
+        str(datetime.datetime.now())
+        .replace("-", "_")
+        .replace(" ", "_")
+        .replace(".", "_")
+        .replace(":", "_")
+    )
+    results_path = f"/home/no316758/results/{now}_{experiment_type}_{model_name}_{dataset_name}_{experiment_n_folds}/"
     if not os.path.exists(results_path):
         os.makedirs(results_path)
 
     # copy config
-    exp_cfg_path = f'{results_path}config.yaml'
-    with open(exp_cfg_path, 'w') as outfile:
+    exp_cfg_path = f"{results_path}config.yaml"
+    with open(exp_cfg_path, "w") as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
 
     script_name = "_single_slurm_run.sh"
-    script_path = os.path.abspath(os.path.join(
-        os.path.dirname(__file__), script_name))
+    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), script_name))
     p = subprocess.Popen(
-        f'sbatch -o {results_path}sbatch_stdout_%j.txt {script_path} {results_path}', shell=True)
+        f"sbatch -o {results_path}sbatch_stdout_%j.txt {script_path} {results_path}",
+        shell=True,
+    )
     p.wait()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 
