@@ -52,6 +52,8 @@ class NewDeep4Net(nn.Sequential):
         batch_norm=True,
         batch_norm_alpha=0.1,
         stride_before_pool=False,
+        siamese=False,
+        i_feature_alignment_layer=None,
         *args
     ):
         super().__init__(*args)
