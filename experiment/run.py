@@ -18,8 +18,11 @@ from trainer.setup.optimizer import get_optmizer
 from trainer.trainer import Trainer
 
 log = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s %(levelname)s : %(message)s',
-                    level=logging.DEBUG, stream=sys.stdout)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s : %(message)s",
+    level=logging.DEBUG,
+    stream=sys.stdout,
+)
 
 
 def main(args):
@@ -27,10 +30,10 @@ def main(args):
     config = load_cfg(args)
 
     # Set subject id and valid fold
-    subject_id = config['experiment']['subject_id']
-    i_valid_fold = config['experiment']['i_valid_fold']
+    subject_id = config["experiment"]["subject_id"]
+    i_valid_fold = config["experiment"]["i_valid_fold"]
 
-    if config['server']['full_cv']:
+    if config["server"]["full_cv"]:
         full_cv_all_subjects(config)
     else:
         # Run single subject single fold:
@@ -39,62 +42,60 @@ def main(args):
 
 def single_subject_single_fold(subject_id, i_valid_fold, config):
     # Run experiment
-    if config['experiment']['type'] == 'ccsa_da':
+    if config["experiment"]["type"] == "ccsa_da":
         train_siamese_model(subject_id, i_valid_fold, config)
-    elif config['experiment']['type'] == 'loo_tl':
+    elif config["experiment"]["type"] == "loo_tl":
         train_model_loo_tl(subject_id, i_valid_fold, config)
-    elif config['experiment']['type'] == 'no_tl':
+    elif config["experiment"]["type"] == "no_tl":
         train_model_once(subject_id, i_valid_fold, config)
 
 
 def full_cv_all_subjects(config):
     # Load config file
-    dataset_name = config['experiment']['dataset']
-    n_subjects = [x for x in
-                  range(1, config['data'][dataset_name]['n_subjects'] + 1)]
-    n_folds = [x for x in range(config['experiment']['n_folds'])]
+    dataset_name = config["experiment"]["dataset"]
+    n_subjects = [x for x in range(1, config["data"][dataset_name]["n_subjects"] + 1)]
+    n_folds = [x for x in range(config["experiment"]["n_folds"])]
     for subject_id in n_subjects:
         for i_fold in n_folds:
-            print(f"---> START: subject_id={subject_id} and "
-                  f"i_valid_fold={i_fold}")
+            print(f"---> START: subject_id={subject_id} and " f"i_valid_fold={i_fold}")
             single_subject_single_fold(subject_id, i_fold, config)
-            print(f"<--- END: subject_id={subject_id} and "
-                  f"i_valid_fold={i_fold}\n\n")
+            print(
+                f"<--- END: subject_id={subject_id} and " f"i_valid_fold={i_fold}\n\n"
+            )
 
 
 def train_siamese_model(subject_id, i_valid_fold, config):
     # Train Siamese model:
-    siamese_model_state = train_model_once(subject_id, i_valid_fold,
-                                           config)
+    siamese_model_state = train_model_once(subject_id, i_valid_fold, config)
 
     # Finetune classifier on target:
-    config['experiment']['type'] = 'no_tl'  # Continue without siamese
-    train_model_once(subject_id, i_valid_fold, config,
-                     model_state_dict=siamese_model_state)
-    config['experiment']['type'] = 'ccsa_da'  # Back to siamese !!
+    config["experiment"]["type"] = "no_tl"  # Continue without siamese
+    train_model_once(
+        subject_id, i_valid_fold, config, model_state_dict=siamese_model_state
+    )
+    config["experiment"]["type"] = "ccsa_da"  # Back to siamese !!
 
 
 def train_model_loo_tl(subject_id, i_valid_fold, config):
     target_subject_id = subject_id
-    dataset_name = config['experiment']['dataset']
-    n_subjects = config['data'][dataset_name]['n_subjects']
+    dataset_name = config["experiment"]["dataset"]
+    n_subjects = config["data"][dataset_name]["n_subjects"]
 
-    source_subject_ids = [i for i in range(1, n_subjects + 1) if
-                          i != target_subject_id]
+    source_subject_ids = [i for i in range(1, n_subjects + 1) if i != target_subject_id]
 
     # Train source model on all subjects except the one chosen
-    source_model_state = train_model_once(source_subject_ids, i_valid_fold,
-                                          config)
+    source_model_state = train_model_once(source_subject_ids, i_valid_fold, config)
     # Fine tune model on target subject
-    train_model_once(target_subject_id, i_valid_fold, config,
-                     model_state_dict=source_model_state)
+    train_model_once(
+        target_subject_id, i_valid_fold, config, model_state_dict=source_model_state
+    )
 
 
-def train_model_once(subject_id, i_valid_fold, config,
-                     model_state_dict=None):
+def train_model_once(subject_id, i_valid_fold, config, model_state_dict=None):
     # Data loading
-    data = get_dataset(subject_id, i_valid_fold,
-                       config['experiment']['dataset'], config)
+    data = get_dataset(
+        subject_id, i_valid_fold, config["experiment"]["dataset"], config
+    )
     # import pickle
     # from base.base_data_loader import BaseDataLoader
     # from braindecode.datautil.splitters import split_into_train_valid_test
@@ -124,13 +125,20 @@ def train_model_once(subject_id, i_valid_fold, config,
     print(model)
 
     # Init trainer and train
-    trainer = Trainer(data.train_set, data.validation_set,
-                      data.test_set, model, optimizer, iterator,
-                      loss_function, stop_criterion,
-                      model_constraint=MaxNormDefaultConstraint(),
-                      cuda=torch.cuda.is_available(),
-                      func_compute_pred_labels=predict_label_func,
-                      siamese=(config['experiment']['type'] == 'ccsa_da'))
+    trainer = Trainer(
+        data.train_set,
+        data.validation_set,
+        data.test_set,
+        model,
+        optimizer,
+        iterator,
+        loss_function,
+        stop_criterion,
+        model_constraint=MaxNormDefaultConstraint(),
+        cuda=torch.cuda.is_available(),
+        func_compute_pred_labels=predict_label_func,
+        siamese=(config["experiment"]["type"] == "ccsa_da"),
+    )
     trainer.train()
 
     # Save results
@@ -151,7 +159,7 @@ def save_result_and_model(trainer, model, config):
     result_dir = create_unique_result_dir(config)
 
     # 1) Save config file:
-    with open(f'{result_dir}/config.yaml', 'w') as outfile:
+    with open(f"{result_dir}/config.yaml", "w") as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
 
     # 2) Save results csv
@@ -159,7 +167,7 @@ def save_result_and_model(trainer, model, config):
     trainer.epochs_df.to_csv(f_name)
 
     # 3) Save model state (parameters)
-    file_name_state_dict = f'{result_dir}/model_sate.pt'
+    file_name_state_dict = f"{result_dir}/model_sate.pt"
     torch.save(model.state_dict(), file_name_state_dict)
     return file_name_state_dict
 
@@ -171,14 +179,18 @@ def create_unique_result_dir(config):
 
     # Make result directory
     result_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..',
-                     f"results/{timestamp}_{config['model']['name']}"
-                     f"_{unique_id}"))
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            f"results/{timestamp}_{config['model']['name']}" f"_{unique_id}",
+        )
+    )
 
     # Check ouput dir exists and possibly create it
     parent_output_dir = os.path.abspath(os.path.join(result_dir, os.pardir))
-    assert os.path.exists(parent_output_dir), \
-        "Parent directory of given output directory does not exist"
+    assert os.path.exists(
+        parent_output_dir
+    ), "Parent directory of given output directory does not exist"
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
 
@@ -190,21 +202,30 @@ def create_unique_result_dir(config):
 def parse_given_arguments():
     """Get parser object."""
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-    parser = ArgumentParser(description=__doc__,
-                            formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-s', '--subject-id', type=int,
-                        metavar='N',
-                        help='overrides config subject id')
-    parser.add_argument('-i', '--i-fold', type=int,
-                        metavar='N',
-                        help='overrides config valid fold index (0-based)')
-    parser.add_argument('-l', '--i-layer', type=int,
-                        metavar='N',
-                        help='overrides config '
-                             'i_feature_alignment_layer (0-based)')
+
+    parser = ArgumentParser(
+        description=__doc__, formatter_class=ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "-s", "--subject-id", type=int, metavar="N", help="overrides config subject id"
+    )
+    parser.add_argument(
+        "-i",
+        "--i-fold",
+        type=int,
+        metavar="N",
+        help="overrides config valid fold index (0-based)",
+    )
+    parser.add_argument(
+        "-l",
+        "--i-layer",
+        type=int,
+        metavar="N",
+        help="overrides config " "i_feature_alignment_layer (0-based)",
+    )
     args = parser.parse_args()
     return args
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(parse_given_arguments())

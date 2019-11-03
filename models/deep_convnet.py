@@ -10,42 +10,43 @@ from base.base_model import BaseModel
 
 
 class DeepConvNet(BaseModel):
-
-    def __init__(self, in_chans,
-                 n_classes,
-                 input_time_length,
-                 final_conv_length,
-                 n_filters_time=25,
-                 n_filters_spat=25,
-                 filter_time_length=10,
-                 pool_time_length=3,
-                 pool_time_stride=3,
-                 n_filters_2=50,
-                 filter_length_2=10,
-                 n_filters_3=100,
-                 filter_length_3=10,
-                 n_filters_4=200,
-                 filter_length_4=10,
-                 first_nonlin=elu,
-                 first_pool_mode='max',
-                 first_pool_nonlin=identity,
-                 later_nonlin=elu,
-                 later_pool_mode='max',
-                 later_pool_nonlin=identity,
-                 drop_prob=0.5,
-                 double_time_convs=False,
-                 split_first_layer=True,
-                 batch_norm=True,
-                 batch_norm_alpha=0.1,
-                 stride_before_pool=False,
-                 siamese=False,
-                 i_feature_alignment_layer=None
-                 ):
+    def __init__(
+        self,
+        in_chans,
+        n_classes,
+        input_time_length,
+        final_conv_length,
+        n_filters_time=25,
+        n_filters_spat=25,
+        filter_time_length=10,
+        pool_time_length=3,
+        pool_time_stride=3,
+        n_filters_2=50,
+        filter_length_2=10,
+        n_filters_3=100,
+        filter_length_3=10,
+        n_filters_4=200,
+        filter_length_4=10,
+        first_nonlin=elu,
+        first_pool_mode="max",
+        first_pool_nonlin=identity,
+        later_nonlin=elu,
+        later_pool_mode="max",
+        later_pool_nonlin=identity,
+        drop_prob=0.5,
+        double_time_convs=False,
+        split_first_layer=True,
+        batch_norm=True,
+        batch_norm_alpha=0.1,
+        stride_before_pool=False,
+        siamese=False,
+        i_feature_alignment_layer=None,
+    ):
         super(DeepConvNet, self).__init__()
 
         if i_feature_alignment_layer is None:
             i_feature_alignment_layer = 4  # default alignment layer
-        if final_conv_length == 'auto':
+        if final_conv_length == "auto":
             assert input_time_length is not None
 
         self.__dict__.update(locals())
@@ -68,79 +69,106 @@ class DeepConvNet(BaseModel):
 
         self.temporal_conv = nn.Sequential(
             Expression(_transpose_time_to_spat),
-            nn.Conv2d(1, self.n_filters_time, (self.filter_time_length, 1),
-                      stride=1)
+            nn.Conv2d(1, self.n_filters_time, (self.filter_time_length, 1), stride=1),
         )
 
         self.spatial_conv = nn.Sequential(
-            nn.Conv2d(self.n_filters_time, self.n_filters_spat,
-                      (1, self.in_chans), stride=(conv_stride, 1),
-                      bias=not self.batch_norm),
-            nn.BatchNorm2d(n_filters_conv, momentum=self.batch_norm_alpha,
-                           affine=True, eps=1e-5),
+            nn.Conv2d(
+                self.n_filters_time,
+                self.n_filters_spat,
+                (1, self.in_chans),
+                stride=(conv_stride, 1),
+                bias=not self.batch_norm,
+            ),
+            nn.BatchNorm2d(
+                n_filters_conv, momentum=self.batch_norm_alpha, affine=True, eps=1e-5
+            ),
             Expression(self.first_nonlin),
-            first_pool_class(kernel_size=(self.pool_time_length, 1),
-                             stride=(pool_stride, 1)),
-            Expression(self.first_pool_nonlin)
+            first_pool_class(
+                kernel_size=(self.pool_time_length, 1), stride=(pool_stride, 1)
+            ),
+            Expression(self.first_pool_nonlin),
         )
 
-        self.conv_block2 = self.add_conv_pool_block(n_filters_conv,
-                                                    self.n_filters_2,
-                                                    self.filter_length_2,
-                                                    conv_stride,
-                                                    pool_stride,
-                                                    later_pool_class)
-        self.conv_block3 = self.add_conv_pool_block(self.n_filters_2,
-                                                    self.n_filters_3,
-                                                    self.filter_length_3,
-                                                    conv_stride, pool_stride,
-                                                    later_pool_class)
-        self.conv_block4 = self.add_conv_pool_block(self.n_filters_3,
-                                                    self.n_filters_4,
-                                                    self.filter_length_4,
-                                                    conv_stride, pool_stride,
-                                                    later_pool_class)
+        self.conv_block2 = self.add_conv_pool_block(
+            n_filters_conv,
+            self.n_filters_2,
+            self.filter_length_2,
+            conv_stride,
+            pool_stride,
+            later_pool_class,
+        )
+        self.conv_block3 = self.add_conv_pool_block(
+            self.n_filters_2,
+            self.n_filters_3,
+            self.filter_length_3,
+            conv_stride,
+            pool_stride,
+            later_pool_class,
+        )
+        self.conv_block4 = self.add_conv_pool_block(
+            self.n_filters_3,
+            self.n_filters_4,
+            self.filter_length_4,
+            conv_stride,
+            pool_stride,
+            later_pool_class,
+        )
 
         self.eval()
-        if self.final_conv_length == 'auto':
+        if self.final_conv_length == "auto":
             out = np_to_var(
-                np.ones((1, self.in_chans, self.input_time_length, 1),
-                        dtype=np.float32))
+                np.ones((1, self.in_chans, self.input_time_length, 1), dtype=np.float32)
+            )
             out = self.forward_once(out)
             n_out_time = out.cpu().data.numpy().shape[2]
             self.final_conv_length = n_out_time
 
         self.cls = nn.Sequential(
-            nn.Conv2d(self.n_filters_4, self.n_classes,
-                      (self.final_conv_length, 1), bias=True),
+            nn.Conv2d(
+                self.n_filters_4, self.n_classes, (self.final_conv_length, 1), bias=True
+            ),
             nn.LogSoftmax(dim=1),
-            Expression(_squeeze_final_output)
+            Expression(_squeeze_final_output),
         )
 
         # Initialize weights of the network
         self.apply(glorot_weight_zero_bias)
 
         # Set feature space alignment layer, used in siamese training/testing
-        assert 0 <= self.i_feature_alignment_layer < len(self._modules), \
-            "Given feature space alignment layer does not " \
-            "exist for current model"
-        self.feature_alignment_layer = \
-            list(self._modules.items())[self.i_feature_alignment_layer][0]
+        assert 0 <= self.i_feature_alignment_layer < len(self._modules), (
+            "Given feature space alignment layer does not " "exist for current model"
+        )
+        self.feature_alignment_layer = list(self._modules.items())[
+            self.i_feature_alignment_layer
+        ][0]
 
-    def add_conv_pool_block(self, n_filters_before, n_filters, filter_length,
-                            conv_stride, pool_stride,
-                            later_pool_class):
+    def add_conv_pool_block(
+        self,
+        n_filters_before,
+        n_filters,
+        filter_length,
+        conv_stride,
+        pool_stride,
+        later_pool_class,
+    ):
         return nn.Sequential(
             nn.Dropout(p=self.drop_prob),
-            nn.Conv2d(n_filters_before, n_filters, (filter_length, 1),
-                      stride=(conv_stride, 1),
-                      bias=not self.batch_norm),
-            nn.BatchNorm2d(n_filters, momentum=self.batch_norm_alpha,
-                           affine=True, eps=1e-5),
+            nn.Conv2d(
+                n_filters_before,
+                n_filters,
+                (filter_length, 1),
+                stride=(conv_stride, 1),
+                bias=not self.batch_norm,
+            ),
+            nn.BatchNorm2d(
+                n_filters, momentum=self.batch_norm_alpha, affine=True, eps=1e-5
+            ),
             Expression(self.later_nonlin),
-            later_pool_class(kernel_size=(self.pool_time_length, 1),
-                             stride=(pool_stride, 1)),
-            Expression(self.later_pool_nonlin)
+            later_pool_class(
+                kernel_size=(self.pool_time_length, 1), stride=(pool_stride, 1)
+            ),
+            Expression(self.later_pool_nonlin),
         )
 
     def forward(self, *inputs):
@@ -154,8 +182,8 @@ class DeepConvNet(BaseModel):
         return x
 
     def forward_siamese(self, x):
-        target = x['target']
-        source = x['source']
+        target = x["target"]
+        source = x["source"]
 
         # Compute embeddings:
         for module in self._modules:
@@ -175,9 +203,11 @@ class DeepConvNet(BaseModel):
                 start_cls = True
         cls = source
 
-        return {'target_embedding': target_embedding,
-                'source_embedding': source_embedding,
-                'cls': cls}
+        return {
+            "target_embedding": target_embedding,
+            "source_embedding": source_embedding,
+            "cls": cls,
+        }
 
     def freeze_layers(self):
         for module in self._modules:
