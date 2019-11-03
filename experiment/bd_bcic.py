@@ -35,6 +35,7 @@ from braindecode.models.eegnet import EEGNetv4
 from models.eegnet import EEGNet
 from models.new_eegnet import NewEEGNet
 from models.new_deep import NewDeep4Net
+from models.new_shallow import NewShallowNet
 
 from data_loader.data_loader import get_dataset
 from util.config import load_cfg
@@ -84,12 +85,15 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
     n_chans = int(train_set.X.shape[1])
     input_time_length = train_set.X.shape[2]
     if model == "shallow":
-        model = ShallowFBCSPNet(
-            n_chans,
-            n_classes,
-            input_time_length=input_time_length,
-            final_conv_length="auto",
-        ).create_network()
+        model = NewShallowNet(
+            n_chans, n_classes, input_time_length, final_conv_length="auto"
+        )
+        # model = ShallowFBCSPNet(
+        #     n_chans,
+        #     n_classes,
+        #     input_time_length=input_time_length,
+        #     final_conv_length="auto",
+        # ).create_network()
     elif model == "deep":
         model = NewDeep4Net(n_chans, n_classes, input_time_length, "auto")
         # model = Deep4Net(
