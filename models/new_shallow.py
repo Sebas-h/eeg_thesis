@@ -33,9 +33,9 @@ class NewShallowNet(nn.Sequential):
         pool_time_length=75,
         pool_time_stride=15,
         final_conv_length=30,
-        conv_nonlin_method=square,
+        conv_nonlin_func=square,
         pool_mode="mean",
-        pool_nonlin=safe_log,
+        pool_nonlin_func=safe_log,
         split_first_layer=True,
         batch_norm=True,
         batch_norm_alpha=0.1,
@@ -91,7 +91,7 @@ class NewShallowNet(nn.Sequential):
                     n_filters_conv, momentum=self.batch_norm_alpha, affine=True
                 ),
             )
-        self.add_module("conv_nonlin", Expression(self.conv_nonlin_method))
+        self.add_module("conv_nonlin", Expression(self.conv_nonlin_func))
         self.add_module(
             "pool",
             pool_class(
@@ -99,7 +99,7 @@ class NewShallowNet(nn.Sequential):
                 stride=(self.pool_time_stride, 1),
             ),
         )
-        self.add_module("pool_nonlin", Expression(self.pool_nonlin))
+        self.add_module("pool_nonlin", Expression(self.pool_nonlin_func))
         self.add_module("drop", nn.Dropout(p=self.drop_prob))
         if self.final_conv_length == "auto":
             out = self(
