@@ -25,4 +25,5 @@ source ~/anaconda3/bin/activate eeg
 
 ### add -u flag so that python print will be unbuffered and therefore show up with bpeek (-f) command
 #python -um experiment.run
-python -um experiment.bd_bcic $1
+# python -um experiment.bd_bcic $1
+python -um experiment.loo_tl $1

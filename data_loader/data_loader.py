@@ -25,7 +25,7 @@ def get_dataset(subject_id, i_valid_fold, dataset_name, config):
         return ProcessedDataset(subject_id, n_folds, i_valid_fold, data_dir, n_classes)
 
 
-def get_dataset(
+def get_dataset_new(
     subject_id,
     i_valid_fold,
     data_dir,

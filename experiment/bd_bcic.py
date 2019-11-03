@@ -37,7 +37,7 @@ from models.new_eegnet import NewEEGNet
 from models.new_deep import NewDeep4Net
 from models.new_shallow import NewShallowNet
 
-from data_loader.data_loader import get_dataset
+from data_loader.data_loader import get_dataset_new
 from util.config import load_cfg
 from data_loader.process_data.braindecodes_processing import processing_data
 
@@ -49,30 +49,35 @@ BCICIV2a without cropped (no TL obviously as well)
 """
 
 
-def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
-    ival = [-500, 4000]
-    max_epochs = 1600
-    max_increase_epochs = 160
-    batch_size = 60
-    high_cut_hz = 38
-    factor_new = 1e-3
-    init_block_size = 1000
-    valid_set_fraction = 0.25
+# def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
+# ival = [-500, 4000]
+# max_epochs = 1600
+# max_increase_epochs = 160
+# batch_size = 60
+# high_cut_hz = 38
+# factor_new = 1e-3
+# init_block_size = 1000
+# valid_set_fraction = 0.25
+
+# processing_data()
+# train_set, valid_set, test_set = processing_data(
+#     data_folder,
+#     subject_id,
+#     low_cut_hz,
+#     high_cut_hz,
+#     factor_new,
+#     init_block_size,
+#     ival,
+#     valid_set_fraction,
+# )
+
+
+def build_exp(model_name, cuda, data, batch_size, max_epochs, max_increase_epochs):
 
     log.info("==============================")
     log.info("Loading Data...")
     log.info("==============================")
-    # processing_data()
-    # train_set, valid_set, test_set = processing_data(
-    #     data_folder,
-    #     subject_id,
-    #     low_cut_hz,
-    #     high_cut_hz,
-    #     factor_new,
-    #     init_block_size,
-    #     ival,
-    #     valid_set_fraction,
-    # )
+
     train_set = data.train_set
     valid_set = data.validation_set
     test_set = data.test_set
@@ -84,7 +89,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
     n_classes = 4
     n_chans = int(train_set.X.shape[1])
     input_time_length = train_set.X.shape[2]
-    if model == "shallow":
+    if model_name == "shallow":
         model = NewShallowNet(
             n_chans, n_classes, input_time_length, final_conv_length="auto"
         )
@@ -94,7 +99,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
         #     input_time_length=input_time_length,
         #     final_conv_length="auto",
         # ).create_network()
-    elif model == "deep":
+    elif model_name == "deep":
         model = NewDeep4Net(n_chans, n_classes, input_time_length, "auto")
         # model = Deep4Net(
         #     n_chans,
@@ -102,7 +107,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
         #     input_time_length=input_time_length,
         #     final_conv_length="auto",
         # ).create_network()
-    elif model == "eegnet":
+    elif model_name == "eegnet":
         # model = EEGNet(n_chans, n_classes,
         #                input_time_length=input_time_length)
         # model = EEGNetv4(n_chans, n_classes,
@@ -118,7 +123,7 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
     log.info("Model: \n{:s}".format(str(model)))
 
     log.info("==============================")
-    log.info("Running Experiment:")
+    log.info("Building Experiment:")
     log.info("==============================")
     optimizer = optim.Adam(model.parameters())
 
@@ -147,7 +152,6 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
         run_after_early_stop=True,
         cuda=cuda,
     )
-    exp.run()
     return exp
 
 
@@ -162,9 +166,9 @@ if __name__ == "__main__":
         stream=sys.stdout,
     )
     # Should contain both .gdf files and .mat-labelfiles from competition
-    data_folder = "/home/no316758/data/BCICIV_2a_gdf/"
+    # data_folder = "/home/no316758/data/BCICIV_2a_gdf/"
     # data_folder = '/Users/sebas/code/_eeg_data/BCICIV_2a_gdf/'
-    low_cut_hz = 4  # 0 or 4
+    # low_cut_hz = 4  # 0 or 4
     cuda = True
 
     # get config
@@ -179,13 +183,16 @@ if __name__ == "__main__":
     experiment_n_folds = config["experiment"]["n_folds"]
     experiment_i_valid_fold = config["experiment"]["i_valid_fold"]
     model_name = config["model"]["name"]  # 'eegnet' or 'shallow' or 'deep'
+    experiment_max_epochs = config["train"]["max_epochs"]
+    experiment_max_increase_epochs = config["train"]["early_stop_patience"]
+    experiment_batch_size = config["train"]["batch_size"]
 
     # set subject ids to iterate
     subjects = [x for x in range(1, dataset_subject_count + 1)]
 
     for subject_id in subjects:
         # get data sets
-        data = get_dataset(
+        data = get_dataset_new(
             subject_id,
             experiment_i_valid_fold,
             dataset_path,
@@ -196,7 +203,15 @@ if __name__ == "__main__":
         )
 
         # subject_id = 1  # 1-9
-        exp = run_exp(data_folder, subject_id, low_cut_hz, model_name, cuda, data)
+        exp = build_exp(
+            model_name,
+            cuda,
+            data,
+            experiment_batch_size,
+            experiment_max_epochs,
+            experiment_max_increase_epochs,
+        )
+        exp.run()
 
         log.info("==============================")
         log.info(f"End Experiment - Last 10 epochs - Subject {subject_id}:")
