@@ -33,7 +33,7 @@ class NewShallowNet(nn.Sequential):
         pool_time_length=75,
         pool_time_stride=15,
         final_conv_length=30,
-        conv_nonlin=square,
+        conv_nonlin_method=square,
         pool_mode="mean",
         pool_nonlin=safe_log,
         split_first_layer=True,
@@ -91,7 +91,7 @@ class NewShallowNet(nn.Sequential):
                     n_filters_conv, momentum=self.batch_norm_alpha, affine=True
                 ),
             )
-        self.add_module("conv_nonlin", Expression(self.conv_nonlin))
+        self.add_module("conv_nonlin", Expression(self.conv_nonlin_method))
         self.add_module(
             "pool",
             pool_class(
