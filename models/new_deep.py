@@ -9,7 +9,7 @@ from braindecode.torch_ext.functions import identity
 from braindecode.torch_ext.util import np_to_var
 
 
-class Deep4Net(nn.Sequential):
+class NewDeep4Net(nn.Sequential):
     """
     Deep ConvNet models from [1]_.
 
@@ -227,6 +227,44 @@ class Deep4Net(nn.Sequential):
         init.constant_(self.conv_classifier.bias, 0)
         # Start in eval mode
         # self.eval()
+
+    def forward(self, *inputs):
+        if self.siamese:
+            return self.forward_siamese(*inputs)
+        return self.forward_once(*inputs)
+
+    def forward_once(self, x_input):
+        for name, module in self._modules.items():
+            x_input = module(x_input)
+        return x_input
+
+    def forward_siamese(self, x):
+        target = x["target"]
+        source = x["source"]
+
+        # Compute embeddings:
+        for name, module in self._modules.items():
+            target = module(target)
+            source = module(source)
+            if name == self.feature_alignment_layer:
+                break
+        target_embedding = target
+        source_embedding = source
+
+        # Compute cls for modules past the ones used for the embedding:
+        start_cls = False
+        for name, module in self._modules.items():
+            if start_cls:
+                source = module(source)
+            elif name == self.feature_alignment_layer:
+                start_cls = True
+        cls = source
+
+        return {
+            "target_embedding": target_embedding,
+            "source_embedding": source_embedding,
+            "cls": cls,
+        }
 
 
 # remove empty dim at end and potentially remove empty time dim

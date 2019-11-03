@@ -3,7 +3,7 @@ experiment:
   subject_id: 1
   type: no_tl               # [no_tl, loo_tl, ccsa_da]
   n_folds: 5
-  i_valid_fold: 1           # [0, 1, 2, 3]
+  i_valid_fold: 0           # [0, 1, 2, 3]
 
 model:
   name: deep           # [eegnet, deep, shallow]

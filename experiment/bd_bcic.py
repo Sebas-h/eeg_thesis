@@ -34,6 +34,8 @@ from braindecode.datautil.trial_segment import create_signal_target_from_raw_mne
 from braindecode.models.eegnet import EEGNetv4
 from models.eegnet import EEGNet
 from models.new_eegnet import NewEEGNet
+from models.new_deep import NewDeep4Net
+
 from data_loader.data_loader import get_dataset
 from util.config import load_cfg
 from data_loader.process_data.braindecodes_processing import processing_data
@@ -89,12 +91,13 @@ def run_exp(data_folder, subject_id, low_cut_hz, model, cuda, data):
             final_conv_length="auto",
         ).create_network()
     elif model == "deep":
-        model = Deep4Net(
-            n_chans,
-            n_classes,
-            input_time_length=input_time_length,
-            final_conv_length="auto",
-        ).create_network()
+        model = NewDeep4Net(n_chans, n_classes, input_time_length, "auto")
+        # model = Deep4Net(
+        #     n_chans,
+        #     n_classes,
+        #     input_time_length=input_time_length,
+        #     final_conv_length="auto",
+        # ).create_network()
     elif model == "eegnet":
         # model = EEGNet(n_chans, n_classes,
         #                input_time_length=input_time_length)
