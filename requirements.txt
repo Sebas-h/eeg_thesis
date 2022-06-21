@@ -33,7 +33,7 @@ mne==0.17.1
 mock==2.0.0
 munch==2.3.2
 numba==0.42.1
-numpy==1.16.2
+numpy==1.22.0
 olefile==0.46
 pandas==0.24.1
 pbr==5.1.3
